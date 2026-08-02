@@ -1,5 +1,107 @@
 # Progress
 
+## 2026-08-02 — AUTH-001: registration terms/privacy consent fields
+
+### Requirement IDs implemented
+
+AUTH-001 (registration must capture accepted terms/privacy versions). This
+was a gap left over from the original Phase 0 identity implementation: the
+PRD required it, but the field never made it into `RegisterInput`, `User`,
+or the schema. Backend-only prerequisite for a later, separate mobile
+Register screen task, which will send fixed version-string constants.
+
+### Files changed
+
+- `internal/domain/entities.go`: added `User.AcceptedTermsVersion`,
+  `User.AcceptedPrivacyVersion` (immutable after registration — not touched
+  by `UpdateUserProfile`, not part of `userResponse`/OpenAPI `User` schema).
+- `internal/application/auth.go`: `RegisterInput` gains
+  `AcceptedTermsVersion`, `AcceptedPrivacyVersion`; `Register` trims and
+  validates both as required, max 32 characters, returning a
+  `domain.ValidationError` (field `consent`) when missing/oversized; both
+  are persisted onto the created `domain.User`.
+- `internal/application/auth_test.go`: updated
+  `TestRegisterCreatesUserAndTokens` to assert the two fields round-trip
+  through the fake repository; updated
+  `TestRefreshRotatesSessionAndRejectsReuse`'s register call; added
+  `TestRegisterRejectsMissingConsent`.
+- `internal/adapters/postgres/store.go`: `CreateUser`, `scanUser` (used by
+  both `GetUserByID` and `GetUserByEmail`) read/write the two new columns.
+- `internal/adapters/httpapi/auth_handlers.go`: `registerRequest` gains
+  `accepted_terms_version`/`accepted_privacy_version` JSON fields, passed
+  through to `application.RegisterInput`.
+- `internal/adapters/httpapi/server_test.go`,
+  `internal/adapters/httpapi/reporting_handlers_test.go`: the four
+  HTTP-level register call sites now send both consent fields (previously
+  501/422'd once the field became required).
+- `tests/integration/postgres_test.go`: `startPostgres` previously
+  hand-parsed only `db/migrations/00001_core.sql` as the Testcontainers init
+  script, hardcoding a single migration file by name. With migration
+  `00002` adding a `NOT NULL` column, this would have silently skipped it
+  and broken every integration test (`column accepted_terms_version does
+  not exist`). Changed it to read and concatenate the `-- +goose Up`
+  section of every `*.sql` file in `db/migrations`, sorted by filename, so
+  future migrations are picked up automatically. Also updated `createUser`
+  to supply both consent fields (now `NOT NULL` in the real schema).
+- `openapi/openapi.yaml`: `RegisterRequest` gains `accepted_terms_version`,
+  `accepted_privacy_version` as required string properties (1–32 chars).
+
+### Database migrations
+
+- `db/migrations/00002_users_registration_consent.sql`: adds
+  `accepted_terms_version` and `accepted_privacy_version` (`text NOT NULL`)
+  to `users`. Uses a temporary `DEFAULT ''` during `ADD COLUMN` (dropped
+  immediately after) purely to satisfy `NOT NULL` against a table that
+  already has rows in dev databases; new rows must supply a real value
+  going forward since application-layer validation requires it.
+
+### Commands run and results
+
+1. `go test ./internal/application/... -run 'TestRegister'` (pre-implementation,
+   RED) → compile failure: `RegisterInput` had no `AcceptedTermsVersion`/
+   `AcceptedPrivacyVersion` fields, as expected before Step 3.
+2. `go test ./internal/application/... -run 'TestRegister|TestRefresh' -v`
+   (post-implementation, GREEN) → PASS
+   (`TestRegisterCreatesUserAndTokens`, `TestRegisterRejectsMissingConsent`,
+   `TestRefreshRotatesSessionAndRejectsReuse`, 3/3).
+3. `task migrate:up` → applied `00002_users_registration_consent.sql`
+   (`goose: successfully migrated database to version: 2`). This sandbox
+   cannot route from the host network namespace to the Compose Postgres
+   container's bridge IP (a pre-existing sandbox limitation, also noted in
+   the 2026-08-02 Phase 7a entry below for the fixed 5432 port); worked
+   around by running `goose` inside a short-lived container attached to the
+   same Compose network (`docker run --network
+   mobile-scaffold-auth_default ...`, connecting to the `postgres` service
+   by container DNS name instead of `localhost`), with the host's Go module
+   cache bind-mounted in so no network egress was needed for the build.
+   Verified with `psql \d users` that both columns exist as `NOT NULL`.
+4. `go test ./...` → PASS, all packages.
+5. `go test -race ./internal/...` → PASS, all packages.
+6. `task verify` (fmt:check, vet, test, test:race, build) → PASS.
+7. `task lint` (`golangci-lint run ./...`) → 35 findings, same counts and
+   categories as the pre-change baseline (`bodyclose: 21, gosec: 1,
+   govet: 12, nilerr: 1`), confirmed by running lint against `git stash`'d
+   (pre-change) code and diffing the finding counts — no new finding or new
+   category introduced by this change.
+8. `govulncheck ./...` → PASS. 0 vulnerabilities in code or called
+   dependencies.
+9. `task test:integration` (`go test -tags=integration -count=1
+   ./tests/integration/...`) → PASS, both
+   `TestPostgresLedgerAndBudgetConstraints` and
+   `TestPostgresReportingQueries`, against real Testcontainers-launched
+   Postgres with both migrations applied.
+
+### Deferred / not verified
+
+- No manual `task run` end-to-end smoke test, for the same sandbox
+  networking reason recorded in the Phase 7a entry below (fixed-port
+  Postgres unreachable from the host network namespace). Confidence rests
+  on the application unit tests (fake repository), and the Postgres
+  integration tests (real schema, real `NOT NULL` constraint, real
+  round-trip through `CreateUser`/`scanUser`).
+
+---
+
 ## 2026-08-02 — Phase 7a: Dashboard, cash-flow report, export (RPT-001..004)
 
 ### Requirement IDs implemented

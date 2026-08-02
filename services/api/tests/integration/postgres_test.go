@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -26,14 +27,31 @@ func (c fixedClock) Now() time.Time { return c.now }
 func startPostgres(t *testing.T) (*postgres.Store, func()) {
 	t.Helper()
 	ctx := context.Background()
-	migration, err := os.ReadFile(filepath.Join("..", "..", "db", "migrations", "00001_core.sql"))
+	migrationsDir := filepath.Join("..", "..", "db", "migrations")
+	entries, err := os.ReadDir(migrationsDir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	upSQL := strings.Split(string(migration), "-- +goose Down")[0]
-	upSQL = strings.Replace(upSQL, "-- +goose Up", "", 1)
+	names := make([]string, 0, len(entries))
+	for _, e := range entries {
+		if !e.IsDir() && strings.HasSuffix(e.Name(), ".sql") {
+			names = append(names, e.Name())
+		}
+	}
+	sort.Strings(names)
+	var upSQL strings.Builder
+	for _, name := range names {
+		migration, err := os.ReadFile(filepath.Join(migrationsDir, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		section := strings.Split(string(migration), "-- +goose Down")[0]
+		section = strings.Replace(section, "-- +goose Up", "", 1)
+		upSQL.WriteString(section)
+		upSQL.WriteString("\n")
+	}
 	initScript := filepath.Join(t.TempDir(), "001_core.sql")
-	if err := os.WriteFile(initScript, []byte(upSQL), 0o600); err != nil {
+	if err := os.WriteFile(initScript, []byte(upSQL.String()), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -70,17 +88,19 @@ func startPostgres(t *testing.T) (*postgres.Store, func()) {
 func createUser(t *testing.T, repo domain.UserRepository, ids system.IDGenerator, now time.Time) domain.User {
 	t.Helper()
 	user, err := repo.Create(context.Background(), domain.User{
-		ID:           ids.New(),
-		Email:        "integration@example.com",
-		DisplayName:  "Integration User",
-		PasswordHash: "not-used-in-this-test",
-		Status:       domain.UserStatusActive,
-		Role:         domain.RoleUser,
-		Currency:     "IDR",
-		Timezone:     "Asia/Jakarta",
-		Payday:       25,
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		ID:                     ids.New(),
+		Email:                  "integration@example.com",
+		DisplayName:            "Integration User",
+		PasswordHash:           "not-used-in-this-test",
+		Status:                 domain.UserStatusActive,
+		Role:                   domain.RoleUser,
+		Currency:               "IDR",
+		Timezone:               "Asia/Jakarta",
+		Payday:                 25,
+		AcceptedTermsVersion:   "2026-08-02",
+		AcceptedPrivacyVersion: "2026-08-02",
+		CreatedAt:              now,
+		UpdatedAt:              now,
 	})
 	if err != nil {
 		t.Fatal(err)

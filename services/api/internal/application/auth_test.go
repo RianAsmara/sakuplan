@@ -22,7 +22,10 @@ func authFixture() (*application.AuthService, *testkit.Users, *testkit.Sessions,
 
 func TestRegisterCreatesUserAndTokens(t *testing.T) {
 	svc, users, _, _, _ := authFixture()
-	pair, err := svc.Register(context.Background(), application.RegisterInput{Email: "Rian@example.com", Password: "strong-password", DisplayName: "Rian"})
+	pair, err := svc.Register(context.Background(), application.RegisterInput{
+		Email: "Rian@example.com", Password: "strong-password", DisplayName: "Rian",
+		AcceptedTermsVersion: "2026-08-02", AcceptedPrivacyVersion: "2026-08-02",
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,6 +34,21 @@ func TestRegisterCreatesUserAndTokens(t *testing.T) {
 	}
 	if len(users.ByID) != 1 {
 		t.Fatalf("expected one user, got %d", len(users.ByID))
+	}
+	stored := users.ByID[pair.User.ID]
+	if stored.AcceptedTermsVersion != "2026-08-02" || stored.AcceptedPrivacyVersion != "2026-08-02" {
+		t.Fatalf("expected consent versions to be persisted, got %+v", stored)
+	}
+}
+
+func TestRegisterRejectsMissingConsent(t *testing.T) {
+	svc, _, _, _, _ := authFixture()
+	_, err := svc.Register(context.Background(), application.RegisterInput{
+		Email: "missing-consent@example.com", Password: "strong-password", DisplayName: "No Consent",
+	})
+	var validation domain.ValidationError
+	if !errors.As(err, &validation) {
+		t.Fatalf("expected validation error, got %v", err)
 	}
 }
 
@@ -44,7 +62,10 @@ func TestLoginHidesUnknownEmail(t *testing.T) {
 
 func TestRefreshRotatesSessionAndRejectsReuse(t *testing.T) {
 	svc, _, sessions, refresh, _ := authFixture()
-	pair, err := svc.Register(context.Background(), application.RegisterInput{Email: "a@example.com", Password: "strong-password", DisplayName: "A"})
+	pair, err := svc.Register(context.Background(), application.RegisterInput{
+		Email: "a@example.com", Password: "strong-password", DisplayName: "A",
+		AcceptedTermsVersion: "2026-08-02", AcceptedPrivacyVersion: "2026-08-02",
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
