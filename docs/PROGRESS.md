@@ -1,5 +1,111 @@
 # Progress
 
+## 2026-08-02 — Mobile Task 2: Expo scaffold + custom Tamagui theme
+
+### Requirement IDs implemented
+
+None (infrastructure/scaffolding task — SDD plan
+`.superpowers/sdd/2026-08-02-mobile-scaffold-auth/task-2-brief.md`, Task 2 of
+the mobile scaffold+auth plan). Creates `services/mobile/` from scratch: an
+Expo Router app wired to a custom Tamagui theme (SakuPlan's `kertas`/`tinta`/
+`terjaga`/`leluasa`/`kulit`/`peringatan` color tokens, Fraunces/IBM Plex Sans/
+IBM Plex Mono fonts) and gated font loading. No screens, navigation, or API
+client — those are later tasks in the same plan.
+
+### Files changed
+
+- `services/mobile/` (new): scaffolded via `create-expo-app@latest --template
+  blank-typescript`, `expo-router` + navigation deps, Tamagui core packages,
+  Google Fonts packages.
+- `services/mobile/tamagui.config.ts` (new): custom color/space/size/radius
+  tokens, three custom fonts (heading/body/mono), single `light` theme,
+  exports `AppConfig` type via `declare module 'tamagui'`.
+- `services/mobile/metro.config.js` (new): `withTamagui` Metro plugin wiring.
+- `services/mobile/src/theme/fonts.ts` (new): `useAppFontsLoaded()` hook
+  gating on Fraunces/Plex Sans/Plex Mono via `@expo-google-fonts/*`.
+- `services/mobile/app/_layout.tsx` (new): root layout — themed loading
+  spinner while fonts load, then `TamaguiProvider`/`Theme`/`Slot` once ready.
+  Added `defaultTheme="light"` (required by the installed Tamagui version,
+  not present in the original plan snippet).
+- `services/mobile/app/index.tsx` (new, not in the original plan): minimal
+  stub route (`return null`) — `expo-router`'s `<Slot />` throws "Couldn't
+  find any screens for the navigator" when `app/` has zero route files, a
+  real crash found via the emulator boot check. Task 7 replaces this with
+  real route groups.
+- Deleted `services/mobile/App.tsx` and `services/mobile/index.ts` (template
+  entry point, superseded by `main: "expo-router/entry"`).
+
+### Database migrations
+
+None (mobile-only).
+
+### Commands run and results
+
+1. `npx create-expo-app@latest mobile --template blank-typescript` +
+   `npx expo install expo-router react-native-safe-area-context
+   react-native-screens expo-linking expo-constants expo-status-bar` → PASS.
+2. `npm install tamagui@2.6.2 @tamagui/config@2.6.2
+   @tamagui/animations-react-native@2.6.2 --legacy-peer-deps` → PASS
+   (`--legacy-peer-deps` needed: `react-dom@19.2.8` pulled transitively via
+   `expo-router`'s optional web deps conflicts with the SDK-57-pinned
+   `react@19.2.3`).
+3. `npx expo install expo-font @expo-google-fonts/fraunces
+   @expo-google-fonts/ibm-plex-sans @expo-google-fonts/ibm-plex-mono` → PASS.
+4. `npm install @tamagui/metro-plugin@2.6.2 --legacy-peer-deps` → PASS.
+5. `npm install --save-dev react-dom@19.2.3 --legacy-peer-deps` → PASS
+   (`@tamagui/metro-plugin`'s static extractor does a real `require('react-dom')`
+   at Metro build time; without it Metro failed to start with `Cannot find
+   module 'react-dom'`. Pinned to match the app's `react` version exactly;
+   never shipped in the native bundle).
+6. `npx tsc --noEmit` → PASS, exit 0 (after adding `defaultTheme="light"` to
+   `TamaguiProvider`, required by tamagui 2.6.2's types — the plan snippet
+   predates this requirement).
+7. `npx expo start` (Metro boot) → started cleanly, no bundler errors.
+8. Forced a real Android bundle via `curl
+   ".../expo-router/entry.bundle?platform=android&dev=true..."` directly
+   against the running Metro server → HTTP 200, 1835 modules, no errors.
+9. Real Android emulator boot check (Android SDK + `/dev/kvm` available in
+   this sandbox): downloaded `system-images;android-35;google_apis;x86_64`,
+   created AVD `sakuplan_test` (Pixel 6 profile), booted headless
+   (`-no-window -gpu swiftshader_indirect`), confirmed
+   `sys.boot_completed=1`, ran `npx expo start --android` (auto-installed
+   Expo Go), verified app state via `adb shell screencap` screenshots (no
+   interactive display in this sandbox, so the emulator's off-screen
+   framebuffer was captured instead of a live view):
+   - First attempt (before the `app/index.tsx` fix): real red-box render
+     error confirmed via screenshot — `<Slot />` with zero registered routes.
+   - After the fix: clean full rebuild (`--clear`), 1836 modules, no render
+     errors, app reaches a stable blank white screen. Confirmed by pixel
+     sampling (`RGB 255,255,255`) that this is the correct rendering of the
+     plan's own code: the `fontsLoaded` branch in `_layout.tsx` sets no
+     `backgroundColor` (only the loading/spinner branch does), so once fonts
+     load and `<Slot/>` renders the empty stub route, the native view's
+     default white shows — matching the plan's "then an empty screen"
+     expectation.
+   - Did **not** visually catch the intermediate `$kertas`-background/
+     `$primary`-spinner loading frame — Google Fonts are bundled locally and
+     `useFonts` resolved faster than the `adb screencap`+`pull` round-trip
+     across ~5 rapid-fire screenshots. Confident in this branch by code
+     review and type-checking, not by direct observation; noted as a gap
+     rather than claimed as verified.
+
+### Deferred / not verified
+
+- iOS boot check not performed (no macOS/simulator in this sandbox); the
+  brief accepts either platform and Android was used.
+- The `$kertas`/`$primary` loading-spinner frame was not visually confirmed
+  (see above) — only the pre- and post-load states were captured.
+- An intermittent "Cannot connect to Expo CLI..." banner appeared from Expo
+  Go's dev-tools websocket channel (separate from the HTTP bundle-fetch
+  channel, which kept working) — likely a sandbox networking quirk, did not
+  block bundle loading or rendering, not investigated further.
+- `openapi-typescript` (referenced by the new `generate:api` npm script) is
+  not installed — out of scope per the brief ("no API client yet").
+
+Full detail: `.superpowers/sdd/2026-08-02-mobile-scaffold-auth/task-2-report.md`.
+
+---
+
 ## 2026-08-02 — AUTH-001: registration terms/privacy consent fields
 
 ### Requirement IDs implemented
