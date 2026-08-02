@@ -1,0 +1,59 @@
+name: Backend
+
+on:
+  push:
+    paths:
+      - 'services/api/**'
+      - '.github/workflows/backend.yml'
+      - 'Taskfile.yml'
+  pull_request:
+    paths:
+      - 'services/api/**'
+      - '.github/workflows/backend.yml'
+      - 'Taskfile.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.26.5'
+          cache-dependency-path: services/api/go.sum
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.12
+          working-directory: services/api
+
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/api
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.26.5'
+          cache-dependency-path: services/api/go.sum
+      - name: Download dependencies
+        run: go mod download
+      - name: Check formatting
+        run: test -z "$(find . -name '*.go' -type f -print0 | xargs -0 gofmt -l)"
+      - name: Vet
+        run: go vet ./...
+      - name: Unit and adapter tests
+        run: go test -count=1 ./...
+      - name: Race detector
+        run: go test -race -count=1 ./internal/...
+      - name: PostgreSQL integration tests
+        run: go test -tags=integration -count=1 ./tests/integration/...
+      - name: Build
+        run: CGO_ENABLED=0 go build -trimpath ./cmd/api
+      - name: Vulnerability scan
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...

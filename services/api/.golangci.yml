@@ -1,0 +1,27 @@
+version: "2"
+run:
+  timeout: 5m
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - errorlint
+    - gosec
+    - nilerr
+    - noctx
+  settings:
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+formatters:
+  enable:
+    - gofmt
+    - goimports
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclusions:
+    presets:
+      - common-false-positives
+      - std-error-handling

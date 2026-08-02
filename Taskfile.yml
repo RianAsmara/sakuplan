@@ -1,0 +1,111 @@
+version: '3'
+
+vars:
+  API_DIR: services/api
+  GOOSE_VERSION: v3.27.3
+
+tasks:
+  bootstrap:
+    desc: Download Go dependencies and create the local environment file
+    cmds:
+      - test -f .env || cp .env.example .env
+      - cd {{.API_DIR}} && go mod tidy
+
+  infra:up:
+    desc: Start PostgreSQL required by the current API core
+    cmds:
+      - docker compose up -d postgres
+
+  infra:up:platform:
+    desc: Start PostgreSQL plus optional Redis and Mailpit services
+    cmds:
+      - docker compose --profile platform up -d postgres redis mailpit
+
+  infra:down:
+    desc: Stop local infrastructure
+    cmds:
+      - docker compose down
+
+  migrate:up:
+    desc: Apply database migrations
+    dotenv: ['.env']
+    cmds:
+      - cd {{.API_DIR}} && go run github.com/pressly/goose/v3/cmd/goose@{{.GOOSE_VERSION}} -dir db/migrations postgres "$DATABASE_URL" up
+
+  migrate:down:
+    desc: Roll back one database migration
+    dotenv: ['.env']
+    cmds:
+      - cd {{.API_DIR}} && go run github.com/pressly/goose/v3/cmd/goose@{{.GOOSE_VERSION}} -dir db/migrations postgres "$DATABASE_URL" down
+
+  run:
+    desc: Run the API
+    dir: '{{.API_DIR}}'
+    dotenv: ['../../.env']
+    cmds:
+      - go run ./cmd/api
+
+  fmt:
+    desc: Format Go code
+    dir: '{{.API_DIR}}'
+    cmds:
+      - find . -name '*.go' -type f -print0 | xargs -0 gofmt -w
+
+  fmt:check:
+    desc: Fail when Go files are not formatted
+    dir: '{{.API_DIR}}'
+    cmds:
+      - test -z "$(find . -name '*.go' -type f -print0 | xargs -0 gofmt -l)"
+
+  test:
+    desc: Run unit and HTTP adapter tests
+    dir: '{{.API_DIR}}'
+    cmds:
+      - go test ./...
+
+  test:race:
+    desc: Run tests with the race detector
+    dir: '{{.API_DIR}}'
+    cmds:
+      - go test -race ./internal/...
+
+  test:integration:
+    desc: Run PostgreSQL integration tests with Testcontainers
+    dir: '{{.API_DIR}}'
+    cmds:
+      - go test -tags=integration -count=1 ./tests/integration/...
+
+  coverage:
+    desc: Generate unit-test coverage
+    dir: '{{.API_DIR}}'
+    cmds:
+      - go test -coverprofile=coverage.out ./internal/...
+      - go tool cover -html=coverage.out -o coverage.html
+
+  vet:
+    desc: Run go vet
+    dir: '{{.API_DIR}}'
+    cmds:
+      - go vet ./...
+
+  lint:
+    desc: Run golangci-lint v2
+    dir: '{{.API_DIR}}'
+    cmds:
+      - golangci-lint run ./...
+
+  build:
+    desc: Build the API binary
+    dir: '{{.API_DIR}}'
+    cmds:
+      - mkdir -p ../../bin
+      - CGO_ENABLED=0 go build -trimpath -o ../../bin/sakuplan-api ./cmd/api
+
+  verify:
+    desc: Run formatting, vet, unit tests, race tests, and build
+    cmds:
+      - task: fmt:check
+      - task: vet
+      - task: test
+      - task: test:race
+      - task: build

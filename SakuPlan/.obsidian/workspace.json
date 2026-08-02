@@ -1,0 +1,225 @@
+{
+  "main": {
+    "id": "fc8391984fed35d1",
+    "type": "split",
+    "children": [
+      {
+        "id": "f83165c2c4ba5dc5",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "3c25bc9106cdb316",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Projects/SakuPlan/Product/Product Requirements.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Product Requirements"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "9259abe35a6b4610",
+    "type": "split",
+    "children": [
+      {
+        "id": "269bf8c6224decbc",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "28ab58f4fec3b509",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "e6b68ca342e07d9d",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "25f460ff5fba268a",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "9aac513ad01c3657",
+    "type": "split",
+    "children": [
+      {
+        "id": "166c47740bd7a389",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "530ec09b038f51de",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Projects/SakuPlan/Product/Product Requirements.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Product Requirements"
+            }
+          },
+          {
+            "id": "a69db8fe5082430c",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Projects/SakuPlan/Product/Product Requirements.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from Product Requirements"
+            }
+          },
+          {
+            "id": "9cb7fae05c643112",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "877ed48bf229f50f",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "12d1d356556cff8d",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Projects/SakuPlan/Product/Product Requirements.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Product Requirements"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "3c25bc9106cdb316",
+  "lastOpenFiles": [
+    "Projects/SakuPlan/SakuPlan.md.tmp.143843.ebcdf31c4b9b",
+    "Projects/SakuPlan/Product/Product Requirements.md.tmp.143843.cd5c16398736",
+    "Projects/SakuPlan/Product/Product Requirements.md.tmp.143843.1a34a76cd63d",
+    "Projects/SakuPlan/SakuPlan.md",
+    "Projects/SakuPlan/SakuPlan.md.tmp.143843.1c92150b489d",
+    "Projects/SakuPlan/References/Source Map.md",
+    "Projects/SakuPlan/References/Source Map.md.tmp.143843.c45f4ccdee88",
+    "Projects/SakuPlan/References/Glossary.md",
+    "Projects/SakuPlan/References/Glossary.md.tmp.143843.51b16c496f59",
+    "Projects/SakuPlan/Progress/Changelog.md",
+    "Projects/SakuPlan/Progress/Changelog.md.tmp.143843.aa0fcf856f83",
+    "Projects/SakuPlan/Progress/Remaining Work.md",
+    "Projects/SakuPlan/Progress/Remaining Work.md.tmp.143843.9bdee7cfdf7b",
+    "Projects/SakuPlan/Progress/Completed Milestones.md",
+    "Projects/SakuPlan/Progress/Completed Milestones.md.tmp.143843.c7881531d555",
+    "Projects/SakuPlan/Progress/Implementation Status.md",
+    "Projects/SakuPlan/Progress/Implementation Status.md.tmp.143843.770a35baf7b3",
+    "Projects/SakuPlan/Decisions/Decision Log.md",
+    "Projects/SakuPlan/Decisions/Decision Log.md.tmp.143843.a4a429deb907",
+    "Projects/SakuPlan/Decisions/ADR-012.md",
+    "Projects/SakuPlan/Decisions/ADR-011.md",
+    "Projects/SakuPlan/Decisions/ADR-010.md",
+    "Projects/SakuPlan/Decisions/ADR-009.md",
+    "Projects/SakuPlan/Decisions/ADR-008.md",
+    "Projects/SakuPlan/Decisions/ADR-007.md",
+    "Projects/SakuPlan/Decisions/ADR-006.md",
+    "Projects/SakuPlan/Decisions/ADR-005.md",
+    "Projects/SakuPlan/Decisions/ADR-004.md",
+    "Projects/SakuPlan/Decisions/ADR-003.md",
+    "Projects/SakuPlan/Decisions/ADR-002.md",
+    "Projects/SakuPlan/Decisions/ADR-001.md",
+    "Projects/SakuPlan/Operations/Runbook.md",
+    "Projects/SakuPlan/Operations/Troubleshooting.md",
+    "Projects/SakuPlan/Operations/Database Operations.md",
+    "Projects/SakuPlan/Operations/Deployment.md",
+    "Projects/SakuPlan/Operations/Configuration.md"
+  ]
+}

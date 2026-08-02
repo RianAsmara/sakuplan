@@ -1,0 +1,955 @@
+openapi: 3.1.0
+info:
+  title: SakuPlan API
+  version: 0.1.0
+  description: Core API for the SakuPlan personal budget planner.
+servers:
+  - url: http://localhost:8080
+security:
+  - bearerAuth: []
+tags:
+  - name: Health
+  - name: Authentication
+  - name: Accounts
+  - name: Categories
+  - name: Transactions
+  - name: Budgets
+  - name: Bills
+  - name: Goals
+  - name: Planning
+  - name: Reporting
+paths:
+  /healthz:
+    get:
+      security: []
+      tags: [Health]
+      operationId: getHealth
+      responses:
+        '200':
+          description: Process is alive.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, time]
+                properties:
+                  status: { type: string, const: ok }
+                  time: { type: string, format: date-time }
+  /livez:
+    get:
+      security: []
+      tags: [Health]
+      operationId: getLiveness
+      responses:
+        '200':
+          description: Process is alive.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+  /readyz:
+    get:
+      security: []
+      tags: [Health]
+      operationId: getReadiness
+      responses:
+        '200':
+          description: Required dependencies are ready.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+        '503':
+          description: A required dependency is unavailable.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+  /v1/auth/register:
+    post:
+      security: []
+      tags: [Authentication]
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201': { $ref: '#/components/responses/TokenPair' }
+        '422': { $ref: '#/components/responses/Error' }
+  /v1/auth/login:
+    post:
+      security: []
+      tags: [Authentication]
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/TokenPair' }
+        '401': { $ref: '#/components/responses/Error' }
+  /v1/auth/refresh:
+    post:
+      security: []
+      tags: [Authentication]
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/TokenPair' }
+        '401': { $ref: '#/components/responses/Error' }
+  /v1/auth/logout:
+    post:
+      security: []
+      tags: [Authentication]
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshRequest' }
+      responses:
+        '204': { description: Session revoked. }
+  /v1/auth/logout-all:
+    post:
+      tags: [Authentication]
+      operationId: logoutAll
+      responses:
+        '204': { description: All sessions revoked. }
+  /v1/me:
+    get:
+      tags: [Authentication]
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Current user.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+    put:
+      tags: [Authentication]
+      operationId: updateCurrentUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateProfileRequest' }
+      responses:
+        '200':
+          description: Updated current user.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '422': { $ref: '#/components/responses/Error' }
+  /v1/accounts:
+    get:
+      tags: [Accounts]
+      operationId: listAccounts
+      parameters:
+        - in: query
+          name: include_archived
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Account collection.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Account' }
+    post:
+      tags: [Accounts]
+      operationId: createAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateAccountRequest' }
+      responses:
+        '201':
+          description: Account created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+  /v1/accounts/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ResourceID'
+    get:
+      tags: [Accounts]
+      operationId: getAccount
+      responses:
+        '200':
+          description: Account.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+        '404': { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [Accounts]
+      operationId: archiveAccount
+      responses:
+        '204': { description: Account archived. }
+  /v1/accounts/{id}/balance:
+    parameters:
+      - $ref: '#/components/parameters/ResourceID'
+    get:
+      tags: [Accounts]
+      operationId: getAccountBalance
+      responses:
+        '200':
+          description: Reconstructed ledger balance.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [account_id, balance]
+                properties:
+                  account_id: { type: string, format: uuid }
+                  balance: { $ref: '#/components/schemas/Money' }
+  /v1/categories:
+    get:
+      tags: [Categories]
+      operationId: listCategories
+      parameters:
+        - in: query
+          name: kind
+          schema: { $ref: '#/components/schemas/CategoryKind' }
+        - in: query
+          name: include_archived
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Categories.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Category' }
+    post:
+      tags: [Categories]
+      operationId: createCategory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateCategoryRequest' }
+      responses:
+        '201':
+          description: Category created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Category' }
+  /v1/categories/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ResourceID'
+    delete:
+      tags: [Categories]
+      operationId: archiveCategory
+      responses:
+        '204': { description: Custom category archived. }
+  /v1/transactions:
+    get:
+      tags: [Transactions]
+      operationId: listTransactions
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        - in: query
+          name: cursor
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Cursor-paginated transaction collection.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, next_cursor]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Transaction' }
+                  next_cursor: { type: string }
+    post:
+      tags: [Transactions]
+      operationId: createTransaction
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateTransactionRequest' }
+      responses:
+        '201':
+          description: Transaction created or original idempotent result returned.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Transaction' }
+        '409': { $ref: '#/components/responses/Error' }
+  /v1/transactions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ResourceID'
+    get:
+      tags: [Transactions]
+      operationId: getTransaction
+      responses:
+        '200':
+          description: Transaction.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Transaction' }
+  /v1/transactions/{id}/reverse:
+    parameters:
+      - $ref: '#/components/parameters/ResourceID'
+    post:
+      tags: [Transactions]
+      operationId: reverseTransaction
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReverseTransactionRequest' }
+      responses:
+        '201':
+          description: Reversal transaction created and linked to the original transaction.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Transaction' }
+        '409': { $ref: '#/components/responses/Error' }
+  /v1/budgets:
+    post:
+      tags: [Budgets]
+      operationId: createBudgetDraft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateBudgetRequest' }
+      responses:
+        '201':
+          description: Budget draft created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Budget' }
+        '409': { $ref: '#/components/responses/Error' }
+  /v1/budgets/{id}/activate:
+    parameters:
+      - $ref: '#/components/parameters/ResourceID'
+    post:
+      tags: [Budgets]
+      operationId: activateBudget
+      responses:
+        '200':
+          description: Activated budget.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Budget' }
+        '409': { $ref: '#/components/responses/Error' }
+  /v1/budgets/active:
+    get:
+      tags: [Budgets]
+      operationId: getActiveBudget
+      responses:
+        '200':
+          description: Active budget for current date.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Budget' }
+        '404': { $ref: '#/components/responses/Error' }
+  /v1/bills:
+    get:
+      tags: [Bills]
+      operationId: listBills
+      parameters:
+        - in: query
+          name: include_inactive
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Recurring bills.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Bill' }
+    post:
+      tags: [Bills]
+      operationId: createBill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateBillRequest' }
+      responses:
+        '201':
+          description: Bill created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Bill' }
+  /v1/goals:
+    get:
+      tags: [Goals]
+      operationId: listGoals
+      parameters:
+        - in: query
+          name: include_inactive
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Saving goals.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Goal' }
+    post:
+      tags: [Goals]
+      operationId: createGoal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateGoalRequest' }
+      responses:
+        '201':
+          description: Goal created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Goal' }
+  /v1/goals/{id}/contributions:
+    parameters:
+      - $ref: '#/components/parameters/ResourceID'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [Goals]
+      operationId: contributeToGoal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GoalContributionRequest' }
+      responses:
+        '201':
+          description: Contribution recorded.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GoalContribution' }
+  /v1/planning/safe-to-spend:
+    get:
+      tags: [Planning]
+      operationId: getSafeToSpend
+      responses:
+        '200':
+          description: Deterministic safe-to-spend calculation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SafeToSpend' }
+  /v1/planning/recommendations:
+    post:
+      tags: [Planning]
+      operationId: createBudgetRecommendation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RecommendationRequest' }
+      responses:
+        '200':
+          description: Rule-based recommendation. No LLM is involved in monetary calculations.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Recommendation' }
+  /v1/dashboard:
+    get:
+      tags: [Reporting]
+      operationId: getDashboard
+      responses:
+        '200':
+          description: Mobile dashboard summary.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Dashboard' }
+  /v1/reports/cash-flow:
+    get:
+      tags: [Reporting]
+      operationId: getCashFlowReport
+      parameters:
+        - in: query
+          name: start
+          schema: { type: string, format: date }
+          description: Defaults to the first day of the current calendar month.
+        - in: query
+          name: end
+          schema: { type: string, format: date }
+          description: Defaults to the last day of the current calendar month.
+        - in: query
+          name: group_by
+          schema: { type: string, enum: [day, week], default: day }
+      responses:
+        '200':
+          description: Cash-flow report using the same ledger rules as account and budget summaries.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CashFlowReport' }
+        '400': { $ref: '#/components/responses/Error' }
+  /v1/exports:
+    post:
+      tags: [Reporting]
+      operationId: createExport
+      responses:
+        '201':
+          description: Synchronous export of the user's profile, accounts, categories, transactions, budgets, bills, goals, and consent metadata.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Export' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    ResourceID:
+      in: path
+      name: id
+      required: true
+      schema: { type: string, format: uuid }
+    IdempotencyKey:
+      in: header
+      name: Idempotency-Key
+      required: true
+      schema: { type: string, minLength: 8, maxLength: 128 }
+  responses:
+    TokenPair:
+      description: Access and rotating refresh tokens.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/TokenPair' }
+    Error:
+      description: Standard error envelope.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+  schemas:
+    Health:
+      type: object
+      required: [status, time]
+      properties:
+        status: { type: string, enum: [ok, unavailable] }
+        time: { type: string, format: date-time }
+    Money:
+      type: integer
+      format: int64
+      description: Integer minor units. For IDR, one unit equals one rupiah.
+      examples: [125000]
+    RegisterRequest:
+      type: object
+      required: [email, password, display_name]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 12, maxLength: 128 }
+        display_name: { type: string, minLength: 1, maxLength: 100 }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        password: { type: string, minLength: 1, maxLength: 128 }
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token: { type: string }
+    UpdateProfileRequest:
+      type: object
+      required: [display_name, currency, timezone, payday, minimum_buffer, ai_consent]
+      properties:
+        display_name: { type: string, minLength: 1, maxLength: 100 }
+        currency: { type: string, minLength: 3, maxLength: 3 }
+        timezone: { type: string, minLength: 1 }
+        payday: { type: integer, minimum: 1, maximum: 31 }
+        minimum_buffer: { $ref: '#/components/schemas/Money' }
+        ai_consent: { type: boolean }
+    User:
+      type: object
+      required: [id, email, display_name, status, role, currency, timezone, payday, minimum_buffer, ai_consent]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        display_name: { type: string }
+        status: { type: string, enum: [active, suspended, deletion_pending, deleted] }
+        role: { type: string, enum: [user, super_admin, operations_admin, support_agent, auditor] }
+        currency: { type: string, minLength: 3, maxLength: 3 }
+        timezone: { type: string }
+        payday: { type: integer, minimum: 1, maximum: 31 }
+        minimum_buffer: { $ref: '#/components/schemas/Money' }
+        ai_consent: { type: boolean }
+    TokenPair:
+      type: object
+      required: [access_token, access_expires_at, refresh_token, refresh_expires_at, user]
+      properties:
+        access_token: { type: string }
+        access_expires_at: { type: string, format: date-time }
+        refresh_token: { type: string }
+        refresh_expires_at: { type: string, format: date-time }
+        user: { $ref: '#/components/schemas/User' }
+    AccountType:
+      type: string
+      enum: [cash, bank, ewallet, savings, other]
+    CreateAccountRequest:
+      type: object
+      required: [name, type, initial_balance, spendable]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        type: { $ref: '#/components/schemas/AccountType' }
+        currency: { type: string, default: IDR }
+        initial_balance: { $ref: '#/components/schemas/Money' }
+        spendable: { type: boolean }
+    Account:
+      allOf:
+        - $ref: '#/components/schemas/CreateAccountRequest'
+        - type: object
+          required: [id, created_at]
+          properties:
+            id: { type: string, format: uuid }
+            archived_at: { type: [string, 'null'], format: date-time }
+            created_at: { type: string, format: date-time }
+    CategoryKind:
+      type: string
+      enum: [income, expense]
+    CreateCategoryRequest:
+      type: object
+      required: [name, kind]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        kind: { $ref: '#/components/schemas/CategoryKind' }
+        icon: { type: string, maxLength: 64 }
+    Category:
+      allOf:
+        - $ref: '#/components/schemas/CreateCategoryRequest'
+        - type: object
+          required: [id, is_default]
+          properties:
+            id: { type: string, format: uuid }
+            is_default: { type: boolean }
+    TransactionType:
+      type: string
+      enum: [income, expense, transfer, adjustment, reversal]
+    CreateTransactionType:
+      type: string
+      enum: [income, expense, transfer, adjustment]
+    CreateTransactionRequest:
+      type: object
+      required: [type, account_id, amount]
+      properties:
+        type: { $ref: '#/components/schemas/CreateTransactionType' }
+        account_id: { type: string, format: uuid }
+        destination_account_id: { type: string, format: uuid }
+        category_id: { type: string, format: uuid }
+        amount: { $ref: '#/components/schemas/Money' }
+        occurred_at: { type: string, format: date-time }
+        note: { type: string, maxLength: 500 }
+        reason: { type: string, maxLength: 500 }
+    TransactionEntry:
+      type: object
+      required: [account_id, direction, amount]
+      properties:
+        account_id: { type: string, format: uuid }
+        direction: { type: string, enum: [credit, debit] }
+        amount: { $ref: '#/components/schemas/Money' }
+    ReverseTransactionRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 1, maxLength: 500 }
+    Transaction:
+      type: object
+      required: [id, type, amount, occurred_at, entries, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        type: { $ref: '#/components/schemas/TransactionType' }
+        category_id: { type: string, format: uuid }
+        amount: { $ref: '#/components/schemas/Money' }
+        occurred_at: { type: string, format: date-time }
+        note: { type: string, maxLength: 500 }
+        reason: { type: string, maxLength: 500 }
+        reverses_id: { type: string, format: uuid }
+        reversed_by_id: { type: string, format: uuid }
+        entries:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/TransactionEntry' }
+        created_at: { type: string, format: date-time }
+    CreateBudgetRequest:
+      type: object
+      required: [start_date, end_date, expected_income, savings_commitment, minimum_buffer, allocations]
+      properties:
+        start_date: { type: string, format: date-time }
+        end_date: { type: string, format: date-time }
+        expected_income: { $ref: '#/components/schemas/Money' }
+        savings_commitment: { $ref: '#/components/schemas/Money' }
+        minimum_buffer: { $ref: '#/components/schemas/Money' }
+        source: { type: string, enum: [manual, rule_based, ai_assisted], default: manual }
+        allocations:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/Money' }
+    BudgetAllocation:
+      type: object
+      required: [id, category_id, amount]
+      properties:
+        id: { type: string, format: uuid }
+        category_id: { type: string, format: uuid }
+        amount: { $ref: '#/components/schemas/Money' }
+    Budget:
+      type: object
+      required: [id, start_date, end_date, expected_income, savings_commitment, minimum_buffer, status, source, allocations]
+      properties:
+        id: { type: string, format: uuid }
+        start_date: { type: string, format: date-time }
+        end_date: { type: string, format: date-time }
+        expected_income: { $ref: '#/components/schemas/Money' }
+        savings_commitment: { $ref: '#/components/schemas/Money' }
+        minimum_buffer: { $ref: '#/components/schemas/Money' }
+        status: { type: string, enum: [draft, active, closed] }
+        source: { type: string, enum: [manual, rule_based, ai_assisted] }
+        allocations:
+          type: array
+          items: { $ref: '#/components/schemas/BudgetAllocation' }
+    CreateBillRequest:
+      type: object
+      required: [name, amount, due_day, frequency, category_id, account_id]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        amount: { $ref: '#/components/schemas/Money' }
+        due_day: { type: integer, minimum: 1, maximum: 31 }
+        frequency: { type: string, enum: [monthly] }
+        category_id: { type: string, format: uuid }
+        account_id: { type: string, format: uuid }
+        reminder_days: { type: integer, minimum: 0, maximum: 90 }
+    Bill:
+      allOf:
+        - $ref: '#/components/schemas/CreateBillRequest'
+        - type: object
+          required: [id, active, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            active: { type: boolean }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    CreateGoalRequest:
+      type: object
+      required: [name, target_amount, monthly_commitment, priority]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        target_amount: { $ref: '#/components/schemas/Money' }
+        target_date: { type: string, format: date-time }
+        monthly_commitment: { $ref: '#/components/schemas/Money' }
+        priority: { type: integer }
+    Goal:
+      allOf:
+        - $ref: '#/components/schemas/CreateGoalRequest'
+        - type: object
+          required: [id, status, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            status: { type: string, enum: [active, completed, archived] }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    GoalContributionRequest:
+      type: object
+      required: [account_id, amount]
+      properties:
+        account_id: { type: string, format: uuid }
+        amount: { $ref: '#/components/schemas/Money' }
+        occurred_at: { type: string, format: date-time }
+    GoalContribution:
+      type: object
+      required: [id, goal_id, account_id, amount, occurred_at, transaction_id, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        goal_id: { type: string, format: uuid }
+        account_id: { type: string, format: uuid }
+        amount: { $ref: '#/components/schemas/Money' }
+        occurred_at: { type: string, format: date-time }
+        transaction_id: { type: string, format: uuid }
+        created_at: { type: string, format: date-time }
+    SafeToSpend:
+      type: object
+      required: [liquid_balance, upcoming_bills, remaining_savings_commitment, minimum_buffer, until_payday, daily, days_remaining, risk_level]
+      properties:
+        liquid_balance: { $ref: '#/components/schemas/Money' }
+        upcoming_bills: { $ref: '#/components/schemas/Money' }
+        remaining_savings_commitment: { $ref: '#/components/schemas/Money' }
+        minimum_buffer: { $ref: '#/components/schemas/Money' }
+        until_payday: { $ref: '#/components/schemas/Money' }
+        daily: { $ref: '#/components/schemas/Money' }
+        days_remaining: { type: integer }
+        risk_level: { type: string, enum: [healthy, attention, high] }
+    RecommendationRequest:
+      type: object
+      required: [expected_income, fixed_bills, debt_payments, minimum_buffer, mode]
+      properties:
+        expected_income: { $ref: '#/components/schemas/Money' }
+        fixed_bills: { $ref: '#/components/schemas/Money' }
+        debt_payments: { $ref: '#/components/schemas/Money' }
+        requested_savings: { $ref: '#/components/schemas/Money' }
+        minimum_buffer: { $ref: '#/components/schemas/Money' }
+        dependants: { type: integer, minimum: 0 }
+        mode: { type: string, enum: [conservative, balanced, flexible] }
+        category_weights:
+          type: object
+          additionalProperties: { type: integer, minimum: 0 }
+        locked_allocations:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/Money' }
+    Recommendation:
+      type: object
+      required: [mode, savings_commitment, minimum_buffer, allocations, unallocated, warnings, reason_codes]
+      properties:
+        mode: { type: string, enum: [conservative, balanced, flexible] }
+        savings_commitment: { $ref: '#/components/schemas/Money' }
+        minimum_buffer: { $ref: '#/components/schemas/Money' }
+        allocations:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/Money' }
+        unallocated: { $ref: '#/components/schemas/Money' }
+        warnings: { type: array, items: { type: string } }
+        reason_codes: { type: array, items: { type: string } }
+    UpcomingBill:
+      type: object
+      required: [bill_id, name, amount, due_date]
+      properties:
+        bill_id: { type: string, format: uuid }
+        name: { type: string }
+        amount: { $ref: '#/components/schemas/Money' }
+        due_date: { type: string, format: date-time }
+    GoalProgress:
+      type: object
+      required: [goal_id, name, target_amount, contributed, progress_percent]
+      properties:
+        goal_id: { type: string, format: uuid }
+        name: { type: string }
+        target_amount: { $ref: '#/components/schemas/Money' }
+        contributed: { $ref: '#/components/schemas/Money' }
+        progress_percent: { type: integer, description: 'May exceed 100 when a goal is overachieved.' }
+    CategorySpend:
+      type: object
+      required: [category_id, name, amount]
+      properties:
+        category_id: { type: string, format: uuid }
+        name: { type: string }
+        amount: { $ref: '#/components/schemas/Money' }
+    Dashboard:
+      type: object
+      required: [liquid_balance, safe_to_spend_today, safe_to_spend_until_payday, days_until_payday, budget_total, budget_used, budget_remaining, goals, top_categories]
+      properties:
+        liquid_balance: { $ref: '#/components/schemas/Money' }
+        safe_to_spend_today: { $ref: '#/components/schemas/Money' }
+        safe_to_spend_until_payday: { $ref: '#/components/schemas/Money' }
+        days_until_payday: { type: integer }
+        budget_total: { $ref: '#/components/schemas/Money' }
+        budget_used: { $ref: '#/components/schemas/Money' }
+        budget_remaining: { $ref: '#/components/schemas/Money' }
+        upcoming_bill:
+          oneOf:
+            - $ref: '#/components/schemas/UpcomingBill'
+            - type: 'null'
+        goals:
+          type: array
+          items: { $ref: '#/components/schemas/GoalProgress' }
+        top_categories:
+          type: array
+          maxItems: 5
+          items: { $ref: '#/components/schemas/CategorySpend' }
+    BudgetVsActualLine:
+      type: object
+      required: [category_id, name, budgeted, actual, variance]
+      properties:
+        category_id: { type: string, format: uuid }
+        name: { type: string }
+        budgeted: { $ref: '#/components/schemas/Money' }
+        actual: { $ref: '#/components/schemas/Money' }
+        variance: { $ref: '#/components/schemas/Money' }
+    CashFlowTrendPoint:
+      type: object
+      required: [bucket_start, income, expenses, net]
+      properties:
+        bucket_start: { type: string, format: date-time }
+        income: { $ref: '#/components/schemas/Money' }
+        expenses: { $ref: '#/components/schemas/Money' }
+        net: { $ref: '#/components/schemas/Money' }
+    CashFlowReport:
+      type: object
+      required: [start, end, group_by, income, expenses, net_cash_flow, category_breakdown, budget_vs_actual, trend]
+      properties:
+        start: { type: string, format: date-time }
+        end: { type: string, format: date-time }
+        group_by: { type: string, enum: [day, week] }
+        income: { $ref: '#/components/schemas/Money' }
+        expenses: { $ref: '#/components/schemas/Money' }
+        net_cash_flow: { $ref: '#/components/schemas/Money' }
+        category_breakdown:
+          type: array
+          items: { $ref: '#/components/schemas/CategorySpend' }
+        budget_vs_actual:
+          type: array
+          items: { $ref: '#/components/schemas/BudgetVsActualLine' }
+        trend:
+          type: array
+          items: { $ref: '#/components/schemas/CashFlowTrendPoint' }
+    Export:
+      type: object
+      required: [generated_at, profile, accounts, categories, transactions, budgets, bills, goals]
+      properties:
+        generated_at: { type: string, format: date-time }
+        profile: { $ref: '#/components/schemas/User' }
+        accounts:
+          type: array
+          items: { $ref: '#/components/schemas/Account' }
+        categories:
+          type: array
+          items: { $ref: '#/components/schemas/Category' }
+        transactions:
+          type: array
+          items: { $ref: '#/components/schemas/Transaction' }
+        budgets:
+          type: array
+          items: { $ref: '#/components/schemas/Budget' }
+        bills:
+          type: array
+          items: { $ref: '#/components/schemas/Bill' }
+        goals:
+          type: array
+          items: { $ref: '#/components/schemas/Goal' }
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, request_id]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            request_id: { type: string, format: uuid }

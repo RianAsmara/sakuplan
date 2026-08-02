@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:17.10-alpine3.24
+    environment:
+      POSTGRES_DB: sakuplan
+      POSTGRES_USER: sakuplan
+      POSTGRES_PASSWORD: sakuplan
+    ports:
+      - "5432:5432"
+    volumes:
+      - sakuplan_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sakuplan -d sakuplan"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8.6.4-alpine3.23
+    profiles: ["platform"]
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - sakuplan_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:v1.30.5
+    profiles: ["platform"]
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  sakuplan_postgres:
+  sakuplan_redis:
