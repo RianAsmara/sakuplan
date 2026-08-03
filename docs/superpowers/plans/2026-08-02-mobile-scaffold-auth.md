@@ -4,9 +4,9 @@
 
 **Goal:** Add the missing AUTH-001 consent fields to the Go API, then stand up the SakuPlan mobile app (Expo + TypeScript + Tamagui) from scratch with a working Register → Login → Home → Logout flow against the real backend.
 
-**Architecture:** Task 1 is a small, self-contained `services/api` change (two new required registration fields, migration, tests). Tasks 2–11 build `services/mobile` from an empty directory: project scaffold and custom Tamagui theme, generated OpenAPI client, i18n, Zustand auth store with secure token storage and a 401 refresh interceptor, Expo Router auth gate, then the three screens. Each task produces something independently runnable/testable — no task leaves the tree in a broken state for the next task to silently repair.
+**Architecture:** Task 1 is a small, self-contained `services/api` change (two new required registration fields, migration, tests). Tasks 2–9 build `services/mobile` from an empty directory: project scaffold and custom Tamagui theme, generated OpenAPI client, Zustand auth store with secure token storage and a 401 refresh interceptor, Expo Router auth gate, then the three screens with hardcoded Bahasa Indonesia copy. Each task produces something independently runnable/testable — no task leaves the tree in a broken state for the next task to silently repair.
 
-**Tech Stack:** Go 1.26 / Fiber v3 / pgx / Goose (Task 1, existing stack). Expo SDK (TypeScript template) / Expo Router / Tamagui / TanStack Query / Zustand / `openapi-typescript` + `openapi-fetch` / `expo-secure-store` / `react-i18next` / Jest (`jest-expo` preset) + React Native Testing Library (Tasks 2–11).
+**Tech Stack:** Go 1.26 / Fiber v3 / pgx / Goose (Task 1, existing stack). Expo SDK (TypeScript template) / Expo Router / Tamagui / TanStack Query / Zustand / `openapi-typescript` + `openapi-fetch` / `expo-secure-store` / Jest (`jest-expo` preset) + React Native Testing Library (Tasks 2–9). No i18n library — per the 2026-08-03 spec revision, all screen copy is hardcoded Bahasa Indonesia string literals; `react-i18next`/`expo-localization` are deferred until a second locale is actually scheduled.
 
 ## Global Constraints
 
@@ -36,7 +36,7 @@
 **Interfaces:**
 - Produces: `domain.User.AcceptedTermsVersion string`, `domain.User.AcceptedPrivacyVersion string` (immutable after creation — not touched by `UpdateUserProfile`, not part of `userResponse`/`User` OpenAPI schema).
 - Produces: `application.RegisterInput` gains `AcceptedTermsVersion string`, `AcceptedPrivacyVersion string` — both required, validated non-empty, max 32 characters (a version tag like `"2026-08-02"` or `"v1"`, not free text).
-- Consumed by: the mobile Register screen (Task 10) will send `accepted_terms_version`/`accepted_privacy_version` as fixed string constants in the request body.
+- Consumed by: the mobile Register screen (Task 9) will send `accepted_terms_version`/`accepted_privacy_version` as fixed string constants in the request body.
 
 - [ ] **Step 1: Write the failing application test**
 
@@ -362,7 +362,7 @@ user, not something to do unprompted.)
 **Interfaces:**
 - Produces: default export `config` from `tamagui.config.ts` (type `AppConfig`), used by every later screen task via `TamaguiProvider`.
 - Produces: `useAppFontsLoaded(): boolean` from `src/theme/fonts.ts`, used by the root layout to gate rendering until Fraunces/Plex fonts are loaded.
-- Produces: `PocketCard` is **not** built in this task — it's Task 8 (Login screen), since it's first needed there and reused by Register/Home.
+- Produces: `PocketCard` is **not** built in this task — it's Task 7 (Login screen), since it's first needed there and reused by Register/Home.
 
 - [ ] **Step 1: Scaffold the Expo project**
 
@@ -560,7 +560,7 @@ simulator/emulator is acceptable — this is a visual boot check, not an
 automated test).
 Expected: a blank `$kertas`-colored screen with a centered `$primary`
 (teal) spinner while fonts load, then an empty screen (no route content
-yet — `Slot` has nothing to render until Task 7 adds route groups). No
+yet — `Slot` has nothing to render until Task 6 adds route groups). No
 red-box errors.
 
 - [ ] **Step 8: Commit**
@@ -583,7 +583,7 @@ git commit -m "feat(mobile): scaffold Expo app with custom Tamagui theme"
 
 **Interfaces:**
 - Consumes: `services/api/openapi/openapi.yaml` (must be run from a checkout where `services/api` exists as a sibling).
-- Produces: `export const api` from `src/api/client.ts` — an `openapi-fetch` `Client<paths>` instance, pre-configured with `baseUrl` and ready for `.GET(...)`/`.POST(...)` calls using the generated path/schema types. Used by Task 5 (auth store's underlying calls happen through this), Task 8, 9, 10 (screens).
+- Produces: `export const api` from `src/api/client.ts` — an `openapi-fetch` `Client<paths>` instance, pre-configured with `baseUrl` and ready for `.GET(...)`/`.POST(...)` calls using the generated path/schema types. Used by Task 4 (auth store's underlying calls happen through this), Tasks 7, 8, 9 (screens).
 - Produces: `export type paths` and `export type components` re-exported from `src/api/generated/types.ts` for other tasks that need response/request types (e.g. `components['schemas']['User']`).
 
 - [ ] **Step 1: Install the client tooling**
@@ -627,7 +627,7 @@ export type { paths, components } from './generated/types'
 ```
 
 (The auth-header injection and 401 refresh-and-retry middleware are added
-in Task 6, once the auth store and secure token storage it depends on
+in Task 5, once the auth store and secure token storage it depends on
 exist — this task only produces the bare typed client.)
 
 - [ ] **Step 4: Verify it compiles and resolves a real path**
@@ -659,124 +659,7 @@ git commit -m "feat(mobile): generate typed OpenAPI client from services/api spe
 
 ---
 
-## Task 4: Mobile — i18n scaffolding (Bahasa Indonesia)
-
-**Files:**
-- Create: `services/mobile/src/i18n/locales/id.json`
-- Create: `services/mobile/src/i18n/index.ts`
-- Modify: `services/mobile/app/_layout.tsx` (import `../src/i18n` once, for its side effect of initializing i18next)
-
-**Interfaces:**
-- Produces: default export `i18n` (an initialized `i18next` instance) from `src/i18n/index.ts`.
-- Produces: the `useTranslation()` hook from `react-i18next`, re-exported nowhere special — every screen task imports it directly from `react-i18next` once `src/i18n/index.ts` has been imported at app startup.
-- Produces: translation keys under the `auth` and `common` namespaces, consumed by Tasks 8, 9, 10. Every key this plan's screens use is listed in Step 2 below — no screen task introduces a key not defined here.
-
-- [ ] **Step 1: Install i18n packages**
-
-```bash
-cd services/mobile
-npm install i18next react-i18next
-npx expo install expo-localization
-```
-
-- [ ] **Step 2: Write the Bahasa Indonesia strings**
-
-Create `services/mobile/src/i18n/locales/id.json`:
-
-```json
-{
-  "common": {
-    "appName": "SakuPlan",
-    "loading": "Memuat...",
-    "genericError": "Terjadi kesalahan. Coba lagi."
-  },
-  "auth": {
-    "loginTitle": "Masuk ke SakuPlan",
-    "loginSubtitle": "Kelola pengeluaran dan lihat berapa yang aman kamu belanjakan hari ini.",
-    "registerTitle": "Buat akun SakuPlan",
-    "emailLabel": "Email",
-    "passwordLabel": "Kata sandi",
-    "passwordHint": "Minimal 12 karakter",
-    "displayNameLabel": "Nama tampilan",
-    "loginButton": "Masuk",
-    "registerButton": "Buat Akun",
-    "noAccountPrompt": "Belum punya akun?",
-    "createAccountLink": "Buat akun",
-    "hasAccountPrompt": "Sudah punya akun?",
-    "loginLink": "Masuk",
-    "invalidCredentials": "Email atau kata sandi salah.",
-    "consentPrefix": "Saya menyetujui",
-    "termsLink": "Ketentuan Layanan",
-    "consentConjunction": "dan",
-    "privacyLink": "Kebijakan Privasi",
-    "consentRequired": "Kamu harus menyetujui Ketentuan Layanan dan Kebijakan Privasi."
-  },
-  "home": {
-    "greeting": "Halo, {{name}}",
-    "summaryPlaceholder": "Ringkasan keuanganmu akan muncul di sini.",
-    "accountActive": "Akun kamu sudah aktif.",
-    "logout": "Keluar"
-  }
-}
-```
-
-- [ ] **Step 3: Initialize i18next**
-
-Create `services/mobile/src/i18n/index.ts`:
-
-```ts
-import * as Localization from 'expo-localization'
-import i18n from 'i18next'
-import { initReactI18next } from 'react-i18next'
-import id from './locales/id.json'
-
-void Localization
-
-i18n.use(initReactI18next).init({
-  resources: { id: { translation: id } },
-  lng: 'id',
-  fallbackLng: 'id',
-  compatibilityJSON: 'v4',
-  interpolation: { escapeValue: false },
-})
-
-export default i18n
-```
-
-(`expo-localization` is imported now so device-locale detection is wired
-for a future language switcher, but `lng` is hardcoded to `'id'` per the
-design spec's "single bundled locale for this pass" decision — `void
-Localization` avoids an unused-import lint error while keeping the intent
-visible.)
-
-- [ ] **Step 4: Import it once at app startup**
-
-In `services/mobile/app/_layout.tsx`, add at the top of the file, before
-any component code:
-
-```tsx
-import '../src/i18n'
-```
-
-- [ ] **Step 5: Verify a translation resolves**
-
-Add a temporary `<Text>{t('common.appName')}</Text>` inside the loaded
-branch of `RootLayout` (using `const { t } = useTranslation()` from
-`react-i18next`), run `npx expo start`, confirm "SakuPlan" renders, then
-remove the temporary text (Task 7 replaces `<Slot />`'s empty render with
-real routes anyway).
-
-- [ ] **Step 6: Commit**
-
-```bash
-cd "/data/Gawai Duniawi/SaaS/sakuplan"
-git add services/mobile/src/i18n services/mobile/app/_layout.tsx services/mobile/package.json services/mobile/package-lock.json
-git commit -m "feat(mobile): add i18n scaffolding with Bahasa Indonesia strings"
-```
-
----
-
-## Task 5: Mobile — Secure token storage + Zustand auth store
+## Task 4: Mobile — Secure token storage + Zustand auth store
 
 **Files:**
 - Create: `services/mobile/src/auth/secureTokens.ts`
@@ -786,7 +669,7 @@ git commit -m "feat(mobile): add i18n scaffolding with Bahasa Indonesia strings"
 - Modify: `services/mobile/package.json` (`"test"` script)
 
 **Interfaces:**
-- Produces: `saveRefreshToken(token: string): Promise<void>`, `getRefreshToken(): Promise<string | null>`, `clearRefreshToken(): Promise<void>` from `src/auth/secureTokens.ts`. Consumed by Task 6 (refresh interceptor) and Tasks 8–10 (screens, on login/register/logout).
+- Produces: `saveRefreshToken(token: string): Promise<void>`, `getRefreshToken(): Promise<string | null>`, `clearRefreshToken(): Promise<void>` from `src/auth/secureTokens.ts`. Consumed by Task 5 (refresh interceptor) and Tasks 7–9 (screens, on login/register/logout).
 - Produces: `useAuthStore` (Zustand hook) from `src/auth/store.ts`, with shape:
   ```ts
   interface AuthState {
@@ -798,7 +681,7 @@ git commit -m "feat(mobile): add i18n scaffolding with Bahasa Indonesia strings"
     setHydrating: (value: boolean) => void
   }
   ```
-  `isAuthenticated` is *not* a stored field — it's derived (`accessToken !== null`) by consumers, to avoid two fields going out of sync. Consumed by Task 6 (interceptor calls `setSession`/`clearSession`), Task 7 (route redirect reads `accessToken`/`isHydrating`), Tasks 8–10 (screens call `setSession` on login/register success, `clearSession` on logout).
+  `isAuthenticated` is *not* a stored field — it's derived (`accessToken !== null`) by consumers, to avoid two fields going out of sync. Consumed by Task 5 (interceptor calls `setSession`/`clearSession`), Task 6 (route redirect reads `accessToken`/`isHydrating`), Tasks 7–9 (screens call `setSession` on login/register success, `clearSession` on logout).
 
 - [ ] **Step 1: Install dependencies**
 
@@ -948,7 +831,7 @@ git commit -m "feat(mobile): add Zustand auth store and secure refresh-token sto
 
 ---
 
-## Task 6: Mobile — 401 refresh interceptor
+## Task 5: Mobile — 401 refresh interceptor
 
 **Files:**
 - Modify: `services/mobile/src/api/client.ts`
@@ -956,8 +839,8 @@ git commit -m "feat(mobile): add Zustand auth store and secure refresh-token sto
 - Create: `services/mobile/src/api/refreshInterceptor.test.ts`
 
 **Interfaces:**
-- Consumes: `useAuthStore` (`getState`/`setState` directly, not the hook — this runs outside React) from Task 5, `getRefreshToken`/`saveRefreshToken`/`clearRefreshToken` from Task 5.
-- Produces: `installAuthMiddleware(client: Client<paths>): void`, called once from `src/api/client.ts` on the exported `api` instance. Not consumed elsewhere directly, but its *effect* (auto-attached `Authorization` header, transparent refresh-and-retry, forced `clearSession()` on unrecoverable 401) is relied on by every screen task that calls `api.GET`/`api.POST` on authenticated endpoints (Task 10's `/v1/me` call).
+- Consumes: `useAuthStore` (`getState`/`setState` directly, not the hook — this runs outside React) from Task 4, `getRefreshToken`/`saveRefreshToken`/`clearRefreshToken` from Task 4.
+- Produces: `installAuthMiddleware(client: Client<paths>): void`, called once from `src/api/client.ts` on the exported `api` instance. Not consumed elsewhere directly, but its *effect* (auto-attached `Authorization` header, transparent refresh-and-retry, forced `clearSession()` on unrecoverable 401) is relied on by every screen task that calls `api.GET`/`api.POST` on authenticated endpoints (Task 9's `/v1/me` call).
 
 - [ ] **Step 1: Write the failing interceptor test**
 
@@ -1084,7 +967,7 @@ export type { paths, components } from './generated/types'
 - [ ] **Step 6: Run the full test suite to confirm nothing broke**
 
 Run: `cd services/mobile && npm test`
-Expected: all tests (Task 5's + Task 6's) PASS.
+Expected: all tests (Task 4's + Task 5's) PASS.
 
 - [ ] **Step 7: Commit**
 
@@ -1096,7 +979,7 @@ git commit -m "feat(mobile): add 401 refresh-and-retry auth middleware"
 
 ---
 
-## Task 7: Mobile — Expo Router auth gate
+## Task 6: Mobile — Expo Router auth gate
 
 **Files:**
 - Create: `services/mobile/app/(auth)/_layout.tsx`
@@ -1105,9 +988,9 @@ git commit -m "feat(mobile): add 401 refresh-and-retry auth middleware"
 - Create: `services/mobile/src/auth/useHydrateSession.ts`
 
 **Interfaces:**
-- Consumes: `useAuthStore`, `getRefreshToken` (Task 5), `api` (Task 3/6, for the `/v1/auth/refresh` call to turn a stored refresh token into a fresh access token on cold start).
+- Consumes: `useAuthStore`, `getRefreshToken` (Task 4), `api` (Task 3/5, for the `/v1/auth/refresh` call to turn a stored refresh token into a fresh access token on cold start).
 - Produces: `useHydrateSession(): void` from `src/auth/useHydrateSession.ts`, called once in the root layout — on mount, reads the refresh token from secure storage, exchanges it for a session via `POST /v1/auth/refresh` if present, then calls `setHydrating(false)` regardless of outcome.
-- Produces: the `(auth)` and `(app)` route groups' layouts, which Tasks 8–10 place their screen files into (`app/(auth)/login.tsx`, `app/(auth)/register.tsx`, `app/(app)/home.tsx` — those files are created by Tasks 8–10, not this one).
+- Produces: the `(auth)` and `(app)` route groups' layouts, which Tasks 7–9 place their screen files into (`app/(auth)/login.tsx`, `app/(auth)/register.tsx`, `app/(app)/home.tsx` — those files are created by Tasks 7–9, not this one).
 
 - [ ] **Step 1: Write the session-hydration hook**
 
@@ -1213,12 +1096,11 @@ export default function Index() {
 }
 ```
 
-Update `services/mobile/app/_layout.tsx` to add the i18n import (Task 4)
-on top of what Task 2 already wrote — it otherwise stays the same
-provider shell, with no auth/hydration logic in it:
+`services/mobile/app/_layout.tsx` needs no change in this task — it stays
+the same provider shell Task 2 wrote, with no auth/hydration logic in it.
+For reference, that file remains:
 
 ```tsx
-import '../src/i18n'
 import { Slot } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { Spinner, TamaguiProvider, Theme, YStack } from 'tamagui'
@@ -1249,7 +1131,7 @@ export default function RootLayout() {
 
 Run: `cd services/mobile && npx expo start`, open in a simulator.
 Expected: app boots, briefly shows the spinner, then — since no route
-files exist yet at `(auth)/login` or `(app)/home` (Tasks 8/10 add them) —
+files exist yet at `(auth)/login` or `(app)/home` (Tasks 7/9 add them) —
 Expo Router will show its "Unmatched Route" screen. That's the correct,
 expected state for this task: the redirect logic ran and pointed at
 `/(auth)/login`, which doesn't exist *yet*. Confirm via the Expo dev
@@ -1266,7 +1148,7 @@ git commit -m "feat(mobile): add Expo Router auth gate and cold-start session hy
 
 ---
 
-## Task 8: Mobile — `PocketCard` component + Login screen
+## Task 7: Mobile — `PocketCard` component + Login screen
 
 **Files:**
 - Create: `services/mobile/src/components/PocketCard.tsx`
@@ -1274,9 +1156,9 @@ git commit -m "feat(mobile): add Expo Router auth gate and cold-start session hy
 - Create: `services/mobile/src/auth/useLogin.ts`
 
 **Interfaces:**
-- Produces: `PocketCard` (React component, `YStack`-based, accepts standard Tamagui stack props via `...props` plus `children`) from `src/components/PocketCard.tsx`. Reused by Task 9 (Register) and Task 10 (Home) — those tasks import it, they do not redefine it.
-- Produces: `useLogin()` from `src/auth/useLogin.ts` — a thin wrapper around `useMutation` calling `api.POST('/v1/auth/login', ...)`, returning `{ mutate, isPending, error }` (TanStack Query's `useMutation` return shape) and, on success, persisting the refresh token + calling `setSession`. Task 9's `useRegister` follows the identical pattern.
-- Consumes: `api` (Task 3/6), `useAuthStore` (Task 5), `saveRefreshToken` (Task 5), `t` from `react-i18next` (Task 4's `auth.*` keys).
+- Produces: `PocketCard` (React component, `YStack`-based, accepts standard Tamagui stack props via `...props` plus `children`) from `src/components/PocketCard.tsx`. Reused by Task 8 (Register) and Task 9 (Home) — those tasks import it, they do not redefine it.
+- Produces: `useLogin()` from `src/auth/useLogin.ts` — a thin wrapper around `useMutation` calling `api.POST('/v1/auth/login', ...)`, returning `{ mutate, isPending, error }` (TanStack Query's `useMutation` return shape) and, on success, persisting the refresh token + calling `setSession`. Task 8's `useRegister` follows the identical pattern.
+- Consumes: `api` (Task 3/5), `useAuthStore` (Task 4), `saveRefreshToken` (Task 4). All screen copy is a hardcoded Bahasa Indonesia string literal — no translation function.
 
 - [ ] **Step 1: Install TanStack Query**
 
@@ -1360,13 +1242,11 @@ Create `services/mobile/app/(auth)/login.tsx`:
 ```tsx
 import { useState } from 'react'
 import { Link } from 'expo-router'
-import { useTranslation } from 'react-i18next'
 import { Button, Input, Label, Text, XStack, YStack } from 'tamagui'
 import { PocketCard } from '../../src/components/PocketCard'
 import { useLogin } from '../../src/auth/useLogin'
 
 export default function LoginScreen() {
-  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const login = useLogin()
@@ -1376,28 +1256,28 @@ export default function LoginScreen() {
   return (
     <YStack flex={1} backgroundColor="$background" padding="$5" justifyContent="center" gap="$6">
       <Text fontFamily="$heading" fontSize="$5" textAlign="center" color="$color">
-        {t('common.appName')}
+        SakuPlan
       </Text>
 
       <PocketCard>
         <Text fontFamily="$heading" fontSize="$4" color="$color">
-          {t('auth.loginTitle')}
+          Masuk ke SakuPlan
         </Text>
         <Text fontFamily="$body" fontSize="$2" color="$kulit">
-          {t('auth.loginSubtitle')}
+          Kelola pengeluaran dan lihat berapa yang aman kamu belanjakan hari ini.
         </Text>
 
         {login.isError ? (
           <YStack backgroundColor="$peringatan" borderRadius="$2" padding="$3">
             <Text fontFamily="$body" color="$white" fontSize="$2">
-              {t('auth.invalidCredentials')}
+              Email atau kata sandi salah.
             </Text>
           </YStack>
         ) : null}
 
         <YStack gap="$2">
           <Label htmlFor="login-email" fontFamily="$body" fontSize="$2" color="$kulit">
-            {t('auth.emailLabel')}
+            Email
           </Label>
           <Input
             id="login-email"
@@ -1411,7 +1291,7 @@ export default function LoginScreen() {
 
         <YStack gap="$2">
           <Label htmlFor="login-password" fontFamily="$body" fontSize="$2" color="$kulit">
-            {t('auth.passwordLabel')}
+            Kata sandi
           </Label>
           <Input
             id="login-password"
@@ -1429,16 +1309,16 @@ export default function LoginScreen() {
           opacity={canSubmit ? 1 : 0.5}
           onPress={() => login.mutate({ email, password })}
         >
-          {login.isPending ? t('common.loading') : t('auth.loginButton')}
+          {login.isPending ? 'Memuat...' : 'Masuk'}
         </Button>
 
         <XStack justifyContent="center" gap="$2">
           <Text fontFamily="$body" fontSize="$2" color="$kulit">
-            {t('auth.noAccountPrompt')}
+            Belum punya akun?
           </Text>
           <Link href="/(auth)/register">
             <Text fontFamily="$body" fontSize="$2" color="$primary" textDecorationLine="underline">
-              {t('auth.createAccountLink')}
+              Buat akun
             </Text>
           </Link>
         </XStack>
@@ -1468,7 +1348,7 @@ git commit -m "feat(mobile): add PocketCard component and Login screen"
 
 ---
 
-## Task 9: Mobile — Register screen
+## Task 8: Mobile — Register screen
 
 **Files:**
 - Create: `services/mobile/app/(auth)/register.tsx`
@@ -1476,8 +1356,8 @@ git commit -m "feat(mobile): add PocketCard component and Login screen"
 - Create: `services/mobile/src/auth/consentVersions.ts`
 
 **Interfaces:**
-- Consumes: `PocketCard` (Task 8), `api`/`useAuthStore`/`saveRefreshToken` (Tasks 3/5/6), `t` (Task 4's `auth.*` keys — all already defined, none new needed).
-- Produces: `useRegister()` — same shape/pattern as `useLogin` (Task 8), calling `POST /v1/auth/register` with the two consent-version fields from `consentVersions.ts`.
+- Consumes: `PocketCard` (Task 7), `api`/`useAuthStore`/`saveRefreshToken` (Tasks 3/4/5). All screen copy is a hardcoded Bahasa Indonesia string literal, matching Login's exact wording style — no translation function.
+- Produces: `useRegister()` — same shape/pattern as `useLogin` (Task 7), calling `POST /v1/auth/register` with the two consent-version fields from `consentVersions.ts`.
 - Produces: `CURRENT_TERMS_VERSION`, `CURRENT_PRIVACY_VERSION` string constants from `src/auth/consentVersions.ts` — the single source of truth for the version strings sent at registration, so a future terms/privacy update only requires bumping these two constants.
 
 - [ ] **Step 1: Write the consent version constants**
@@ -1544,14 +1424,12 @@ Create `services/mobile/app/(auth)/register.tsx`:
 ```tsx
 import { useState } from 'react'
 import { Link } from 'expo-router'
-import { useTranslation } from 'react-i18next'
 import { Button, Checkbox, Input, Label, Text, XStack, YStack } from 'tamagui'
 import { Check } from '@tamagui/lucide-icons'
 import { PocketCard } from '../../src/components/PocketCard'
 import { useRegister } from '../../src/auth/useRegister'
 
 export default function RegisterScreen() {
-  const { t } = useTranslation()
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -1568,32 +1446,32 @@ export default function RegisterScreen() {
   return (
     <YStack flex={1} backgroundColor="$background" padding="$5" justifyContent="center" gap="$6">
       <Text fontFamily="$heading" fontSize="$5" textAlign="center" color="$color">
-        {t('common.appName')}
+        SakuPlan
       </Text>
 
       <PocketCard>
         <Text fontFamily="$heading" fontSize="$4" color="$color">
-          {t('auth.registerTitle')}
+          Buat akun SakuPlan
         </Text>
 
         {register.isError ? (
           <YStack backgroundColor="$peringatan" borderRadius="$2" padding="$3">
             <Text fontFamily="$body" color="$white" fontSize="$2">
-              {t('common.genericError')}
+              Terjadi kesalahan. Coba lagi.
             </Text>
           </YStack>
         ) : null}
 
         <YStack gap="$2">
           <Label htmlFor="register-name" fontFamily="$body" fontSize="$2" color="$kulit">
-            {t('auth.displayNameLabel')}
+            Nama tampilan
           </Label>
           <Input id="register-name" value={displayName} onChangeText={setDisplayName} />
         </YStack>
 
         <YStack gap="$2">
           <Label htmlFor="register-email" fontFamily="$body" fontSize="$2" color="$kulit">
-            {t('auth.emailLabel')}
+            Email
           </Label>
           <Input
             id="register-email"
@@ -1607,7 +1485,7 @@ export default function RegisterScreen() {
 
         <YStack gap="$2">
           <Label htmlFor="register-password" fontFamily="$body" fontSize="$2" color="$kulit">
-            {t('auth.passwordLabel')}
+            Kata sandi
           </Label>
           <Input
             id="register-password"
@@ -1617,7 +1495,7 @@ export default function RegisterScreen() {
             textContentType="newPassword"
           />
           <Text fontFamily="$body" fontSize="$1" color="$kulit">
-            {t('auth.passwordHint')}
+            Minimal 12 karakter
           </Text>
         </YStack>
 
@@ -1634,13 +1512,13 @@ export default function RegisterScreen() {
             </Checkbox.Indicator>
           </Checkbox>
           <Text fontFamily="$body" fontSize="$1" color="$kulit" flexShrink={1}>
-            {t('auth.consentPrefix')}{' '}
+            Saya menyetujui{' '}
             <Text color="$primary" textDecorationLine="underline">
-              {t('auth.termsLink')}
+              Ketentuan Layanan
             </Text>{' '}
-            {t('auth.consentConjunction')}{' '}
+            dan{' '}
             <Text color="$primary" textDecorationLine="underline">
-              {t('auth.privacyLink')}
+              Kebijakan Privasi
             </Text>
           </Text>
         </XStack>
@@ -1654,16 +1532,16 @@ export default function RegisterScreen() {
             register.mutate({ email, password, displayName })
           }
         >
-          {register.isPending ? t('common.loading') : t('auth.registerButton')}
+          {register.isPending ? 'Memuat...' : 'Buat Akun'}
         </Button>
 
         <XStack justifyContent="center" gap="$2">
           <Text fontFamily="$body" fontSize="$2" color="$kulit">
-            {t('auth.hasAccountPrompt')}
+            Sudah punya akun?
           </Text>
           <Link href="/(auth)/login">
             <Text fontFamily="$body" fontSize="$2" color="$primary" textDecorationLine="underline">
-              {t('auth.loginLink')}
+              Masuk
             </Text>
           </Link>
         </XStack>
@@ -1686,7 +1564,7 @@ With `services/api` running, run `npx expo start`, navigate to Register.
 Confirm: submit button stays disabled until name, email, a ≥12-character
 password, and the consent checkbox are all satisfied; successful
 registration lands on the (still-unmatched-route) `/(app)/home` — expected
-until Task 10 adds that screen. Confirm in the backend logs / via
+until Task 9 adds that screen. Confirm in the backend logs / via
 `psql`/`task` tooling that the new user row has non-empty
 `accepted_terms_version`/`accepted_privacy_version`.
 
@@ -1700,7 +1578,7 @@ git commit -m "feat(mobile): add Register screen with terms/privacy consent"
 
 ---
 
-## Task 10: Mobile — Home screen + Logout
+## Task 9: Mobile — Home screen + Logout
 
 **Files:**
 - Create: `services/mobile/app/(app)/home.tsx`
@@ -1708,7 +1586,7 @@ git commit -m "feat(mobile): add Register screen with terms/privacy consent"
 - Create: `services/mobile/src/auth/useLogout.ts`
 
 **Interfaces:**
-- Consumes: `PocketCard` (Task 8), `api` (Task 3/6), `useAuthStore` (Task 5), `clearRefreshToken`/`getRefreshToken` (Task 5), `t` (Task 4's `home.*` keys).
+- Consumes: `PocketCard` (Task 7), `api` (Task 3/5), `useAuthStore` (Task 4), `clearRefreshToken`/`getRefreshToken` (Task 4). All screen copy is a hardcoded Bahasa Indonesia string literal — no translation function.
 - Produces: `useCurrentUser()` — a `useQuery` wrapper around `GET /v1/me`, returning TanStack Query's standard `{ data, isLoading, error }`.
 - Produces: `useLogout()` — a `useMutation` wrapper around `POST /v1/auth/logout`, which on success (or failure — logout must always clear local state even if the network call fails, since the goal is "the user is signed out on this device") clears the refresh token and calls `clearSession()`.
 
@@ -1765,14 +1643,12 @@ export function useLogout() {
 Create `services/mobile/app/(app)/home.tsx`:
 
 ```tsx
-import { useTranslation } from 'react-i18next'
 import { Button, Spinner, Text, YStack } from 'tamagui'
 import { PocketCard } from '../../src/components/PocketCard'
 import { useCurrentUser } from '../../src/auth/useCurrentUser'
 import { useLogout } from '../../src/auth/useLogout'
 
 export default function HomeScreen() {
-  const { t } = useTranslation()
   const { data: user, isLoading } = useCurrentUser()
   const logout = useLogout()
 
@@ -1785,18 +1661,18 @@ export default function HomeScreen() {
       ) : (
         <>
           <Text fontFamily="$heading" fontSize="$5" color="$color">
-            {t('home.greeting', { name: user.display_name })}
+            {`Halo, ${user.display_name}`}
           </Text>
 
           <PocketCard>
             <Text fontFamily="$body" fontSize="$2" color="$kulit">
-              {t('home.accountActive')}
+              Akun kamu sudah aktif.
             </Text>
             <Text fontFamily="$body" fontSize="$3" color="$color">
               {user.email}
             </Text>
             <Text fontFamily="$body" fontSize="$2" color="$kulit">
-              {t('home.summaryPlaceholder')}
+              Ringkasan keuanganmu akan muncul di sini.
             </Text>
           </PocketCard>
 
@@ -1806,7 +1682,7 @@ export default function HomeScreen() {
             color="$kulit"
             onPress={() => logout.mutate()}
           >
-            {t('home.logout')}
+            Keluar
           </Button>
         </>
       )}
@@ -1834,14 +1710,14 @@ git commit -m "feat(mobile): add Home screen with profile display and logout"
 
 ---
 
-## Task 11: Mobile — Final verification pass
+## Task 10: Mobile — Final verification pass
 
 **Files:** none created — this task runs the full suite and fixes anything it finds.
 
 - [ ] **Step 1: Run the full mobile test suite**
 
 Run: `cd services/mobile && npm test`
-Expected: all tests from Tasks 5 and 6 PASS (auth store: 4 tests; refresh
+Expected: all tests from Tasks 4 and 5 PASS (auth store: 4 tests; refresh
 interceptor: 3 tests).
 
 - [ ] **Step 2: Typecheck the whole app**
@@ -1895,6 +1771,6 @@ git commit -m "docs: record mobile scaffold + auth flow completion"
 
 ## Self-Review Notes
 
-- **Spec coverage:** location/tooling (Task 2), navigation (Task 7), UI/Tamagui theme (Task 2), API client (Task 3), server state (Tasks 8–10), token storage + interceptor (Tasks 5–6), PRD-alignment backend fix (Task 1), localization (Task 4), visual design direction (Tasks 2, 8), all three screens (Tasks 8–10), testing scope (Tasks 5, 6, 11) — every spec section maps to at least one task.
-- **Type consistency verified:** `AuthState` shape defined once in Task 5 and reused verbatim (not redefined) by Tasks 6, 7, 8, 9, 10; `PocketCard` defined once in Task 8 and imported (not redefined) by Tasks 9–10; `CURRENT_TERMS_VERSION`/`CURRENT_PRIVACY_VERSION` defined once in Task 9 and match the literal string used in Task 1's backend tests.
-- **Known gap surfaced, not hidden:** Task 9 explicitly calls out that the Terms/Privacy Policy links are non-functional placeholder text in this pass (no in-app document exists yet) rather than silently shipping dead tap targets without comment.
+- **Spec coverage:** location/tooling (Task 2), navigation (Task 6), UI/Tamagui theme (Task 2), API client (Task 3), server state (Tasks 7–9), token storage + interceptor (Tasks 4–5), PRD-alignment backend fix (Task 1), localization (hardcoded Bahasa Indonesia strings per the 2026-08-03 spec revision — no dedicated task, inline in Tasks 7–9), visual design direction (Tasks 2, 7), all three screens (Tasks 7–9), testing scope (Tasks 4, 5, 10) — every spec section maps to at least one task.
+- **Type consistency verified:** `AuthState` shape defined once in Task 4 and reused verbatim (not redefined) by Tasks 5, 6, 7, 8, 9; `PocketCard` defined once in Task 7 and imported (not redefined) by Tasks 8–9; `CURRENT_TERMS_VERSION`/`CURRENT_PRIVACY_VERSION` defined once in Task 8 and match the literal string used in Task 1's backend tests.
+- **Known gap surfaced, not hidden:** Task 8 explicitly calls out that the Terms/Privacy Policy links are non-functional placeholder text in this pass (no in-app document exists yet) rather than silently shipping dead tap targets without comment.
