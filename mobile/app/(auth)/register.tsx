@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'expo-router'
 import { Button, Checkbox, Input, Label, Text, XStack, YStack } from 'tamagui'
-import { Check } from '@tamagui/lucide-icons-2'
+import { Check, Lock, Mail, User, UserPlus } from '@tamagui/lucide-icons-2'
 import { PocketCard } from '../../src/components/PocketCard'
 import { useRegister } from '../../src/auth/useRegister'
 
@@ -39,16 +39,22 @@ export default function RegisterScreen() {
         ) : null}
 
         <YStack gap="$2">
-          <Label htmlFor="register-name" fontFamily="$body" fontSize="$2" color="$kulit">
-            Nama tampilan
-          </Label>
-          <Input id="register-name" value={displayName} onChangeText={setDisplayName} />
+          <XStack alignItems="center" gap="$2">
+            <User size={14} color="$kulit" />
+            <Label htmlFor="register-name" fontFamily="$body" fontSize="$2" color="$kulit">
+              Nama tampilan
+            </Label>
+          </XStack>
+          <Input id="register-name" value={displayName} onChangeText={setDisplayName} color="$color" />
         </YStack>
 
         <YStack gap="$2">
-          <Label htmlFor="register-email" fontFamily="$body" fontSize="$2" color="$kulit">
-            Email
-          </Label>
+          <XStack alignItems="center" gap="$2">
+            <Mail size={14} color="$kulit" />
+            <Label htmlFor="register-email" fontFamily="$body" fontSize="$2" color="$kulit">
+              Email
+            </Label>
+          </XStack>
           <Input
             id="register-email"
             value={email}
@@ -56,19 +62,24 @@ export default function RegisterScreen() {
             autoCapitalize="none"
             keyboardType="email-address"
             textContentType="emailAddress"
+            color="$color"
           />
         </YStack>
 
         <YStack gap="$2">
-          <Label htmlFor="register-password" fontFamily="$body" fontSize="$2" color="$kulit">
-            Kata sandi
-          </Label>
+          <XStack alignItems="center" gap="$2">
+            <Lock size={14} color="$kulit" />
+            <Label htmlFor="register-password" fontFamily="$body" fontSize="$2" color="$kulit">
+              Kata sandi
+            </Label>
+          </XStack>
           <Input
             id="register-password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
             textContentType="newPassword"
+            color="$color"
           />
           <Text fontFamily="$body" fontSize="$1" color="$kulit">
             Minimal 12 karakter
@@ -100,6 +111,7 @@ export default function RegisterScreen() {
         </XStack>
 
         <Button
+          icon={UserPlus}
           backgroundColor="$primary"
           color="$primaryText"
           disabled={!canSubmit}

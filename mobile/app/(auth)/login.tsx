@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'expo-router'
 import { Button, Input, Label, Text, XStack, YStack } from 'tamagui'
+import { LogIn, Lock, Mail } from '@tamagui/lucide-icons-2'
 import { PocketCard } from '../../src/components/PocketCard'
 import { useLogin } from '../../src/auth/useLogin'
 
@@ -34,9 +35,12 @@ export default function LoginScreen() {
         ) : null}
 
         <YStack gap="$2">
-          <Label htmlFor="login-email" fontFamily="$body" fontSize="$2" color="$kulit">
-            Email
-          </Label>
+          <XStack alignItems="center" gap="$2">
+            <Mail size={14} color="$kulit" />
+            <Label htmlFor="login-email" fontFamily="$body" fontSize="$2" color="$kulit">
+              Email
+            </Label>
+          </XStack>
           <Input
             id="login-email"
             value={email}
@@ -44,23 +48,29 @@ export default function LoginScreen() {
             autoCapitalize="none"
             keyboardType="email-address"
             textContentType="emailAddress"
+            color="$color"
           />
         </YStack>
 
         <YStack gap="$2">
-          <Label htmlFor="login-password" fontFamily="$body" fontSize="$2" color="$kulit">
-            Kata sandi
-          </Label>
+          <XStack alignItems="center" gap="$2">
+            <Lock size={14} color="$kulit" />
+            <Label htmlFor="login-password" fontFamily="$body" fontSize="$2" color="$kulit">
+              Kata sandi
+            </Label>
+          </XStack>
           <Input
             id="login-password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
             textContentType="password"
+            color="$color"
           />
         </YStack>
 
         <Button
+          icon={LogIn}
           backgroundColor="$primary"
           color="$primaryText"
           disabled={!canSubmit}

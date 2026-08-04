@@ -1,4 +1,5 @@
-import { Button, Spinner, Text, YStack } from 'tamagui'
+import { Button, Spinner, Text, XStack, YStack } from 'tamagui'
+import { LogOut, Mail } from '@tamagui/lucide-icons-2'
 import { PocketCard } from '../../src/components/PocketCard'
 import { useCurrentUser } from '../../src/auth/useCurrentUser'
 import { useLogout } from '../../src/auth/useLogout'
@@ -23,15 +24,19 @@ export default function HomeScreen() {
             <Text fontFamily="$body" fontSize="$2" color="$kulit">
               Akun kamu sudah aktif.
             </Text>
-            <Text fontFamily="$body" fontSize="$3" color="$color">
-              {user.email}
-            </Text>
+            <XStack alignItems="center" gap="$2">
+              <Mail size={14} color="$color" />
+              <Text fontFamily="$body" fontSize="$3" color="$color">
+                {user.email}
+              </Text>
+            </XStack>
             <Text fontFamily="$body" fontSize="$2" color="$kulit">
               Ringkasan keuanganmu akan muncul di sini.
             </Text>
           </PocketCard>
 
           <Button
+            icon={LogOut}
             alignSelf="center"
             backgroundColor="transparent"
             color="$kulit"
