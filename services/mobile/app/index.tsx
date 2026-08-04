@@ -1,9 +1,19 @@
-// Placeholder route so expo-router's <Slot /> (in app/_layout.tsx) has at
-// least one registered screen to render. expo-router's navigator throws
-// "Couldn't find any screens for the navigator" when app/ has zero route
-// files, so a truly empty app/ directory (as originally scaffolded in this
-// task) cannot boot. Real route groups and screens land in Task 7+; this
-// file intentionally renders nothing.
+import { Redirect } from 'expo-router'
+import { Spinner, YStack } from 'tamagui'
+import { useAuthStore } from '../src/auth/store'
+import { useHydrateSession } from '../src/auth/useHydrateSession'
+
 export default function Index() {
-  return null
+  useHydrateSession()
+  const isHydrating = useAuthStore((state) => state.isHydrating)
+  const accessToken = useAuthStore((state) => state.accessToken)
+
+  if (isHydrating) {
+    return (
+      <YStack flex={1} alignItems="center" justifyContent="center" backgroundColor="$background">
+        <Spinner size="large" color="$primary" />
+      </YStack>
+    )
+  }
+  return <Redirect href={accessToken ? '/(app)/home' : '/(auth)/login'} />
 }
