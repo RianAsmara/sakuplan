@@ -7,14 +7,14 @@ tags:
   - project/sakuplan
   - progress/remaining
 source: repository
-last_synced: 2026-07-29
+last_synced: 2026-08-04
 ---
 
 # Remaining Work
 
-## Backend (Phase 7–9 of `docs/IMPLEMENTATION_PLAN.md`)
+## Backend (Phase 7b–9 of `docs/IMPLEMENTATION_PLAN.md`)
 
-- **Phase 7 — API completeness**: dashboard summary endpoint, cash-flow report, data export, notification preferences, OpenAPI client generation — see [[Reports API]].
+- **Phase 7b — Notifications**: preferences, idempotent delivery, push/email channels, background job reliability (`NOTIF-001..004`) — the dashboard/report/export half of Phase 7 (`RPT-001..004`) shipped 2026-08-02, see [[Completed Milestones]]. Needs a job-runner infrastructure decision before implementation starts.
 - **Phase 8 — Admin**: RBAC/explicit permission model, admin user-management endpoints, default-category admin management, feature flags, sensitive-access workflow — see [[Security Controls]].
 - **Phase 9 — Hardening**: OpenTelemetry tracing + Prometheus metrics, rate limiting, security tests, load tests for ledger/dashboard paths, backup/restore + reconciliation runbooks.
 
@@ -29,9 +29,9 @@ last_synced: 2026-07-29
 - `golangci-lint` currently fails with 27 findings (13 test-only `bodyclose`, 12 `govet shadow`, 1 `gosec G115`, 1 `nilerr`) — none fixed as of the last recorded run.
 - `internal/domain` package has only 18.8% test coverage — see [[Test Coverage]].
 
-## Mobile (not started)
+## Mobile — auth flow done, everything else not started
 
-React Native + Expo + TypeScript app per PRD §5.1: registration/auth, onboarding, accounts/balances, transactions/transfers, budgets, recurring bills, savings goals, safe-to-spend, reports/notifications, AI-recommendation review, privacy/security controls. Zero mobile code exists in this repository.
+React Native + Expo + TypeScript app per PRD §5.1. As of 2026-08-04, on branch `worktree-mobile-scaffold-auth` (not yet merged to `main`): project scaffold and a complete Register/Login/Home/Logout authentication flow are done — see [[Completed Milestones]] and [[Changelog]]. Still not started: onboarding, accounts/balances, transactions/transfers, budgets, recurring bills, savings goals, safe-to-spend, reports/notifications, AI-recommendation review, privacy/security controls. One immediate blocker before the auth-flow branch itself is considered fully done: the interactive simulator+backend walkthrough hasn't been performed by a human yet.
 
 ## Admin web (not started)
 

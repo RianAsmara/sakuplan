@@ -7,7 +7,7 @@ tags:
   - project/sakuplan
   - progress/status
 source: repository
-last_synced: 2026-07-29
+last_synced: 2026-08-04
 ---
 
 # Implementation Status
@@ -44,8 +44,10 @@ Requirement-by-requirement status, derived from source code, tests, migrations, 
 | Safe-to-spend (`STS-001..007`) | ✅ Implemented | [[Safe-to-Spend Engine]], `budget_planning_test.go` |
 | Recommendations, deterministic (`REC-001..006`) | ✅ Implemented | [[Budget Recommendation Engine]] — **note**: REC-006 "apply as draft budget" is not wired to an endpoint, only the computation itself is done |
 | AI explanation (`REC-007`) | ⛔ Not implemented | No AI adapter code anywhere |
-| Reports (`RPT-001..004`) | ⛔ Not implemented | No dashboard/report/export code or OpenAPI paths — [[Reports API]] |
+| Reports (`RPT-001..004`) | ✅ Implemented (2026-08-02) | Dashboard, cash-flow report, synchronous export — `internal/application/reporting.go`, 12 unit tests + Postgres integration tests — [[Reports API]] |
 | Notifications (`NOTIF-001..004`) | ⛔ Not implemented | No notification tables, no worker — [[Background Jobs]] |
+| Mobile auth flow | ✅ Implemented (2026-08-04, branch `worktree-mobile-scaffold-auth`, not merged to `main`) | Register/Login/Home/Logout against the real API; Expo Router auth gate, Zustand store, `expo-secure-store`, 401 refresh interceptor — see [[Changelog]] and [[Completed Milestones]] |
+| Mobile — everything else in PRD §5.1 | ⛔ Not implemented | Onboarding, accounts/balances, transactions, budgets, bills, goals, safe-to-spend, reports, notifications, AI review, privacy controls — no screens exist beyond auth |
 | Admin/RBAC (`ADM-001..006`) | ⛔ Not implemented (audit storage only) | No `/admin/*` routes; `audit_logs` table + partial `AppendAudit` usage exists |
 | AI guardrails (`AI-001..006`) | ⛔ N/A | Nothing to guard yet — no AI integration exists |
 | Rate limiting (`SEC-005`) | ⛔ Not implemented | No limiter middleware — [[Security Controls]] |
