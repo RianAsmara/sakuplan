@@ -3,6 +3,10 @@ import { useAuthStore } from '../auth/store'
 import { clearRefreshToken, getRefreshToken, saveRefreshToken } from '../auth/secureTokens'
 import type { paths } from './generated/types'
 
+// Store cloned requests before they are consumed by fetch.
+// Keyed by the original request object so we can retrieve it in onResponse.
+const requestClones = new WeakMap<Request, Request>()
+
 export function shouldAttemptRefresh(response: Response, alreadyRetried: boolean): boolean {
   return response.status === 401 && !alreadyRetried
 }
@@ -28,9 +32,21 @@ async function refreshSession(baseUrl: string): Promise<string | null> {
   return body.access_token
 }
 
+export function buildRetryRequest(clonedRequest: Request, newAccessToken: string): Request {
+  const retryRequest = new Request(clonedRequest, {
+    headers: new Headers(clonedRequest.headers),
+  })
+  retryRequest.headers.set('Authorization', `Bearer ${newAccessToken}`)
+  retryRequest.headers.set('X-Retry-After-Refresh', '1')
+  return retryRequest
+}
+
 export function installAuthMiddleware(client: Client<paths>, baseUrl: string): void {
   const middleware: Middleware = {
     async onRequest({ request }) {
+      // Clone the request before fetch consumes its body
+      requestClones.set(request, request.clone())
+
       const token = useAuthStore.getState().accessToken
       if (token) {
         request.headers.set('Authorization', `Bearer ${token}`)
@@ -42,17 +58,36 @@ export function installAuthMiddleware(client: Client<paths>, baseUrl: string): v
       if (!shouldAttemptRefresh(response, alreadyRetried)) {
         return response
       }
-      const newAccessToken = await refreshSession(baseUrl)
+
+      let newAccessToken: string | null = null
+      try {
+        newAccessToken = await refreshSession(baseUrl)
+      } catch (error) {
+        // Treat thrown errors (network, JSON parse, etc.) as refresh failure
+        await clearRefreshToken()
+        useAuthStore.getState().clearSession()
+        return response
+      }
+
       if (!newAccessToken) {
         await clearRefreshToken()
         useAuthStore.getState().clearSession()
         return response
       }
-      const retryRequest = new Request(request, {
-        headers: new Headers(request.headers),
-      })
-      retryRequest.headers.set('Authorization', `Bearer ${newAccessToken}`)
-      retryRequest.headers.set('X-Retry-After-Refresh', '1')
+
+      // Retrieve the cloned (unconsumed) request
+      const clonedRequest = requestClones.get(request)
+      if (!clonedRequest) {
+        // Fallback: if clone not found, clear session and return original response
+        await clearRefreshToken()
+        useAuthStore.getState().clearSession()
+        return response
+      }
+
+      const retryRequest = buildRetryRequest(clonedRequest, newAccessToken)
+      // Note: X-Retry-After-Refresh header is defense-in-depth for potential
+      // future middleware reordering; raw fetch() call bypasses middleware chain,
+      // so this header is not checked by onResponse on the retry path.
       return fetch(retryRequest)
     },
   }
