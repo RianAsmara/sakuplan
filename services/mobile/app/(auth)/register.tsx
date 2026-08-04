@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'expo-router'
 import { Button, Checkbox, Input, Label, Text, XStack, YStack } from 'tamagui'
-import { Check } from '@tamagui/lucide-icons'
+import { Check } from '@tamagui/lucide-icons-2'
 import { PocketCard } from '../../src/components/PocketCard'
 import { useRegister } from '../../src/auth/useRegister'
 
