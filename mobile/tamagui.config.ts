@@ -11,6 +11,22 @@ const color = {
   white: '#FFFFFF',
 }
 
+// Derives a lighter/darker shade of a hex color. Positive `amount` lightens
+// (mixes toward white), negative darkens (mixes toward black) — used to
+// generate hover/press/focus state colors from the named palette above
+// without hand-picking a second hex value for every interaction state.
+function shade(hex: string, amount: number): string {
+  const clamp = (n: number) => Math.max(0, Math.min(255, n))
+  const num = Number.parseInt(hex.slice(1), 16)
+  const r = (num >> 16) & 0xff
+  const g = (num >> 8) & 0xff
+  const b = num & 0xff
+  const mix = (channel: number) =>
+    amount >= 0 ? channel + (255 - channel) * amount : channel * (1 + amount)
+  const toHex = (n: number) => clamp(Math.round(mix(n))).toString(16).padStart(2, '0')
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
 const tokens = createTokens({
   color,
   space: { 0: 0, 1: 4, 2: 8, 3: 12, 4: 16, 5: 24, 6: 32, 7: 48, true: 16 },
@@ -41,13 +57,42 @@ const monoFont = createFont({
 })
 
 const lightTheme = {
+  // Base surface + text
   background: tokens.color.kertas,
+  backgroundHover: shade(color.kertas, -0.03),
+  backgroundPress: shade(color.kertas, -0.06),
+  backgroundFocus: shade(color.kertas, -0.03),
   color: tokens.color.tinta,
-  primary: tokens.color.terjaga,
-  primaryText: tokens.color.white,
-  accent: tokens.color.leluasa,
+  colorHover: tokens.color.tinta,
+  colorPress: tokens.color.tinta,
+  colorFocus: tokens.color.tinta,
+  placeholderColor: shade(color.kulit, 0.15),
+  outlineColor: shade(color.terjaga, 0.35),
+
+  // Borders — default kulit (leather), focus shifts to the brand teal so a
+  // focused field is unmistakable without needing a color-coded label.
   borderColor: tokens.color.kulit,
+  borderColorHover: shade(color.kulit, -0.1),
+  borderColorPress: tokens.color.terjaga,
+  borderColorFocus: tokens.color.terjaga,
+
+  // Primary action (buttons, links)
+  primary: tokens.color.terjaga,
+  primaryHover: shade(color.terjaga, 0.08),
+  primaryPress: shade(color.terjaga, -0.12),
+  primaryFocus: shade(color.terjaga, 0.08),
+  primaryText: tokens.color.white,
+
+  // Secondary text/hairlines
+  accent: tokens.color.leluasa,
+  kulit: tokens.color.kulit,
+
+  // Error state
   danger: tokens.color.peringatan,
+  dangerHover: shade(color.peringatan, 0.08),
+  dangerPress: shade(color.peringatan, -0.12),
+
+  white: tokens.color.white,
 }
 
 export const config = createTamagui({
