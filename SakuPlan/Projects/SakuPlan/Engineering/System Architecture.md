@@ -12,7 +12,7 @@ last_synced: 2026-07-29
 
 # System Architecture
 
-Source: `docs/ARCHITECTURE.md`, confirmed against `services/api/internal/**` and `services/api/cmd/api/main.go`.
+Source: `docs/ARCHITECTURE.md`, confirmed against `api/internal/**` and `api/cmd/api/main.go`.
 
 ## Implementation status legend
 
@@ -27,7 +27,7 @@ Source: `docs/ARCHITECTURE.md`, confirmed against `services/api/internal/**` and
 graph TB
     Mobile["React Native mobile app ◻<br/>(Expo + TypeScript)"]
     Admin["Admin web ◻<br/>(Next.js App Router)"]
-    API["Go Fiber API ✅<br/>services/api"]
+    API["Go Fiber API ✅<br/>api"]
     Worker["cmd/worker ◻<br/>(planned, notifications/exports)"]
     PG[("PostgreSQL 17 ✅")]
     Redis[("Redis ◻<br/>(compose profile: platform)")]

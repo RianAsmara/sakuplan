@@ -1,6 +1,6 @@
 # SakuPlan
 
-SakuPlan is an Indonesia-first smart personal budgeting platform. This repository is prepared as a Claude Code implementation baseline and currently contains the complete product specification plus the core Go backend.
+SakuPlan is an Indonesia-first smart personal budgeting platform. This repository contains the complete product specification, the core Go backend, and the mobile app's authentication flow.
 
 ## Included
 
@@ -11,10 +11,11 @@ SakuPlan is an Indonesia-first smart personal budgeting platform. This repositor
 - PostgreSQL 17 schema and Goose migration, with the local image pinned to PostgreSQL 17.10.
 - Hybrid transaction ledger with atomic transfers, immutable reversals, and idempotency.
 - Authentication with Argon2id, short-lived JWT access tokens, opaque rotating refresh tokens, and refresh-token reuse detection.
-- Accounts, categories, budgets, recurring monthly bills, saving goals, safe-to-spend, and deterministic budget recommendations.
+- Accounts, categories, budgets, recurring monthly bills, saving goals, safe-to-spend, deterministic budget recommendations, dashboard/cash-flow reports, and export.
 - OpenAPI 3.1 contract.
 - Unit, HTTP adapter, security adapter, configuration, race, and Testcontainers PostgreSQL integration tests.
 - Docker Compose, Dockerfile, Taskfile, Make wrapper, and GitHub Actions workflow.
+- Expo + TypeScript + Tamagui mobile app with a working Register/Login/Home/Logout flow against the API, a generated typed OpenAPI client, Zustand auth state, and secure token storage.
 
 ## Repository layout
 
@@ -28,7 +29,7 @@ SakuPlan is an Indonesia-first smart personal budgeting platform. This repositor
 │   ├── SECURITY.md
 │   ├── API_CONVENTIONS.md
 │   └── PROGRESS.md
-├── services/api/
+├── api/
 │   ├── cmd/api/
 │   ├── internal/domain/
 │   ├── internal/application/
@@ -37,6 +38,10 @@ SakuPlan is an Indonesia-first smart personal budgeting platform. This repositor
 │   ├── db/migrations/
 │   ├── openapi/
 │   └── tests/integration/
+├── mobile/
+│   ├── app/
+│   ├── src/
+│   └── tamagui.config.ts
 ├── compose.yaml
 ├── Taskfile.yml
 └── Makefile
@@ -90,6 +95,27 @@ This additionally starts:
 - Mailpit web: `localhost:8025`
 
 Redis and Mailpit are reserved for later worker and notification phases. Object storage is intentionally deferred until export requirements and the provider decision are finalized.
+
+## Mobile quick start
+
+Install Node.js and Expo's platform tooling for whichever target you're building for (Xcode for iOS, Android Studio for Android — web needs neither). With the API already running (see above):
+
+```bash
+task mobile:install
+task mobile:start
+```
+
+Press `i` for iOS simulator, `a` for Android emulator, or `w` for web in the Expo CLI, or run `task mobile:ios` / `task mobile:android` / `task mobile:web` directly. The app talks to the API at `EXPO_PUBLIC_API_URL` (defaults to `http://localhost:8080`, matching `task run`'s default port — copy `mobile/.env.example` to `mobile/.env` to override).
+
+Other mobile tasks:
+
+```bash
+task mobile:test         # Jest unit tests
+task mobile:typecheck    # tsc --noEmit
+task mobile:lint         # expo lint
+task mobile:verify       # typecheck + lint + test
+task mobile:generate-api # regenerate the typed client from api/openapi/openapi.yaml
+```
 
 ## Verification
 
@@ -167,4 +193,4 @@ Write the result to @docs/P0_GAP_ANALYSIS.md and propose the next smallest phase
 
 ## Current boundary
 
-The supplied backend is a production-oriented **core**, not the entire P0 product. Mobile, admin web, background notifications, exports, full reports, bank synchronization, and AI-provider integration remain explicit later phases. The deterministic recommendation engine is already implemented; an LLM may later provide explanations only after deterministic validation.
+The supplied backend is a production-oriented **core**, not the entire P0 product. The mobile app currently covers only the authentication flow (Register/Login/Home/Logout) — every other mobile screen (accounts, transactions, budgets, bills, goals, safe-to-spend, reports, notifications, AI review), admin web, background notifications, bank synchronization, and AI-provider integration remain explicit later phases. The deterministic recommendation engine is already implemented; an LLM may later provide explanations only after deterministic validation.

@@ -12,7 +12,7 @@ last_synced: 2026-07-29
 
 # API Overview
 
-Source of truth: `services/api/openapi/openapi.yaml` (OpenAPI 3.1.0, `info.version: 0.1.0`, 805 lines, 29 paths, 33 schemas). This note summarizes conventions; the spec file is authoritative for exact shapes.
+Source of truth: `api/openapi/openapi.yaml` (OpenAPI 3.1.0, `info.version: 0.1.0`, 805 lines, 29 paths, 33 schemas). This note summarizes conventions; the spec file is authoritative for exact shapes.
 
 ## Base path and versioning
 

@@ -12,7 +12,7 @@ last_synced: 2026-07-29
 
 # Budgets API
 
-Source: `services/api/openapi/openapi.yaml` (Budgets tag), `internal/adapters/httpapi/planning_handlers.go`. See [[Backend Modules#Budgets|BudgetService]] and [[Financial Invariants]] for the allocation formula.
+Source: `api/openapi/openapi.yaml` (Budgets tag), `internal/adapters/httpapi/planning_handlers.go`. See [[Backend Modules#Budgets|BudgetService]] and [[Financial Invariants]] for the allocation formula.
 
 | Endpoint | Auth | Idempotency | Request/params | Response | Errors |
 |---|---|---|---|---|---|

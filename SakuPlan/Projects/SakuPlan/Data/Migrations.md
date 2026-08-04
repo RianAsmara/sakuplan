@@ -12,12 +12,12 @@ last_synced: 2026-07-29
 
 # Migrations
 
-Source: `services/api/db/migrations/`, `Taskfile.yml` (`migrate:up`/`migrate:down` tasks).
+Source: `api/db/migrations/`, `Taskfile.yml` (`migrate:up`/`migrate:down` tasks).
 
 ## Tooling
 
 - **Goose v3.27.3** (`github.com/pressly/goose/v3/cmd/goose`), invoked via `go run` (no separate install step).
-- Command: `task migrate:up` → `cd services/api && go run github.com/pressly/goose/v3/cmd/goose@v3.27.3 -dir db/migrations postgres "$DATABASE_URL" up`.
+- Command: `task migrate:up` → `cd api && go run github.com/pressly/goose/v3/cmd/goose@v3.27.3 -dir db/migrations postgres "$DATABASE_URL" up`.
 - `task migrate:down` rolls back exactly one migration.
 - `CLAUDE.md` / README rule: **never edit a released migration — add a new numbered one instead.**
 

@@ -19,7 +19,7 @@ Practical issues actually encountered while running this repository, plus docume
 On the machine used for this synchronization, host port `8080` was already bound by an unrelated Docker container (`kerjain-backend`, a different project). `HTTP_ADDRESS` is read directly from `os.Getenv` in `internal/config/config.go`, so it can be overridden per-launch without editing `.env`:
 
 ```bash
-cd services/api
+cd api
 set -a && source ../../.env && set +a
 export HTTP_ADDRESS=":8081"
 go run ./cmd/api

@@ -6,7 +6,7 @@
 
 None (infrastructure/scaffolding task — SDD plan
 `.superpowers/sdd/2026-08-02-mobile-scaffold-auth/task-2-brief.md`, Task 2 of
-the mobile scaffold+auth plan). Creates `services/mobile/` from scratch: an
+the mobile scaffold+auth plan). Creates `mobile/` from scratch: an
 Expo Router app wired to a custom Tamagui theme (SakuPlan's `kertas`/`tinta`/
 `terjaga`/`leluasa`/`kulit`/`peringatan` color tokens, Fraunces/IBM Plex Sans/
 IBM Plex Mono fonts) and gated font loading. No screens, navigation, or API
@@ -14,25 +14,25 @@ client — those are later tasks in the same plan.
 
 ### Files changed
 
-- `services/mobile/` (new): scaffolded via `create-expo-app@latest --template
+- `mobile/` (new): scaffolded via `create-expo-app@latest --template
   blank-typescript`, `expo-router` + navigation deps, Tamagui core packages,
   Google Fonts packages.
-- `services/mobile/tamagui.config.ts` (new): custom color/space/size/radius
+- `mobile/tamagui.config.ts` (new): custom color/space/size/radius
   tokens, three custom fonts (heading/body/mono), single `light` theme,
   exports `AppConfig` type via `declare module 'tamagui'`.
-- `services/mobile/metro.config.js` (new): `withTamagui` Metro plugin wiring.
-- `services/mobile/src/theme/fonts.ts` (new): `useAppFontsLoaded()` hook
+- `mobile/metro.config.js` (new): `withTamagui` Metro plugin wiring.
+- `mobile/src/theme/fonts.ts` (new): `useAppFontsLoaded()` hook
   gating on Fraunces/Plex Sans/Plex Mono via `@expo-google-fonts/*`.
-- `services/mobile/app/_layout.tsx` (new): root layout — themed loading
+- `mobile/app/_layout.tsx` (new): root layout — themed loading
   spinner while fonts load, then `TamaguiProvider`/`Theme`/`Slot` once ready.
   Added `defaultTheme="light"` (required by the installed Tamagui version,
   not present in the original plan snippet).
-- `services/mobile/app/index.tsx` (new, not in the original plan): minimal
+- `mobile/app/index.tsx` (new, not in the original plan): minimal
   stub route (`return null`) — `expo-router`'s `<Slot />` throws "Couldn't
   find any screens for the navigator" when `app/` has zero route files, a
   real crash found via the emulator boot check. Task 7 replaces this with
   real route groups.
-- Deleted `services/mobile/App.tsx` and `services/mobile/index.ts` (template
+- Deleted `mobile/App.tsx` and `mobile/index.ts` (template
   entry point, superseded by `main: "expo-router/entry"`).
 
 ### Database migrations

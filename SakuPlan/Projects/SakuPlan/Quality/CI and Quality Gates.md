@@ -16,13 +16,13 @@ Source: `.github/workflows/backend.yml`.
 
 ## Workflow: `Backend`
 
-Triggers: `push` and `pull_request`, filtered by `paths:` (`services/api/**`, `.github/workflows/backend.yml`, `Taskfile.yml`) — no branch filter. `permissions: contents: read`.
+Triggers: `push` and `pull_request`, filtered by `paths:` (`api/**`, `.github/workflows/backend.yml`, `Taskfile.yml`) — no branch filter. `permissions: contents: read`.
 
 ### Job: `lint`
-`golangci/golangci-lint-action@v9`, `version: v2.12`, `working-directory: services/api`, Go `1.26.5` via `actions/setup-go@v6`.
+`golangci/golangci-lint-action@v9`, `version: v2.12`, `working-directory: api`, Go `1.26.5` via `actions/setup-go@v6`.
 
 ### Job: `verify`
-Working directory `services/api`, Go `1.26.5`. Steps in order:
+Working directory `api`, Go `1.26.5`. Steps in order:
 1. `go mod download`
 2. Format check: `test -z "$(find . -name '*.go' -type f -print0 | xargs -0 gofmt -l)"`
 3. `go vet ./...`

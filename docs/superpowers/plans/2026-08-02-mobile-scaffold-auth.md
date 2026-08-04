@@ -4,7 +4,7 @@
 
 **Goal:** Add the missing AUTH-001 consent fields to the Go API, then stand up the SakuPlan mobile app (Expo + TypeScript + Tamagui) from scratch with a working Register → Login → Home → Logout flow against the real backend.
 
-**Architecture:** Task 1 is a small, self-contained `services/api` change (two new required registration fields, migration, tests). Tasks 2–9 build `services/mobile` from an empty directory: project scaffold and custom Tamagui theme, generated OpenAPI client, Zustand auth store with secure token storage and a 401 refresh interceptor, Expo Router auth gate, then the three screens with hardcoded Bahasa Indonesia copy. Each task produces something independently runnable/testable — no task leaves the tree in a broken state for the next task to silently repair.
+**Architecture:** Task 1 is a small, self-contained `api` change (two new required registration fields, migration, tests). Tasks 2–9 build `mobile` from an empty directory: project scaffold and custom Tamagui theme, generated OpenAPI client, Zustand auth store with secure token storage and a 401 refresh interceptor, Expo Router auth gate, then the three screens with hardcoded Bahasa Indonesia copy. Each task produces something independently runnable/testable — no task leaves the tree in a broken state for the next task to silently repair.
 
 **Tech Stack:** Go 1.26 / Fiber v3 / pgx / Goose (Task 1, existing stack). Expo SDK (TypeScript template) / Expo Router / Tamagui / TanStack Query / Zustand / `openapi-typescript` + `openapi-fetch` / `expo-secure-store` / Jest (`jest-expo` preset) + React Native Testing Library (Tasks 2–9). No i18n library — per the 2026-08-03 spec revision, all screen copy is hardcoded Bahasa Indonesia string literals; `react-i18next`/`expo-localization` are deferred until a second locale is actually scheduled.
 
@@ -15,23 +15,23 @@
 - `docs/PRD.md` AUTH-002: invalid-credential errors MUST NOT reveal whether the email exists — the mobile Login screen must show one generic message for both cases.
 - Money is never displayed on these screens (no dashboard data yet) — `IBM Plex Mono` is wired as a font role but not used by any screen in this plan.
 - All screen copy is Bahasa Indonesia, "kamu" register — no English strings in `app/` or `src/`.
-- Backend hard rules from `services/api/CLAUDE.md` apply to Task 1: TDD, `int64` minor units n/a here, domain/application packages stay framework-free, tests at unit/handler/repository level, `task verify` / `task lint` / `govulncheck` before considering Task 1 done.
-- Package manager for `services/mobile`: npm.
+- Backend hard rules from `api/CLAUDE.md` apply to Task 1: TDD, `int64` minor units n/a here, domain/application packages stay framework-free, tests at unit/handler/repository level, `task verify` / `task lint` / `govulncheck` before considering Task 1 done.
+- Package manager for `mobile`: npm.
 
 ---
 
 ## Task 1: Backend — AUTH-001 terms/privacy consent fields
 
 **Files:**
-- Modify: `services/api/internal/domain/entities.go:22-36` (`User` struct)
-- Create: `services/api/db/migrations/00002_users_registration_consent.sql`
-- Modify: `services/api/internal/adapters/postgres/store.go:71-79` (`CreateUser`, `scanUser`)
-- Modify: `services/api/internal/application/auth.go:31-33,47-72` (`RegisterInput`, `Register`)
-- Modify: `services/api/internal/application/auth_test.go:24-33,46-50`
-- Modify: `services/api/internal/adapters/httpapi/auth_handlers.go:11-34` (`registerRequest`, `register`)
-- Modify: `services/api/internal/adapters/httpapi/server_test.go` (3 register call sites)
-- Modify: `services/api/internal/adapters/httpapi/reporting_handlers_test.go:8-24` (`registerTestUser`)
-- Modify: `services/api/openapi/openapi.yaml:566-572` (`RegisterRequest` schema)
+- Modify: `api/internal/domain/entities.go:22-36` (`User` struct)
+- Create: `api/db/migrations/00002_users_registration_consent.sql`
+- Modify: `api/internal/adapters/postgres/store.go:71-79` (`CreateUser`, `scanUser`)
+- Modify: `api/internal/application/auth.go:31-33,47-72` (`RegisterInput`, `Register`)
+- Modify: `api/internal/application/auth_test.go:24-33,46-50`
+- Modify: `api/internal/adapters/httpapi/auth_handlers.go:11-34` (`registerRequest`, `register`)
+- Modify: `api/internal/adapters/httpapi/server_test.go` (3 register call sites)
+- Modify: `api/internal/adapters/httpapi/reporting_handlers_test.go:8-24` (`registerTestUser`)
+- Modify: `api/openapi/openapi.yaml:566-572` (`RegisterRequest` schema)
 
 **Interfaces:**
 - Produces: `domain.User.AcceptedTermsVersion string`, `domain.User.AcceptedPrivacyVersion string` (immutable after creation — not touched by `UpdateUserProfile`, not part of `userResponse`/`User` OpenAPI schema).
@@ -41,7 +41,7 @@
 - [ ] **Step 1: Write the failing application test**
 
 Add two new fixtures and update the two existing ones in
-`services/api/internal/application/auth_test.go`. Replace the body of
+`api/internal/application/auth_test.go`. Replace the body of
 `TestRegisterCreatesUserAndTokens` and `TestRefreshRotatesSessionAndRejectsReuse`'s
 register call, and add a new test:
 
@@ -85,7 +85,7 @@ In `TestRefreshRotatesSessionAndRejectsReuse`, update the existing
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `cd services/api && go test ./internal/application/... -run 'TestRegister'`
+Run: `cd api && go test ./internal/application/... -run 'TestRegister'`
 Expected: `TestRegisterCreatesUserAndTokens` and `TestRefreshRotatesSessionAndRejectsReuse`
 FAIL (validation error, since `RegisterInput` doesn't have the new fields
 yet — this won't even compile). `TestRegisterRejectsMissingConsent` doesn't
@@ -94,7 +94,7 @@ move to Step 3 immediately.
 
 - [ ] **Step 3: Add the domain fields**
 
-In `services/api/internal/domain/entities.go`, add two fields to `User`
+In `api/internal/domain/entities.go`, add two fields to `User`
 (after `AIConsent`, before `CreatedAt`):
 
 ```go
@@ -121,7 +121,7 @@ type User struct {
 
 - [ ] **Step 4: Write the migration**
 
-Create `services/api/db/migrations/00002_users_registration_consent.sql`:
+Create `api/db/migrations/00002_users_registration_consent.sql`:
 
 ```sql
 -- +goose Up
@@ -144,7 +144,7 @@ forward since application-layer validation requires it.)
 
 - [ ] **Step 5: Update the Postgres store**
 
-In `services/api/internal/adapters/postgres/store.go`, update `CreateUser`
+In `api/internal/adapters/postgres/store.go`, update `CreateUser`
 and `scanUser`:
 
 ```go
@@ -177,7 +177,7 @@ registration.
 
 - [ ] **Step 6: Update the application layer**
 
-In `services/api/internal/application/auth.go`:
+In `api/internal/application/auth.go`:
 
 ```go
 type RegisterInput struct {
@@ -222,12 +222,12 @@ func (s *AuthService) Register(ctx context.Context, in RegisterInput) (TokenPair
 
 - [ ] **Step 7: Run the application tests to verify they pass**
 
-Run: `cd services/api && go test ./internal/application/... -run 'TestRegister|TestRefresh' -v`
+Run: `cd api && go test ./internal/application/... -run 'TestRegister|TestRefresh' -v`
 Expected: `TestRegisterCreatesUserAndTokens`, `TestRegisterRejectsMissingConsent`, `TestRefreshRotatesSessionAndRejectsReuse` all PASS.
 
 - [ ] **Step 8: Update the HTTP layer**
 
-In `services/api/internal/adapters/httpapi/auth_handlers.go`:
+In `api/internal/adapters/httpapi/auth_handlers.go`:
 
 ```go
 type registerRequest struct {
@@ -263,7 +263,7 @@ These currently POST a body without the two new required fields, so they
 will now get a 422 `VALIDATION_ERROR` instead of 201. Update each request
 body:
 
-In `services/api/internal/adapters/httpapi/server_test.go`, there are
+In `api/internal/adapters/httpapi/server_test.go`, there are
 three inline `/v1/auth/register` calls (in `TestRegisterAndCreateAccount`,
 `TestTransactionAndReversalHTTPFlow`, `TestUpdateProfileHTTPFlow`). Add to
 each of their `map[string]any{...}` request bodies:
@@ -273,7 +273,7 @@ each of their `map[string]any{...}` request bodies:
 "accepted_privacy_version": "2026-08-02",
 ```
 
-In `services/api/internal/adapters/httpapi/reporting_handlers_test.go`,
+In `api/internal/adapters/httpapi/reporting_handlers_test.go`,
 update the shared `registerTestUser` helper's body the same way:
 
 ```go
@@ -301,7 +301,7 @@ func registerTestUser(t *testing.T, server *Server, email string) string {
 
 - [ ] **Step 10: Update the OpenAPI spec**
 
-In `services/api/openapi/openapi.yaml`:
+In `api/openapi/openapi.yaml`:
 
 ```yaml
     RegisterRequest:
@@ -320,9 +320,9 @@ In `services/api/openapi/openapi.yaml`:
 Run, from the repo root:
 ```bash
 task migrate:up
-cd services/api && go test ./... && go test -race ./internal/...
+cd api && go test ./... && go test -race ./internal/...
 cd "$OLDPWD" && task lint
-cd services/api && govulncheck ./...
+cd api && govulncheck ./...
 cd "$OLDPWD" && task test:integration
 ```
 Expected: all PASS; `task lint` shows no *new* finding categories beyond
@@ -340,7 +340,7 @@ commands run and results from Step 11.
 
 ```bash
 cd "/data/Gawai Duniawi/SaaS/sakuplan"
-git add services/api docs/PROGRESS.md
+git add api docs/PROGRESS.md
 git commit -m "feat(api): capture accepted terms/privacy versions at registration (AUTH-001)"
 ```
 
@@ -353,11 +353,11 @@ user, not something to do unprompted.)
 ## Task 2: Mobile — Expo scaffold + custom Tamagui theme
 
 **Files:**
-- Create: `services/mobile/` (via `create-expo-app`)
-- Create: `services/mobile/tamagui.config.ts`
-- Create: `services/mobile/metro.config.js`
-- Create: `services/mobile/src/theme/fonts.ts`
-- Modify: `services/mobile/app/_layout.tsx`
+- Create: `mobile/` (via `create-expo-app`)
+- Create: `mobile/tamagui.config.ts`
+- Create: `mobile/metro.config.js`
+- Create: `mobile/src/theme/fonts.ts`
+- Modify: `mobile/app/_layout.tsx`
 
 **Interfaces:**
 - Produces: default export `config` from `tamagui.config.ts` (type `AppConfig`), used by every later screen task via `TamaguiProvider`.
@@ -373,9 +373,9 @@ cd mobile
 npx expo install expo-router react-native-safe-area-context react-native-screens expo-linking expo-constants expo-status-bar
 ```
 
-Edit `services/mobile/package.json` `"main"` field to `"expo-router/entry"`
+Edit `mobile/package.json` `"main"` field to `"expo-router/entry"`
 and add to `"scripts"`: `"generate:api": "openapi-typescript ../api/openapi/openapi.yaml -o src/api/generated/types.ts"`.
-Edit `services/mobile/app.json`: set `"scheme": "sakuplan"` and add
+Edit `mobile/app.json`: set `"scheme": "sakuplan"` and add
 `"plugins": ["expo-router"]`.
 
 Delete the template's `App.tsx` (Expo Router replaces it with `app/_layout.tsx` + route files).
@@ -389,7 +389,7 @@ npx expo install expo-font @expo-google-fonts/fraunces @expo-google-fonts/ibm-pl
 
 - [ ] **Step 3: Write the Tamagui config**
 
-Create `services/mobile/tamagui.config.ts`:
+Create `mobile/tamagui.config.ts`:
 
 ```ts
 import { createAnimations } from '@tamagui/animations-react-native'
@@ -467,7 +467,7 @@ export default config
 
 - [ ] **Step 4: Write the font-loading hook**
 
-Create `services/mobile/src/theme/fonts.ts`:
+Create `mobile/src/theme/fonts.ts`:
 
 ```ts
 import {
@@ -499,7 +499,7 @@ export function useAppFontsLoaded(): boolean {
 
 - [ ] **Step 5: Configure Metro for Tamagui**
 
-Create `services/mobile/metro.config.js`:
+Create `mobile/metro.config.js`:
 
 ```js
 const { getDefaultConfig } = require('expo/metro-config')
@@ -518,7 +518,7 @@ Install the plugin: `npm install @tamagui/metro-plugin`.
 
 - [ ] **Step 6: Wire the root layout**
 
-Create `services/mobile/app/_layout.tsx`:
+Create `mobile/app/_layout.tsx`:
 
 ```tsx
 import { Slot } from 'expo-router'
@@ -555,7 +555,7 @@ export default function RootLayout() {
 
 - [ ] **Step 7: Verify the app boots**
 
-Run: `cd services/mobile && npx expo start --ios` (or `--android`; either
+Run: `cd mobile && npx expo start --ios` (or `--android`; either
 simulator/emulator is acceptable — this is a visual boot check, not an
 automated test).
 Expected: a blank `$kertas`-colored screen with a centered `$primary`
@@ -567,7 +567,7 @@ red-box errors.
 
 ```bash
 cd "/data/Gawai Duniawi/SaaS/sakuplan"
-git add services/mobile
+git add mobile
 git commit -m "feat(mobile): scaffold Expo app with custom Tamagui theme"
 ```
 
@@ -576,20 +576,20 @@ git commit -m "feat(mobile): scaffold Expo app with custom Tamagui theme"
 ## Task 3: Mobile — Generated OpenAPI client
 
 **Files:**
-- Create: `services/mobile/src/api/generated/types.ts` (generated, not hand-edited)
-- Create: `services/mobile/src/api/client.ts`
-- Create: `services/mobile/.env.example`
-- Modify: `services/mobile/package.json` (already added the `generate:api` script in Task 2, Step 1)
+- Create: `mobile/src/api/generated/types.ts` (generated, not hand-edited)
+- Create: `mobile/src/api/client.ts`
+- Create: `mobile/.env.example`
+- Modify: `mobile/package.json` (already added the `generate:api` script in Task 2, Step 1)
 
 **Interfaces:**
-- Consumes: `services/api/openapi/openapi.yaml` (must be run from a checkout where `services/api` exists as a sibling).
+- Consumes: `api/openapi/openapi.yaml` (must be run from a checkout where `api` exists as a sibling).
 - Produces: `export const api` from `src/api/client.ts` — an `openapi-fetch` `Client<paths>` instance, pre-configured with `baseUrl` and ready for `.GET(...)`/`.POST(...)` calls using the generated path/schema types. Used by Task 4 (auth store's underlying calls happen through this), Tasks 7, 8, 9 (screens).
 - Produces: `export type paths` and `export type components` re-exported from `src/api/generated/types.ts` for other tasks that need response/request types (e.g. `components['schemas']['User']`).
 
 - [ ] **Step 1: Install the client tooling**
 
 ```bash
-cd services/mobile
+cd mobile
 npm install openapi-fetch
 npm install -D openapi-typescript
 ```
@@ -603,17 +603,17 @@ npm run generate:api
 Expected: `src/api/generated/types.ts` is created, containing a `paths`
 interface with keys like `"/v1/auth/register"`, `"/v1/dashboard"`, etc.,
 and a `components` interface with `schemas.User`, `schemas.ErrorEnvelope`,
-etc. — mirroring `services/api/openapi/openapi.yaml` exactly.
+etc. — mirroring `api/openapi/openapi.yaml` exactly.
 
 - [ ] **Step 3: Write the base client**
 
-Create `services/mobile/.env.example`:
+Create `mobile/.env.example`:
 
 ```
 EXPO_PUBLIC_API_URL=http://localhost:8080
 ```
 
-Create `services/mobile/src/api/client.ts`:
+Create `mobile/src/api/client.ts`:
 
 ```ts
 import createClient from 'openapi-fetch'
@@ -632,7 +632,7 @@ exist — this task only produces the bare typed client.)
 
 - [ ] **Step 4: Verify it compiles and resolves a real path**
 
-Create a throwaway `services/mobile/src/api/client.smoke.ts` (delete after
+Create a throwaway `mobile/src/api/client.smoke.ts` (delete after
 verifying — this is a manual typecheck, not a committed test):
 
 ```ts
@@ -646,15 +646,15 @@ async function smoke() {
 void smoke
 ```
 
-Run: `cd services/mobile && npx tsc --noEmit`
+Run: `cd mobile && npx tsc --noEmit`
 Expected: no type errors. Delete `client.smoke.ts`.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 cd "/data/Gawai Duniawi/SaaS/sakuplan"
-git add services/mobile/src/api services/mobile/.env.example services/mobile/package.json services/mobile/package-lock.json
-git commit -m "feat(mobile): generate typed OpenAPI client from services/api spec"
+git add mobile/src/api mobile/.env.example mobile/package.json mobile/package-lock.json
+git commit -m "feat(mobile): generate typed OpenAPI client from api spec"
 ```
 
 ---
@@ -662,11 +662,11 @@ git commit -m "feat(mobile): generate typed OpenAPI client from services/api spe
 ## Task 4: Mobile — Secure token storage + Zustand auth store
 
 **Files:**
-- Create: `services/mobile/src/auth/secureTokens.ts`
-- Create: `services/mobile/src/auth/store.ts`
-- Create: `services/mobile/src/auth/store.test.ts`
-- Create: `services/mobile/jest.config.js`
-- Modify: `services/mobile/package.json` (`"test"` script)
+- Create: `mobile/src/auth/secureTokens.ts`
+- Create: `mobile/src/auth/store.ts`
+- Create: `mobile/src/auth/store.test.ts`
+- Create: `mobile/jest.config.js`
+- Modify: `mobile/package.json` (`"test"` script)
 
 **Interfaces:**
 - Produces: `saveRefreshToken(token: string): Promise<void>`, `getRefreshToken(): Promise<string | null>`, `clearRefreshToken(): Promise<void>` from `src/auth/secureTokens.ts`. Consumed by Task 5 (refresh interceptor) and Tasks 7–9 (screens, on login/register/logout).
@@ -686,16 +686,16 @@ git commit -m "feat(mobile): generate typed OpenAPI client from services/api spe
 - [ ] **Step 1: Install dependencies**
 
 ```bash
-cd services/mobile
+cd mobile
 npx expo install expo-secure-store zustand
 npm install -D jest jest-expo @testing-library/react-native @types/jest
 ```
 
-Add to `services/mobile/package.json` `"scripts"`: `"test": "jest"`.
+Add to `mobile/package.json` `"scripts"`: `"test": "jest"`.
 
 - [ ] **Step 2: Configure Jest**
 
-Create `services/mobile/jest.config.js`:
+Create `mobile/jest.config.js`:
 
 ```js
 module.exports = {
@@ -708,7 +708,7 @@ module.exports = {
 
 - [ ] **Step 3: Write the failing store test**
 
-Create `services/mobile/src/auth/store.test.ts`:
+Create `mobile/src/auth/store.test.ts`:
 
 ```ts
 import { useAuthStore } from './store'
@@ -762,12 +762,12 @@ describe('useAuthStore', () => {
 
 - [ ] **Step 4: Run the test to verify it fails**
 
-Run: `cd services/mobile && npm test -- store.test.ts`
+Run: `cd mobile && npm test -- store.test.ts`
 Expected: FAIL — `./store` module not found.
 
 - [ ] **Step 5: Write the secure token storage wrapper**
 
-Create `services/mobile/src/auth/secureTokens.ts`:
+Create `mobile/src/auth/secureTokens.ts`:
 
 ```ts
 import * as SecureStore from 'expo-secure-store'
@@ -789,7 +789,7 @@ export async function clearRefreshToken(): Promise<void> {
 
 - [ ] **Step 6: Write the store**
 
-Create `services/mobile/src/auth/store.ts`:
+Create `mobile/src/auth/store.ts`:
 
 ```ts
 import { create } from 'zustand'
@@ -818,14 +818,14 @@ export const useAuthStore = create<AuthState>((set) => ({
 
 - [ ] **Step 7: Run the test to verify it passes**
 
-Run: `cd services/mobile && npm test -- store.test.ts`
+Run: `cd mobile && npm test -- store.test.ts`
 Expected: all 4 tests PASS.
 
 - [ ] **Step 8: Commit**
 
 ```bash
 cd "/data/Gawai Duniawi/SaaS/sakuplan"
-git add services/mobile/src/auth services/mobile/jest.config.js services/mobile/package.json services/mobile/package-lock.json
+git add mobile/src/auth mobile/jest.config.js mobile/package.json mobile/package-lock.json
 git commit -m "feat(mobile): add Zustand auth store and secure refresh-token storage"
 ```
 
@@ -834,9 +834,9 @@ git commit -m "feat(mobile): add Zustand auth store and secure refresh-token sto
 ## Task 5: Mobile — 401 refresh interceptor
 
 **Files:**
-- Modify: `services/mobile/src/api/client.ts`
-- Create: `services/mobile/src/api/refreshInterceptor.ts`
-- Create: `services/mobile/src/api/refreshInterceptor.test.ts`
+- Modify: `mobile/src/api/client.ts`
+- Create: `mobile/src/api/refreshInterceptor.ts`
+- Create: `mobile/src/api/refreshInterceptor.test.ts`
 
 **Interfaces:**
 - Consumes: `useAuthStore` (`getState`/`setState` directly, not the hook — this runs outside React) from Task 4, `getRefreshToken`/`saveRefreshToken`/`clearRefreshToken` from Task 4.
@@ -844,7 +844,7 @@ git commit -m "feat(mobile): add Zustand auth store and secure refresh-token sto
 
 - [ ] **Step 1: Write the failing interceptor test**
 
-Create `services/mobile/src/api/refreshInterceptor.test.ts`. This tests
+Create `mobile/src/api/refreshInterceptor.test.ts`. This tests
 the pure retry-decision logic in isolation (`shouldAttemptRefresh`,
 extracted so it's testable without mocking `fetch`/`openapi-fetch`'s
 middleware plumbing):
@@ -872,12 +872,12 @@ describe('shouldAttemptRefresh', () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `cd services/mobile && npm test -- refreshInterceptor.test.ts`
+Run: `cd mobile && npm test -- refreshInterceptor.test.ts`
 Expected: FAIL — `./refreshInterceptor` module not found.
 
 - [ ] **Step 3: Write the interceptor**
 
-Create `services/mobile/src/api/refreshInterceptor.ts`:
+Create `mobile/src/api/refreshInterceptor.ts`:
 
 ```ts
 import type { Client, Middleware } from 'openapi-fetch'
@@ -944,12 +944,12 @@ export function installAuthMiddleware(client: Client<paths>, baseUrl: string): v
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `cd services/mobile && npm test -- refreshInterceptor.test.ts`
+Run: `cd mobile && npm test -- refreshInterceptor.test.ts`
 Expected: all 3 tests PASS.
 
 - [ ] **Step 5: Wire the middleware into the exported client**
 
-Update `services/mobile/src/api/client.ts`:
+Update `mobile/src/api/client.ts`:
 
 ```ts
 import createClient from 'openapi-fetch'
@@ -966,14 +966,14 @@ export type { paths, components } from './generated/types'
 
 - [ ] **Step 6: Run the full test suite to confirm nothing broke**
 
-Run: `cd services/mobile && npm test`
+Run: `cd mobile && npm test`
 Expected: all tests (Task 4's + Task 5's) PASS.
 
 - [ ] **Step 7: Commit**
 
 ```bash
 cd "/data/Gawai Duniawi/SaaS/sakuplan"
-git add services/mobile/src/api
+git add mobile/src/api
 git commit -m "feat(mobile): add 401 refresh-and-retry auth middleware"
 ```
 
@@ -982,10 +982,10 @@ git commit -m "feat(mobile): add 401 refresh-and-retry auth middleware"
 ## Task 6: Mobile — Expo Router auth gate
 
 **Files:**
-- Create: `services/mobile/app/(auth)/_layout.tsx`
-- Create: `services/mobile/app/(app)/_layout.tsx`
-- Modify: `services/mobile/app/_layout.tsx` (cold-start session hydration)
-- Create: `services/mobile/src/auth/useHydrateSession.ts`
+- Create: `mobile/app/(auth)/_layout.tsx`
+- Create: `mobile/app/(app)/_layout.tsx`
+- Modify: `mobile/app/_layout.tsx` (cold-start session hydration)
+- Create: `mobile/src/auth/useHydrateSession.ts`
 
 **Interfaces:**
 - Consumes: `useAuthStore`, `getRefreshToken` (Task 4), `api` (Task 3/5, for the `/v1/auth/refresh` call to turn a stored refresh token into a fresh access token on cold start).
@@ -994,7 +994,7 @@ git commit -m "feat(mobile): add 401 refresh-and-retry auth middleware"
 
 - [ ] **Step 1: Write the session-hydration hook**
 
-Create `services/mobile/src/auth/useHydrateSession.ts`:
+Create `mobile/src/auth/useHydrateSession.ts`:
 
 ```ts
 import { useEffect } from 'react'
@@ -1034,7 +1034,7 @@ export function useHydrateSession(): void {
 
 - [ ] **Step 2: Write the `(auth)` group layout — redirects away if already authenticated**
 
-Create `services/mobile/app/(auth)/_layout.tsx`:
+Create `mobile/app/(auth)/_layout.tsx`:
 
 ```tsx
 import { Redirect, Slot } from 'expo-router'
@@ -1051,7 +1051,7 @@ export default function AuthGroupLayout() {
 
 - [ ] **Step 3: Write the `(app)` group layout — redirects to login if not authenticated**
 
-Create `services/mobile/app/(app)/_layout.tsx`:
+Create `mobile/app/(app)/_layout.tsx`:
 
 ```tsx
 import { Redirect, Slot } from 'expo-router'
@@ -1072,7 +1072,7 @@ Expo Router needs an actual route file to redirect *from* on cold start,
 so hydration and the initial redirect decision live in `app/index.tsx`,
 not in `_layout.tsx` — `_layout.tsx` stays a pure provider shell.
 
-Create `services/mobile/app/index.tsx`:
+Create `mobile/app/index.tsx`:
 
 ```tsx
 import { Redirect } from 'expo-router'
@@ -1096,7 +1096,7 @@ export default function Index() {
 }
 ```
 
-`services/mobile/app/_layout.tsx` needs no change in this task — it stays
+`mobile/app/_layout.tsx` needs no change in this task — it stays
 the same provider shell Task 2 wrote, with no auth/hydration logic in it.
 For reference, that file remains:
 
@@ -1129,7 +1129,7 @@ export default function RootLayout() {
 
 - [ ] **Step 5: Verify the redirect chain manually**
 
-Run: `cd services/mobile && npx expo start`, open in a simulator.
+Run: `cd mobile && npx expo start`, open in a simulator.
 Expected: app boots, briefly shows the spinner, then — since no route
 files exist yet at `(auth)/login` or `(app)/home` (Tasks 7/9 add them) —
 Expo Router will show its "Unmatched Route" screen. That's the correct,
@@ -1142,7 +1142,7 @@ found.
 
 ```bash
 cd "/data/Gawai Duniawi/SaaS/sakuplan"
-git add services/mobile/app services/mobile/src/auth/useHydrateSession.ts
+git add mobile/app mobile/src/auth/useHydrateSession.ts
 git commit -m "feat(mobile): add Expo Router auth gate and cold-start session hydration"
 ```
 
@@ -1151,9 +1151,9 @@ git commit -m "feat(mobile): add Expo Router auth gate and cold-start session hy
 ## Task 7: Mobile — `PocketCard` component + Login screen
 
 **Files:**
-- Create: `services/mobile/src/components/PocketCard.tsx`
-- Create: `services/mobile/app/(auth)/login.tsx`
-- Create: `services/mobile/src/auth/useLogin.ts`
+- Create: `mobile/src/components/PocketCard.tsx`
+- Create: `mobile/app/(auth)/login.tsx`
+- Create: `mobile/src/auth/useLogin.ts`
 
 **Interfaces:**
 - Produces: `PocketCard` (React component, `YStack`-based, accepts standard Tamagui stack props via `...props` plus `children`) from `src/components/PocketCard.tsx`. Reused by Task 8 (Register) and Task 9 (Home) — those tasks import it, they do not redefine it.
@@ -1163,12 +1163,12 @@ git commit -m "feat(mobile): add Expo Router auth gate and cold-start session hy
 - [ ] **Step 1: Install TanStack Query**
 
 ```bash
-cd services/mobile
+cd mobile
 npm install @tanstack/react-query
 ```
 
 Wrap the app in a `QueryClientProvider`. Update
-`services/mobile/app/_layout.tsx` — add near the top:
+`mobile/app/_layout.tsx` — add near the top:
 
 ```tsx
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -1183,7 +1183,7 @@ both the Tamagui theme and the query client).
 
 - [ ] **Step 2: Write `PocketCard`**
 
-Create `services/mobile/src/components/PocketCard.tsx`:
+Create `mobile/src/components/PocketCard.tsx`:
 
 ```tsx
 import { styled, YStack } from 'tamagui'
@@ -1205,7 +1205,7 @@ export const PocketCard = styled(YStack, {
 
 - [ ] **Step 3: Write `useLogin`**
 
-Create `services/mobile/src/auth/useLogin.ts`:
+Create `mobile/src/auth/useLogin.ts`:
 
 ```ts
 import { useMutation } from '@tanstack/react-query'
@@ -1237,7 +1237,7 @@ export function useLogin() {
 
 - [ ] **Step 4: Write the Login screen**
 
-Create `services/mobile/app/(auth)/login.tsx`:
+Create `mobile/app/(auth)/login.tsx`:
 
 ```tsx
 import { useState } from 'react'
@@ -1330,8 +1330,8 @@ export default function LoginScreen() {
 
 - [ ] **Step 5: Verify manually against the running backend**
 
-With `services/api` running (`task run`) and its migrations applied
-(Task 1's `00002_...` included), run `cd services/mobile && npx expo
+With `api` running (`task run`) and its migrations applied
+(Task 1's `00002_...` included), run `cd mobile && npx expo
 start`. Expected: the app now redirects to `/(auth)/login` and renders
 the screen above with the `$kertas` background, Fraunces title, teal
 button. Submit with a non-existent email/wrong password: an inline
@@ -1342,7 +1342,7 @@ Leave fields empty: button is disabled (50% opacity).
 
 ```bash
 cd "/data/Gawai Duniawi/SaaS/sakuplan"
-git add services/mobile/app/(auth)/login.tsx services/mobile/src/components services/mobile/src/auth/useLogin.ts services/mobile/app/_layout.tsx services/mobile/package.json services/mobile/package-lock.json
+git add mobile/app/(auth)/login.tsx mobile/src/components mobile/src/auth/useLogin.ts mobile/app/_layout.tsx mobile/package.json mobile/package-lock.json
 git commit -m "feat(mobile): add PocketCard component and Login screen"
 ```
 
@@ -1351,9 +1351,9 @@ git commit -m "feat(mobile): add PocketCard component and Login screen"
 ## Task 8: Mobile — Register screen
 
 **Files:**
-- Create: `services/mobile/app/(auth)/register.tsx`
-- Create: `services/mobile/src/auth/useRegister.ts`
-- Create: `services/mobile/src/auth/consentVersions.ts`
+- Create: `mobile/app/(auth)/register.tsx`
+- Create: `mobile/src/auth/useRegister.ts`
+- Create: `mobile/src/auth/consentVersions.ts`
 
 **Interfaces:**
 - Consumes: `PocketCard` (Task 7), `api`/`useAuthStore`/`saveRefreshToken` (Tasks 3/4/5). All screen copy is a hardcoded Bahasa Indonesia string literal, matching Login's exact wording style — no translation function.
@@ -1362,7 +1362,7 @@ git commit -m "feat(mobile): add PocketCard component and Login screen"
 
 - [ ] **Step 1: Write the consent version constants**
 
-Create `services/mobile/src/auth/consentVersions.ts`:
+Create `mobile/src/auth/consentVersions.ts`:
 
 ```ts
 export const CURRENT_TERMS_VERSION = '2026-08-02'
@@ -1377,7 +1377,7 @@ in the screen's implementation below rather than silently omitted.)
 
 - [ ] **Step 2: Write `useRegister`**
 
-Create `services/mobile/src/auth/useRegister.ts`:
+Create `mobile/src/auth/useRegister.ts`:
 
 ```ts
 import { useMutation } from '@tanstack/react-query'
@@ -1419,7 +1419,7 @@ export function useRegister() {
 
 - [ ] **Step 3: Write the Register screen**
 
-Create `services/mobile/app/(auth)/register.tsx`:
+Create `mobile/app/(auth)/register.tsx`:
 
 ```tsx
 import { useState } from 'react'
@@ -1560,7 +1560,7 @@ completion report for this task.
 
 - [ ] **Step 4: Verify manually against the running backend**
 
-With `services/api` running, run `npx expo start`, navigate to Register.
+With `api` running, run `npx expo start`, navigate to Register.
 Confirm: submit button stays disabled until name, email, a ≥12-character
 password, and the consent checkbox are all satisfied; successful
 registration lands on the (still-unmatched-route) `/(app)/home` — expected
@@ -1572,7 +1572,7 @@ until Task 9 adds that screen. Confirm in the backend logs / via
 
 ```bash
 cd "/data/Gawai Duniawi/SaaS/sakuplan"
-git add services/mobile/app/(auth)/register.tsx services/mobile/src/auth/useRegister.ts services/mobile/src/auth/consentVersions.ts services/mobile/package.json services/mobile/package-lock.json
+git add mobile/app/(auth)/register.tsx mobile/src/auth/useRegister.ts mobile/src/auth/consentVersions.ts mobile/package.json mobile/package-lock.json
 git commit -m "feat(mobile): add Register screen with terms/privacy consent"
 ```
 
@@ -1581,9 +1581,9 @@ git commit -m "feat(mobile): add Register screen with terms/privacy consent"
 ## Task 9: Mobile — Home screen + Logout
 
 **Files:**
-- Create: `services/mobile/app/(app)/home.tsx`
-- Create: `services/mobile/src/auth/useCurrentUser.ts`
-- Create: `services/mobile/src/auth/useLogout.ts`
+- Create: `mobile/app/(app)/home.tsx`
+- Create: `mobile/src/auth/useCurrentUser.ts`
+- Create: `mobile/src/auth/useLogout.ts`
 
 **Interfaces:**
 - Consumes: `PocketCard` (Task 7), `api` (Task 3/5), `useAuthStore` (Task 4), `clearRefreshToken`/`getRefreshToken` (Task 4). All screen copy is a hardcoded Bahasa Indonesia string literal — no translation function.
@@ -1592,7 +1592,7 @@ git commit -m "feat(mobile): add Register screen with terms/privacy consent"
 
 - [ ] **Step 1: Write `useCurrentUser`**
 
-Create `services/mobile/src/auth/useCurrentUser.ts`:
+Create `mobile/src/auth/useCurrentUser.ts`:
 
 ```ts
 import { useQuery } from '@tanstack/react-query'
@@ -1614,7 +1614,7 @@ export function useCurrentUser() {
 
 - [ ] **Step 2: Write `useLogout`**
 
-Create `services/mobile/src/auth/useLogout.ts`:
+Create `mobile/src/auth/useLogout.ts`:
 
 ```ts
 import { useMutation } from '@tanstack/react-query'
@@ -1640,7 +1640,7 @@ export function useLogout() {
 
 - [ ] **Step 3: Write the Home screen**
 
-Create `services/mobile/app/(app)/home.tsx`:
+Create `mobile/app/(app)/home.tsx`:
 
 ```tsx
 import { Button, Spinner, Text, YStack } from 'tamagui'
@@ -1693,7 +1693,7 @@ export default function HomeScreen() {
 
 - [ ] **Step 4: Verify the full flow manually**
 
-With `services/api` running, run `npx expo start`. Register a new user →
+With `api` running, run `npx expo start`. Register a new user →
 land on Home showing the greeting, email, and placeholder subtitle inside
 a pocket card → tap Keluar → redirected back to `/(auth)/login` and the
 secure-stored refresh token is cleared (confirm by force-quitting and
@@ -1704,7 +1704,7 @@ Then log back in with the same credentials → same Home screen.
 
 ```bash
 cd "/data/Gawai Duniawi/SaaS/sakuplan"
-git add services/mobile/app/(app)/home.tsx services/mobile/src/auth/useCurrentUser.ts services/mobile/src/auth/useLogout.ts
+git add mobile/app/(app)/home.tsx mobile/src/auth/useCurrentUser.ts mobile/src/auth/useLogout.ts
 git commit -m "feat(mobile): add Home screen with profile display and logout"
 ```
 
@@ -1716,29 +1716,29 @@ git commit -m "feat(mobile): add Home screen with profile display and logout"
 
 - [ ] **Step 1: Run the full mobile test suite**
 
-Run: `cd services/mobile && npm test`
+Run: `cd mobile && npm test`
 Expected: all tests from Tasks 4 and 5 PASS (auth store: 4 tests; refresh
 interceptor: 3 tests).
 
 - [ ] **Step 2: Typecheck the whole app**
 
-Run: `cd services/mobile && npx tsc --noEmit`
+Run: `cd mobile && npx tsc --noEmit`
 Expected: no errors. If the generated `src/api/generated/types.ts` is
-stale relative to `services/api/openapi/openapi.yaml` (e.g. Task 1 added
+stale relative to `api/openapi/openapi.yaml` (e.g. Task 1 added
 fields to `RegisterRequest`), re-run `npm run generate:api` first.
 
 - [ ] **Step 3: Lint**
 
 ```bash
-cd services/mobile
+cd mobile
 npx expo lint
 ```
 Fix anything it flags.
 
 - [ ] **Step 4: End-to-end manual walkthrough**
 
-With `services/api` running against a migrated database (`task
-infra:up && task migrate:up && task run`), run `cd services/mobile &&
+With `api` running against a migrated database (`task
+infra:up && task migrate:up && task run`), run `cd mobile &&
 npx expo start` and, on a simulator/device:
 1. Land on Login (cold start, no stored session).
 2. Navigate to Register, submit with the consent checkbox unchecked —
@@ -1755,7 +1755,7 @@ npx expo start` and, on a simulator/device:
 - [ ] **Step 5: Update PROGRESS.md**
 
 Add a dated entry to `docs/PROGRESS.md`: mobile scaffold + auth flow
-complete, listing `services/mobile` as a new top-level surface, the
+complete, listing `mobile` as a new top-level surface, the
 screens shipped, and confirmation that the manual walkthrough in Step 4
 passed. Cross-reference `docs/superpowers/specs/2026-08-02-mobile-scaffold-auth-design.md`.
 

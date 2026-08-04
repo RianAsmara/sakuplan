@@ -12,7 +12,7 @@ last_synced: 2026-07-29
 
 # Dependency Injection
 
-Source: `services/api/internal/bootstrap/app.go`, `services/api/cmd/api/main.go`.
+Source: `api/internal/bootstrap/app.go`, `api/cmd/api/main.go`.
 
 ## Constructor injection everywhere except the composition root
 

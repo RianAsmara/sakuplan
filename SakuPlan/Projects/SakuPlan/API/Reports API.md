@@ -12,7 +12,7 @@ last_synced: 2026-07-29
 
 # Reports API
 
-**Status: not implemented.** No dashboard, cash-flow report, or export code exists anywhere in `internal/`; no corresponding paths exist in `services/api/openapi/openapi.yaml`.
+**Status: not implemented.** No dashboard, cash-flow report, or export code exists anywhere in `internal/`; no corresponding paths exist in `api/openapi/openapi.yaml`.
 
 ## Documented intent (PRD §8.11, requirements `RPT-001`–`RPT-004`)
 

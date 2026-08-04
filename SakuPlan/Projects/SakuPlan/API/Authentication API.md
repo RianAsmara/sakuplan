@@ -12,7 +12,7 @@ last_synced: 2026-07-29
 
 # Authentication API
 
-Source: `services/api/openapi/openapi.yaml` (Authentication tag), `internal/adapters/httpapi/auth_handlers.go`. See [[Authentication and Sessions]] for the underlying mechanism.
+Source: `api/openapi/openapi.yaml` (Authentication tag), `internal/adapters/httpapi/auth_handlers.go`. See [[Authentication and Sessions]] for the underlying mechanism.
 
 | Endpoint | Auth | Idempotency | Request | Response | Errors | Use case |
 |---|---|---|---|---|---|---|

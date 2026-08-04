@@ -2,11 +2,11 @@
 
 ## Context
 
-The Go API (`services/api`) now covers identity, ledger, budgets, bills,
+The Go API (`api`) now covers identity, ledger, budgets, bills,
 goals, planning, and reporting (Phases 0–7a). No mobile client exists yet —
 `docs/PRD.md` mandates React Native + Expo + TypeScript with Zustand for
 local/UI state, and an OpenAPI-generated TypeScript client consuming
-`services/api/openapi/openapi.yaml`. This is the first mobile increment:
+`api/openapi/openapi.yaml`. This is the first mobile increment:
 project scaffold plus the authentication flow (register, login, logout),
 not the full P0 mobile screen set. Onboarding and every other PRD §5.1
 surface (accounts, transactions, budgets, bills, goals, safe-to-spend,
@@ -15,7 +15,7 @@ scope for this pass.
 
 ## Location & tooling
 
-- `services/mobile/`, matching the existing `services/api/` sibling
+- `mobile/`, matching the existing `api/` sibling
   convention in this monorepo.
 - Expo (TypeScript template), npm (no workspace tooling yet — single
   package; revisit pnpm/turborepo only if admin-web joins the monorepo
@@ -46,7 +46,7 @@ just a styling utility, and is explicitly what was requested.
 ## API client — `openapi-typescript` + `openapi-fetch`
 
 `openapi-typescript` generates TS types directly from
-`services/api/openapi/openapi.yaml` (already current, including the
+`api/openapi/openapi.yaml` (already current, including the
 RPT-001..004 endpoints). `openapi-fetch` is a small typed wrapper around
 `fetch` using those generated types — no Java toolchain (unlike
 `openapi-generator-cli`), less codegen magic than hook-generators like
@@ -74,7 +74,7 @@ request, then a forced logout (clear store + secure storage, redirect to
 
 ## PRD-alignment findings and resolutions
 
-Re-reading `docs/PRD.md` against the actual `services/api` implementation
+Re-reading `docs/PRD.md` against the actual `api` implementation
 surfaced two gaps directly relevant to this pass:
 
 1. **AUTH-001** requires registration to capture accepted terms version and
@@ -240,5 +240,5 @@ wiring over the store/query hooks already covered by unit tests.
 - Onboarding flow and all other PRD §5.1 mobile surfaces.
 - Dark theme (this pass ships the single custom light theme only).
 - CSV import, OCR, Android notification parsing (P1 items regardless).
-- Any workspace/monorepo tooling beyond a single `services/mobile`
+- Any workspace/monorepo tooling beyond a single `mobile`
   package.
