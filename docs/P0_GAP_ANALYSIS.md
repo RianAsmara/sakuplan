@@ -2,7 +2,7 @@
 
 > **Status:** Baseline verification snapshot
 > **Date:** 2026-07-24
-> **Scope:** Compares the current `services/api` implementation against the P0 requirement set in `PRD.md` §6/§8. This is a read-only assessment produced while establishing a verified backend baseline; no new product phase was implemented as part of this pass.
+> **Scope:** Compares the current `api` implementation against the P0 requirement set in `PRD.md` §6/§8. This is a read-only assessment produced while establishing a verified backend baseline; no new product phase was implemented as part of this pass.
 
 ## Method
 

@@ -889,7 +889,7 @@ Large lists use cursor-based pagination with stable ordering by `(occurred_at, i
 
 ## 10. API Capability Map
 
-The exact OpenAPI contract is maintained in `../services/api/openapi/openapi.yaml`.
+The exact OpenAPI contract is maintained in `../api/openapi/openapi.yaml`.
 
 ### Public/authenticated end-user API groups
 

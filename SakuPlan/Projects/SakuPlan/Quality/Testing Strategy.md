@@ -12,7 +12,7 @@ last_synced: 2026-07-29
 
 # Testing Strategy
 
-Source: `docs/ARCHITECTURE.md` §9, confirmed against 13 test files under `services/api`. See [[Test Coverage]] for coverage percentages and [[CI and Quality Gates]] for how these run in CI.
+Source: `docs/ARCHITECTURE.md` §9, confirmed against 13 test files under `api`. See [[Test Coverage]] for coverage percentages and [[CI and Quality Gates]] for how these run in CI.
 
 ## Layers
 
@@ -42,7 +42,7 @@ Source: `docs/ARCHITECTURE.md` §9, confirmed against 13 test files under `servi
 | Status | Meaning |
 |---|---|
 | **Verified locally** | `docs/PROGRESS.md` records an actual run with output, dated 2026-07-24: `task bootstrap`, `task infra:up`, `task migrate:up`, `task test` (implied by `task verify`), `task test:race`, `task test:integration`, `task build`, `govulncheck` all passed on Go 1.26.4. |
-| **Verified in CI** | Same command set runs in `.github/workflows/backend.yml` on every push/PR touching `services/api/**` — see [[CI and Quality Gates]]. No independent CI run log was available to this synchronization (repo has no `.git` history). |
+| **Verified in CI** | Same command set runs in `.github/workflows/backend.yml` on every push/PR touching `api/**` — see [[CI and Quality Gates]]. No independent CI run log was available to this synchronization (repo has no `.git` history). |
 | **Test exists, execution not re-verified by this sync** | All test files listed above exist in the repository as of 2026-07-29; this documentation pass read the test source but did not re-run `task test`/`task test:integration` itself — see the `/run` session in this conversation for the closest live verification (functional smoke test via `curl`, not `go test`). |
 
 **Do not claim "all tests pass" from this documentation alone** — the last actual recorded run is `docs/PROGRESS.md`'s 2026-07-24 entry. Re-run `task verify && task test:integration` to get a current result.

@@ -12,7 +12,7 @@ last_synced: 2026-07-29
 
 # Configuration
 
-Source: `services/api/internal/config/config.go`. **No secret values are reproduced here** — only variable names, defaults, and validation rules, per the safety requirements of this synchronization.
+Source: `api/internal/config/config.go`. **No secret values are reproduced here** — only variable names, defaults, and validation rules, per the safety requirements of this synchronization.
 
 | Env var | Default | Validation |
 |---|---|---|

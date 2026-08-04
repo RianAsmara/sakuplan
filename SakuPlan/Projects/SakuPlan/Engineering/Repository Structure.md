@@ -30,7 +30,7 @@ sakuplan/
 │   ├── P0_GAP_ANALYSIS.md         verified gap snapshot, dated 2026-07-24
 │   └── PROGRESS.md                narrative log of verification runs
 ├── .github/workflows/backend.yml  CI — see [[CI and Quality Gates]]
-└── services/api/                  the only implemented service
+└── api/                  the only implemented service
     ├── cmd/api/main.go             entrypoint: bootstrap.New().Run()
     ├── db/migrations/00001_core.sql   single migration — see [[Migrations]]
     ├── openapi/openapi.yaml        OpenAPI 3.1 contract — see [[API Overview]]

@@ -1,7 +1,7 @@
 version: '3'
 
 vars:
-  API_DIR: services/api
+  API_DIR: api
   GOOSE_VERSION: v3.27.3
 
 tasks:
@@ -41,7 +41,7 @@ tasks:
   run:
     desc: Run the API
     dir: '{{.API_DIR}}'
-    dotenv: ['../../.env']
+    dotenv: ['../.env']
     cmds:
       - go run ./cmd/api
 
@@ -98,8 +98,8 @@ tasks:
     desc: Build the API binary
     dir: '{{.API_DIR}}'
     cmds:
-      - mkdir -p ../../bin
-      - CGO_ENABLED=0 go build -trimpath -o ../../bin/sakuplan-api ./cmd/api
+      - mkdir -p ../bin
+      - CGO_ENABLED=0 go build -trimpath -o ../bin/sakuplan-api ./cmd/api
 
   verify:
     desc: Run formatting, vet, unit tests, race tests, and build

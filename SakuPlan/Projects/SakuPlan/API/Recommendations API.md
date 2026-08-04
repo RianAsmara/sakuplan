@@ -12,7 +12,7 @@ last_synced: 2026-07-29
 
 # Recommendations API
 
-Covers both planning endpoints. Source: `services/api/openapi/openapi.yaml` (Planning tag), `internal/adapters/httpapi/planning_handlers.go`. See [[Safe-to-Spend Engine]] and [[Budget Recommendation Engine]] for the underlying formulas.
+Covers both planning endpoints. Source: `api/openapi/openapi.yaml` (Planning tag), `internal/adapters/httpapi/planning_handlers.go`. See [[Safe-to-Spend Engine]] and [[Budget Recommendation Engine]] for the underlying formulas.
 
 | Endpoint | Auth | Request/params | Response | Notes |
 |---|---|---|---|---|

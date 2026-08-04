@@ -28,7 +28,7 @@ SakuPlan is an Indonesia-first smart personal budgeting platform. This repositor
 │   ├── SECURITY.md
 │   ├── API_CONVENTIONS.md
 │   └── PROGRESS.md
-├── services/api/
+├── api/
 │   ├── cmd/api/
 │   ├── internal/domain/
 │   ├── internal/application/

@@ -12,7 +12,7 @@ last_synced: 2026-07-29
 
 # Database Model
 
-Source: `services/api/db/migrations/00001_core.sql` — the **only** migration in the repository (single-file schema, applied via Goose). See [[Migrations]] for migration mechanics and [[Financial Invariants]] for the business rules these constraints enforce.
+Source: `api/db/migrations/00001_core.sql` — the **only** migration in the repository (single-file schema, applied via Goose). See [[Migrations]] for migration mechanics and [[Financial Invariants]] for the business rules these constraints enforce.
 
 ## Entity-relationship diagram
 

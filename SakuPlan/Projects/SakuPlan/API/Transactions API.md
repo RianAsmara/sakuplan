@@ -12,7 +12,7 @@ last_synced: 2026-07-29
 
 # Transactions API
 
-Source: `services/api/openapi/openapi.yaml` (Transactions tag), `internal/adapters/httpapi/finance_handlers.go`. See [[Financial Ledger]] and [[Backend Modules#Transactions|TransactionService]] for the underlying model.
+Source: `api/openapi/openapi.yaml` (Transactions tag), `internal/adapters/httpapi/finance_handlers.go`. See [[Financial Ledger]] and [[Backend Modules#Transactions|TransactionService]] for the underlying model.
 
 | Endpoint | Auth | Idempotency | Request/params | Response | Errors |
 |---|---|---|---|---|---|

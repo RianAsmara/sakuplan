@@ -12,7 +12,7 @@ last_synced: 2026-07-29
 
 # Financial Accounts API
 
-Source: `services/api/openapi/openapi.yaml` (Accounts, Categories tags), `internal/adapters/httpapi/finance_handlers.go`. See [[Backend Modules#Accounts|AccountService]] and [[Backend Modules#Categories|CategoryService]].
+Source: `api/openapi/openapi.yaml` (Accounts, Categories tags), `internal/adapters/httpapi/finance_handlers.go`. See [[Backend Modules#Accounts|AccountService]] and [[Backend Modules#Categories|CategoryService]].
 
 ## Accounts
 

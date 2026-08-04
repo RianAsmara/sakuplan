@@ -12,7 +12,7 @@ last_synced: 2026-07-29
 
 # Saving Goals API
 
-Source: `services/api/openapi/openapi.yaml` (Goals tag), `internal/adapters/httpapi/planning_handlers.go`. See [[Backend Modules#Goals|GoalService]].
+Source: `api/openapi/openapi.yaml` (Goals tag), `internal/adapters/httpapi/planning_handlers.go`. See [[Backend Modules#Goals|GoalService]].
 
 | Endpoint | Auth | Idempotency | Request/params | Response | Errors |
 |---|---|---|---|---|---|

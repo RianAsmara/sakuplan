@@ -12,7 +12,7 @@ last_synced: 2026-07-29
 
 # Bills API
 
-Source: `services/api/openapi/openapi.yaml` (Bills tag), `internal/adapters/httpapi/planning_handlers.go`. See [[Backend Modules#Bills|BillService]].
+Source: `api/openapi/openapi.yaml` (Bills tag), `internal/adapters/httpapi/planning_handlers.go`. See [[Backend Modules#Bills|BillService]].
 
 | Endpoint | Auth | Request/params | Response | Errors |
 |---|---|---|---|---|
