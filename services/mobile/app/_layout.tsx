@@ -2,7 +2,7 @@ import { Slot } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { TamaguiProvider, Theme, YStack, Spinner } from 'tamagui'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import config from '../tamagui.config'
+import tamaguiConfig from '../tamagui.config'
 import { useAppFontsLoaded } from '../src/theme/fonts'
 
 const queryClient = new QueryClient()
@@ -12,7 +12,7 @@ export default function RootLayout() {
 
   if (!fontsLoaded) {
     return (
-      <TamaguiProvider config={config} defaultTheme="light">
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
         <Theme name="light">
           <YStack flex={1} alignItems="center" justifyContent="center" backgroundColor="$background">
             <Spinner size="large" color="$primary" />
@@ -23,7 +23,7 @@ export default function RootLayout() {
   }
 
   return (
-    <TamaguiProvider config={config} defaultTheme="light">
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
       <Theme name="light">
         <QueryClientProvider client={queryClient}>
           <StatusBar style="dark" />

@@ -62,7 +62,7 @@ export function installAuthMiddleware(client: Client<paths>, baseUrl: string): v
       let newAccessToken: string | null = null
       try {
         newAccessToken = await refreshSession(baseUrl)
-      } catch (error) {
+      } catch {
         // Treat thrown errors (network, JSON parse, etc.) as refresh failure
         await clearRefreshToken()
         useAuthStore.getState().clearSession()
