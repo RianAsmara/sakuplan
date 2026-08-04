@@ -1,8 +1,11 @@
 import { Slot } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { TamaguiProvider, Theme, YStack, Spinner } from 'tamagui'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import config from '../tamagui.config'
 import { useAppFontsLoaded } from '../src/theme/fonts'
+
+const queryClient = new QueryClient()
 
 export default function RootLayout() {
   const fontsLoaded = useAppFontsLoaded()
@@ -22,8 +25,10 @@ export default function RootLayout() {
   return (
     <TamaguiProvider config={config} defaultTheme="light">
       <Theme name="light">
-        <StatusBar style="dark" />
-        <Slot />
+        <QueryClientProvider client={queryClient}>
+          <StatusBar style="dark" />
+          <Slot />
+        </QueryClientProvider>
       </Theme>
     </TamaguiProvider>
   )
