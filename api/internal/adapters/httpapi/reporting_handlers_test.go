@@ -9,9 +9,11 @@ import (
 func registerTestUser(t *testing.T, server *Server, email string) string {
 	t.Helper()
 	resp, body := requestJSON(t, server.App(), http.MethodPost, "/v1/auth/register", "", map[string]any{
-		"email":        email,
-		"password":     "strong-password",
-		"display_name": "Reporting User",
+		"email":                    email,
+		"password":                 "strong-password",
+		"display_name":             "Reporting User",
+		"accepted_terms_version":   "2026-08-02",
+		"accepted_privacy_version": "2026-08-02",
 	})
 	if resp.StatusCode != http.StatusCreated {
 		t.Fatalf("register status=%d body=%s", resp.StatusCode, body)

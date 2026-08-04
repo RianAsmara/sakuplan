@@ -69,19 +69,19 @@ func mapError(err error) error {
 
 // Users
 func (s *Store) CreateUser(ctx context.Context, u domain.User) (domain.User, error) {
-	_, err := s.db(ctx).Exec(ctx, `INSERT INTO users(id,email,display_name,password_hash,status,role,currency,timezone,payday,minimum_buffer,ai_consent,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`, u.ID, u.Email, u.DisplayName, u.PasswordHash, u.Status, u.Role, u.Currency, u.Timezone, u.Payday, u.MinimumBuffer, u.AIConsent, u.CreatedAt, u.UpdatedAt)
+	_, err := s.db(ctx).Exec(ctx, `INSERT INTO users(id,email,display_name,password_hash,status,role,currency,timezone,payday,minimum_buffer,ai_consent,accepted_terms_version,accepted_privacy_version,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`, u.ID, u.Email, u.DisplayName, u.PasswordHash, u.Status, u.Role, u.Currency, u.Timezone, u.Payday, u.MinimumBuffer, u.AIConsent, u.AcceptedTermsVersion, u.AcceptedPrivacyVersion, u.CreatedAt, u.UpdatedAt)
 	return u, mapError(err)
 }
 func scanUser(row pgx.Row) (domain.User, error) {
 	var u domain.User
-	err := row.Scan(&u.ID, &u.Email, &u.DisplayName, &u.PasswordHash, &u.Status, &u.Role, &u.Currency, &u.Timezone, &u.Payday, &u.MinimumBuffer, &u.AIConsent, &u.CreatedAt, &u.UpdatedAt)
+	err := row.Scan(&u.ID, &u.Email, &u.DisplayName, &u.PasswordHash, &u.Status, &u.Role, &u.Currency, &u.Timezone, &u.Payday, &u.MinimumBuffer, &u.AIConsent, &u.AcceptedTermsVersion, &u.AcceptedPrivacyVersion, &u.CreatedAt, &u.UpdatedAt)
 	return u, mapError(err)
 }
 func (s *Store) GetUserByID(ctx context.Context, id string) (domain.User, error) {
-	return scanUser(s.db(ctx).QueryRow(ctx, `SELECT id,email,display_name,password_hash,status,role,currency,timezone,payday,minimum_buffer,ai_consent,created_at,updated_at FROM users WHERE id=$1`, id))
+	return scanUser(s.db(ctx).QueryRow(ctx, `SELECT id,email,display_name,password_hash,status,role,currency,timezone,payday,minimum_buffer,ai_consent,accepted_terms_version,accepted_privacy_version,created_at,updated_at FROM users WHERE id=$1`, id))
 }
 func (s *Store) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
-	return scanUser(s.db(ctx).QueryRow(ctx, `SELECT id,email,display_name,password_hash,status,role,currency,timezone,payday,minimum_buffer,ai_consent,created_at,updated_at FROM users WHERE email=$1`, email))
+	return scanUser(s.db(ctx).QueryRow(ctx, `SELECT id,email,display_name,password_hash,status,role,currency,timezone,payday,minimum_buffer,ai_consent,accepted_terms_version,accepted_privacy_version,created_at,updated_at FROM users WHERE email=$1`, email))
 }
 func (s *Store) UpdateUserProfile(ctx context.Context, u domain.User) (domain.User, error) {
 	_, err := s.db(ctx).Exec(ctx, `UPDATE users SET display_name=$3,currency=$4,timezone=$5,payday=$6,minimum_buffer=$7,ai_consent=$8,updated_at=$9 WHERE id=$1 AND email=$2`, u.ID, u.Email, u.DisplayName, u.Currency, u.Timezone, u.Payday, u.MinimumBuffer, u.AIConsent, u.UpdatedAt)

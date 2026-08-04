@@ -565,11 +565,13 @@ components:
       examples: [125000]
     RegisterRequest:
       type: object
-      required: [email, password, display_name]
+      required: [email, password, display_name, accepted_terms_version, accepted_privacy_version]
       properties:
         email: { type: string, format: email }
         password: { type: string, minLength: 12, maxLength: 128 }
         display_name: { type: string, minLength: 1, maxLength: 100 }
+        accepted_terms_version: { type: string, minLength: 1, maxLength: 32 }
+        accepted_privacy_version: { type: string, minLength: 1, maxLength: 32 }
     LoginRequest:
       type: object
       required: [email, password]

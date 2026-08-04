@@ -2,11 +2,11 @@
 
 ## Context
 
-The Go API (`services/api`) now covers identity, ledger, budgets, bills,
+The Go API (`api`) now covers identity, ledger, budgets, bills,
 goals, planning, and reporting (Phases 0–7a). No mobile client exists yet —
 `docs/PRD.md` mandates React Native + Expo + TypeScript with Zustand for
 local/UI state, and an OpenAPI-generated TypeScript client consuming
-`services/api/openapi/openapi.yaml`. This is the first mobile increment:
+`api/openapi/openapi.yaml`. This is the first mobile increment:
 project scaffold plus the authentication flow (register, login, logout),
 not the full P0 mobile screen set. Onboarding and every other PRD §5.1
 surface (accounts, transactions, budgets, bills, goals, safe-to-spend,
@@ -15,7 +15,7 @@ scope for this pass.
 
 ## Location & tooling
 
-- `services/mobile/`, matching the existing `services/api/` sibling
+- `mobile/`, matching the existing `api/` sibling
   convention in this monorepo.
 - Expo (TypeScript template), npm (no workspace tooling yet — single
   package; revisit pnpm/turborepo only if admin-web joins the monorepo
@@ -46,7 +46,7 @@ just a styling utility, and is explicitly what was requested.
 ## API client — `openapi-typescript` + `openapi-fetch`
 
 `openapi-typescript` generates TS types directly from
-`services/api/openapi/openapi.yaml` (already current, including the
+`api/openapi/openapi.yaml` (already current, including the
 RPT-001..004 endpoints). `openapi-fetch` is a small typed wrapper around
 `fetch` using those generated types — no Java toolchain (unlike
 `openapi-generator-cli`), less codegen magic than hook-generators like
@@ -74,7 +74,7 @@ request, then a forced logout (clear store + secure storage, redirect to
 
 ## PRD-alignment findings and resolutions
 
-Re-reading `docs/PRD.md` against the actual `services/api` implementation
+Re-reading `docs/PRD.md` against the actual `api` implementation
 surfaced two gaps directly relevant to this pass:
 
 1. **AUTH-001** requires registration to capture accepted terms version and
@@ -85,43 +85,32 @@ surfaced two gaps directly relevant to this pass:
    Register screen — see "Backend prerequisite" below.
 2. **USER-001**/**NFR-007** require a `locale` profile field and a fully
    localizable UI, with Bahasa Indonesia as the MVP-default language. No
-   `locale` field exists in the backend either. **Resolution:** build the
-   mobile app with real i18n scaffolding and ship Bahasa Indonesia as the
-   default (only) bundled locale for this pass; do not add the backend
-   `locale` field yet — that's a small, separate follow-up alongside other
-   USER-001 profile work, out of scope here since this pass doesn't touch
-   the profile-edit screen.
+   `locale` field exists in the backend either. **Revised resolution**
+   (2026-08-03, scope check against a 3-screen pass): hardcode Bahasa
+   Indonesia copy directly in components for this pass instead of standing
+   up an i18n library — an extraction layer with only one locale ever
+   bundled is speculative for this small a surface. Building it now was
+   the original plan; deferred until a second locale is actually
+   scheduled. The backend `locale` field remains its own later follow-up
+   alongside other USER-001 profile work either way.
 
 ## Backend prerequisite: AUTH-001 terms/privacy consent
 
-Small, scoped `services/api` addition, implemented and verified (with the
-project's usual unit/handler/repository test coverage, migration, and
-`task verify`/`task lint`/vulnerability checks) before the mobile Register
-screen is wired up:
-
-- `internal/domain`: `User` gains `AcceptedTermsVersion string` and
-  `AcceptedPrivacyVersion string` — set once at registration, immutable
-  afterward (a point-in-time consent record, not a `USER-001`-editable
-  preference).
-- Migration: two `NOT NULL` text columns on `users`.
-- `RegisterRequest` (application input + HTTP DTO + OpenAPI schema) gains
-  required `accepted_terms_version` / `accepted_privacy_version` fields,
-  validated non-empty like other required registration fields.
-- Exact validation rules (format/allowed values for a "version" string)
-  and whether these fields are echoed back in `userResponse` are decided
-  during implementation planning, grounded in the real `auth.go` code.
+**Done** — implemented in commit `d4b1f0f` on this branch (`User` gained
+`AcceptedTermsVersion`/`AcceptedPrivacyVersion`, migration, `RegisterRequest`
+fields end to end through domain/application/HTTP/OpenAPI). The mobile
+Register screen can wire directly against it; re-verify the exact field
+names/validation in that commit during implementation rather than against
+the placeholder description originally drafted here.
 
 ## Localization approach
 
-`expo-localization` + `react-i18next` (or equivalent), with Bahasa
-Indonesia as the sole bundled locale for this pass — not because English
-is planned next, but because building screens against an i18n layer from
-the start (extracted string keys, no hardcoded copy) avoids a rewrite once
-additional locales are added, per NFR-007. All Register/Login/Home screen
-copy is written in Bahasa Indonesia. `expo-localization` reads the
-device's locale for future use (date/number formatting) but the app does
-not yet offer a language switcher — matches the "MVP default" framing,
-not a full localization feature.
+Superseded by the revised PRD-alignment resolution above — no i18n
+library in this pass. All Register/Login/Home screen copy is written
+directly in Bahasa Indonesia in the components themselves. Revisit
+`expo-localization` + `react-i18next` (or equivalent) when a second
+locale is actually scheduled, at which point this pass's hardcoded
+strings get extracted into keys.
 
 ## Visual design direction
 
@@ -251,5 +240,5 @@ wiring over the store/query hooks already covered by unit tests.
 - Onboarding flow and all other PRD §5.1 mobile surfaces.
 - Dark theme (this pass ships the single custom light theme only).
 - CSV import, OCR, Android notification parsing (P1 items regardless).
-- Any workspace/monorepo tooling beyond a single `services/mobile`
+- Any workspace/monorepo tooling beyond a single `mobile`
   package.

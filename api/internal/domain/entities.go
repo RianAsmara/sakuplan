@@ -31,8 +31,12 @@ type User struct {
 	Payday        int
 	MinimumBuffer Money
 	AIConsent     bool
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+
+	AcceptedTermsVersion   string
+	AcceptedPrivacyVersion string
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type RefreshSession struct {

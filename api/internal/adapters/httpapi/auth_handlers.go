@@ -9,9 +9,11 @@ import (
 )
 
 type registerRequest struct {
-	Email       string `json:"email"`
-	Password    string `json:"password"`
-	DisplayName string `json:"display_name"`
+	Email                  string `json:"email"`
+	Password               string `json:"password"`
+	DisplayName            string `json:"display_name"`
+	AcceptedTermsVersion   string `json:"accepted_terms_version"`
+	AcceptedPrivacyVersion string `json:"accepted_privacy_version"`
 }
 
 type loginRequest struct {
@@ -28,7 +30,11 @@ func (s *Server) register(c fiber.Ctx) error {
 	if err := c.Bind().Body(&req); err != nil {
 		return domain.ErrInvalidInput
 	}
-	pair, err := s.svc.Auth.Register(c, application.RegisterInput{Email: req.Email, Password: req.Password, DisplayName: req.DisplayName, UserAgent: c.Get("User-Agent"), IPAddress: c.IP()})
+	pair, err := s.svc.Auth.Register(c, application.RegisterInput{
+		Email: req.Email, Password: req.Password, DisplayName: req.DisplayName,
+		AcceptedTermsVersion: req.AcceptedTermsVersion, AcceptedPrivacyVersion: req.AcceptedPrivacyVersion,
+		UserAgent: c.Get("User-Agent"), IPAddress: c.IP(),
+	})
 	if err != nil {
 		return err
 	}

@@ -2,14 +2,16 @@ version: '3'
 
 vars:
   API_DIR: api
+  MOBILE_DIR: mobile
   GOOSE_VERSION: v3.27.3
 
 tasks:
   bootstrap:
-    desc: Download Go dependencies and create the local environment file
+    desc: Download Go and mobile dependencies and create the local environment file
     cmds:
       - test -f .env || cp .env.example .env
       - cd {{.API_DIR}} && go mod tidy
+      - cd {{.MOBILE_DIR}} && npm install
 
   infra:up:
     desc: Start PostgreSQL required by the current API core
@@ -109,3 +111,64 @@ tasks:
       - task: test
       - task: test:race
       - task: build
+
+  mobile:install:
+    desc: Install mobile app dependencies
+    dir: '{{.MOBILE_DIR}}'
+    cmds:
+      - npm install
+
+  mobile:start:
+    desc: Start the Expo dev server
+    dir: '{{.MOBILE_DIR}}'
+    cmds:
+      - npx expo start
+
+  mobile:ios:
+    desc: Start the Expo dev server for iOS
+    dir: '{{.MOBILE_DIR}}'
+    cmds:
+      - npx expo start --ios
+
+  mobile:android:
+    desc: Start the Expo dev server for Android
+    dir: '{{.MOBILE_DIR}}'
+    cmds:
+      - npx expo start --android
+
+  mobile:web:
+    desc: Start the Expo dev server for web
+    dir: '{{.MOBILE_DIR}}'
+    cmds:
+      - npx expo start --web
+
+  mobile:test:
+    desc: Run the mobile app's Jest test suite
+    dir: '{{.MOBILE_DIR}}'
+    cmds:
+      - npm test
+
+  mobile:typecheck:
+    desc: Typecheck the mobile app
+    dir: '{{.MOBILE_DIR}}'
+    cmds:
+      - npx tsc --noEmit
+
+  mobile:lint:
+    desc: Lint the mobile app
+    dir: '{{.MOBILE_DIR}}'
+    cmds:
+      - npx expo lint
+
+  mobile:generate-api:
+    desc: Regenerate the mobile app's typed OpenAPI client from the API's contract
+    dir: '{{.MOBILE_DIR}}'
+    cmds:
+      - npm run generate:api
+
+  mobile:verify:
+    desc: Run typecheck, lint, and tests for the mobile app
+    cmds:
+      - task: mobile:typecheck
+      - task: mobile:lint
+      - task: mobile:test

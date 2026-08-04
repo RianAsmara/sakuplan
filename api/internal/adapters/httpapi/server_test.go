@@ -139,9 +139,11 @@ func TestHealthz(t *testing.T) {
 func TestRegisterAndCreateAccount(t *testing.T) {
 	server, _ := newTestServer()
 	resp, body := requestJSON(t, server.App(), http.MethodPost, "/v1/auth/register", "", map[string]any{
-		"email":        "rian@example.com",
-		"password":     "strong-password",
-		"display_name": "Rian",
+		"email":                    "rian@example.com",
+		"password":                 "strong-password",
+		"display_name":             "Rian",
+		"accepted_terms_version":   "2026-08-02",
+		"accepted_privacy_version": "2026-08-02",
 	})
 	if resp.StatusCode != http.StatusCreated {
 		t.Fatalf("register status=%d body=%s", resp.StatusCode, body)
@@ -200,9 +202,11 @@ func TestProtectedRouteRejectsMissingBearerToken(t *testing.T) {
 func TestTransactionAndReversalHTTPFlow(t *testing.T) {
 	server, _ := newTestServer()
 	_, registerBody := requestJSON(t, server.App(), http.MethodPost, "/v1/auth/register", "", map[string]any{
-		"email":        "ledger@example.com",
-		"password":     "strong-password",
-		"display_name": "Ledger User",
+		"email":                    "ledger@example.com",
+		"password":                 "strong-password",
+		"display_name":             "Ledger User",
+		"accepted_terms_version":   "2026-08-02",
+		"accepted_privacy_version": "2026-08-02",
 	})
 	var tokens struct {
 		AccessToken string `json:"access_token"`
@@ -298,9 +302,11 @@ func TestUnknownRouteReturnsFramework404Envelope(t *testing.T) {
 func TestUpdateProfileHTTPFlow(t *testing.T) {
 	server, _ := newTestServer()
 	_, body := requestJSON(t, server.App(), http.MethodPost, "/v1/auth/register", "", map[string]any{
-		"email":        "profile@example.com",
-		"password":     "strong-password",
-		"display_name": "Initial",
+		"email":                    "profile@example.com",
+		"password":                 "strong-password",
+		"display_name":             "Initial",
+		"accepted_terms_version":   "2026-08-02",
+		"accepted_privacy_version": "2026-08-02",
 	})
 	var tokens struct {
 		AccessToken string `json:"access_token"`

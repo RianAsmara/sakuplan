@@ -30,6 +30,7 @@ func NewAuthService(users domain.UserRepository, sessions domain.SessionReposito
 
 type RegisterInput struct {
 	Email, Password, DisplayName, UserAgent, IPAddress string
+	AcceptedTermsVersion, AcceptedPrivacyVersion       string
 }
 
 type LoginInput struct {
@@ -47,15 +48,20 @@ type TokenPair struct {
 func (s *AuthService) Register(ctx context.Context, in RegisterInput) (TokenPair, error) {
 	in.Email = domain.NormalizeEmail(in.Email)
 	in.DisplayName = strings.TrimSpace(in.DisplayName)
+	in.AcceptedTermsVersion = strings.TrimSpace(in.AcceptedTermsVersion)
+	in.AcceptedPrivacyVersion = strings.TrimSpace(in.AcceptedPrivacyVersion)
 	if in.Email == "" || len(in.Email) > 254 || !strings.Contains(in.Email, "@") || len(in.Password) < 12 || len(in.Password) > 128 || in.DisplayName == "" || len(in.DisplayName) > 100 {
 		return TokenPair{}, domain.ValidationError{Fields: []domain.FieldError{{Field: "credentials", Message: "valid email, display name, and password of at least 12 characters are required"}}}
+	}
+	if in.AcceptedTermsVersion == "" || len(in.AcceptedTermsVersion) > 32 || in.AcceptedPrivacyVersion == "" || len(in.AcceptedPrivacyVersion) > 32 {
+		return TokenPair{}, domain.ValidationError{Fields: []domain.FieldError{{Field: "consent", Message: "accepted terms and privacy policy versions are required"}}}
 	}
 	hash, err := s.hasher.Hash(in.Password)
 	if err != nil {
 		return TokenPair{}, fmt.Errorf("hash password: %w", err)
 	}
 	now := s.clock.Now()
-	user := domain.User{ID: s.ids.New(), Email: in.Email, DisplayName: in.DisplayName, PasswordHash: hash, Status: domain.UserStatusActive, Role: domain.RoleUser, Currency: "IDR", Timezone: "Asia/Jakarta", Payday: 25, CreatedAt: now, UpdatedAt: now}
+	user := domain.User{ID: s.ids.New(), Email: in.Email, DisplayName: in.DisplayName, PasswordHash: hash, Status: domain.UserStatusActive, Role: domain.RoleUser, Currency: "IDR", Timezone: "Asia/Jakarta", Payday: 25, AcceptedTermsVersion: in.AcceptedTermsVersion, AcceptedPrivacyVersion: in.AcceptedPrivacyVersion, CreatedAt: now, UpdatedAt: now}
 	var pair TokenPair
 	err = s.uow.WithinTransaction(ctx, func(txctx context.Context) error {
 		created, err := s.users.Create(txctx, user)

@@ -1,5 +1,213 @@
 # Progress
 
+## 2026-08-02 — Mobile Task 2: Expo scaffold + custom Tamagui theme
+
+### Requirement IDs implemented
+
+None (infrastructure/scaffolding task — SDD plan
+`.superpowers/sdd/2026-08-02-mobile-scaffold-auth/task-2-brief.md`, Task 2 of
+the mobile scaffold+auth plan). Creates `mobile/` from scratch: an
+Expo Router app wired to a custom Tamagui theme (SakuPlan's `kertas`/`tinta`/
+`terjaga`/`leluasa`/`kulit`/`peringatan` color tokens, Fraunces/IBM Plex Sans/
+IBM Plex Mono fonts) and gated font loading. No screens, navigation, or API
+client — those are later tasks in the same plan.
+
+### Files changed
+
+- `mobile/` (new): scaffolded via `create-expo-app@latest --template
+  blank-typescript`, `expo-router` + navigation deps, Tamagui core packages,
+  Google Fonts packages.
+- `mobile/tamagui.config.ts` (new): custom color/space/size/radius
+  tokens, three custom fonts (heading/body/mono), single `light` theme,
+  exports `AppConfig` type via `declare module 'tamagui'`.
+- `mobile/metro.config.js` (new): `withTamagui` Metro plugin wiring.
+- `mobile/src/theme/fonts.ts` (new): `useAppFontsLoaded()` hook
+  gating on Fraunces/Plex Sans/Plex Mono via `@expo-google-fonts/*`.
+- `mobile/app/_layout.tsx` (new): root layout — themed loading
+  spinner while fonts load, then `TamaguiProvider`/`Theme`/`Slot` once ready.
+  Added `defaultTheme="light"` (required by the installed Tamagui version,
+  not present in the original plan snippet).
+- `mobile/app/index.tsx` (new, not in the original plan): minimal
+  stub route (`return null`) — `expo-router`'s `<Slot />` throws "Couldn't
+  find any screens for the navigator" when `app/` has zero route files, a
+  real crash found via the emulator boot check. Task 7 replaces this with
+  real route groups.
+- Deleted `mobile/App.tsx` and `mobile/index.ts` (template
+  entry point, superseded by `main: "expo-router/entry"`).
+
+### Database migrations
+
+None (mobile-only).
+
+### Commands run and results
+
+1. `npx create-expo-app@latest mobile --template blank-typescript` +
+   `npx expo install expo-router react-native-safe-area-context
+   react-native-screens expo-linking expo-constants expo-status-bar` → PASS.
+2. `npm install tamagui@2.6.2 @tamagui/config@2.6.2
+   @tamagui/animations-react-native@2.6.2 --legacy-peer-deps` → PASS
+   (`--legacy-peer-deps` needed: `react-dom@19.2.8` pulled transitively via
+   `expo-router`'s optional web deps conflicts with the SDK-57-pinned
+   `react@19.2.3`).
+3. `npx expo install expo-font @expo-google-fonts/fraunces
+   @expo-google-fonts/ibm-plex-sans @expo-google-fonts/ibm-plex-mono` → PASS.
+4. `npm install @tamagui/metro-plugin@2.6.2 --legacy-peer-deps` → PASS.
+5. `npm install --save-dev react-dom@19.2.3 --legacy-peer-deps` → PASS
+   (`@tamagui/metro-plugin`'s static extractor does a real `require('react-dom')`
+   at Metro build time; without it Metro failed to start with `Cannot find
+   module 'react-dom'`. Pinned to match the app's `react` version exactly;
+   never shipped in the native bundle).
+6. `npx tsc --noEmit` → PASS, exit 0 (after adding `defaultTheme="light"` to
+   `TamaguiProvider`, required by tamagui 2.6.2's types — the plan snippet
+   predates this requirement).
+7. `npx expo start` (Metro boot) → started cleanly, no bundler errors.
+8. Forced a real Android bundle via `curl
+   ".../expo-router/entry.bundle?platform=android&dev=true..."` directly
+   against the running Metro server → HTTP 200, 1835 modules, no errors.
+9. Real Android emulator boot check (Android SDK + `/dev/kvm` available in
+   this sandbox): downloaded `system-images;android-35;google_apis;x86_64`,
+   created AVD `sakuplan_test` (Pixel 6 profile), booted headless
+   (`-no-window -gpu swiftshader_indirect`), confirmed
+   `sys.boot_completed=1`, ran `npx expo start --android` (auto-installed
+   Expo Go), verified app state via `adb shell screencap` screenshots (no
+   interactive display in this sandbox, so the emulator's off-screen
+   framebuffer was captured instead of a live view):
+   - First attempt (before the `app/index.tsx` fix): real red-box render
+     error confirmed via screenshot — `<Slot />` with zero registered routes.
+   - After the fix: clean full rebuild (`--clear`), 1836 modules, no render
+     errors, app reaches a stable blank white screen. Confirmed by pixel
+     sampling (`RGB 255,255,255`) that this is the correct rendering of the
+     plan's own code: the `fontsLoaded` branch in `_layout.tsx` sets no
+     `backgroundColor` (only the loading/spinner branch does), so once fonts
+     load and `<Slot/>` renders the empty stub route, the native view's
+     default white shows — matching the plan's "then an empty screen"
+     expectation.
+   - Did **not** visually catch the intermediate `$kertas`-background/
+     `$primary`-spinner loading frame — Google Fonts are bundled locally and
+     `useFonts` resolved faster than the `adb screencap`+`pull` round-trip
+     across ~5 rapid-fire screenshots. Confident in this branch by code
+     review and type-checking, not by direct observation; noted as a gap
+     rather than claimed as verified.
+
+### Deferred / not verified
+
+- iOS boot check not performed (no macOS/simulator in this sandbox); the
+  brief accepts either platform and Android was used.
+- The `$kertas`/`$primary` loading-spinner frame was not visually confirmed
+  (see above) — only the pre- and post-load states were captured.
+- An intermittent "Cannot connect to Expo CLI..." banner appeared from Expo
+  Go's dev-tools websocket channel (separate from the HTTP bundle-fetch
+  channel, which kept working) — likely a sandbox networking quirk, did not
+  block bundle loading or rendering, not investigated further.
+- `openapi-typescript` (referenced by the new `generate:api` npm script) is
+  not installed — out of scope per the brief ("no API client yet").
+
+Full detail: `.superpowers/sdd/2026-08-02-mobile-scaffold-auth/task-2-report.md`.
+
+---
+
+## 2026-08-02 — AUTH-001: registration terms/privacy consent fields
+
+### Requirement IDs implemented
+
+AUTH-001 (registration must capture accepted terms/privacy versions). This
+was a gap left over from the original Phase 0 identity implementation: the
+PRD required it, but the field never made it into `RegisterInput`, `User`,
+or the schema. Backend-only prerequisite for a later, separate mobile
+Register screen task, which will send fixed version-string constants.
+
+### Files changed
+
+- `internal/domain/entities.go`: added `User.AcceptedTermsVersion`,
+  `User.AcceptedPrivacyVersion` (immutable after registration — not touched
+  by `UpdateUserProfile`, not part of `userResponse`/OpenAPI `User` schema).
+- `internal/application/auth.go`: `RegisterInput` gains
+  `AcceptedTermsVersion`, `AcceptedPrivacyVersion`; `Register` trims and
+  validates both as required, max 32 characters, returning a
+  `domain.ValidationError` (field `consent`) when missing/oversized; both
+  are persisted onto the created `domain.User`.
+- `internal/application/auth_test.go`: updated
+  `TestRegisterCreatesUserAndTokens` to assert the two fields round-trip
+  through the fake repository; updated
+  `TestRefreshRotatesSessionAndRejectsReuse`'s register call; added
+  `TestRegisterRejectsMissingConsent`.
+- `internal/adapters/postgres/store.go`: `CreateUser`, `scanUser` (used by
+  both `GetUserByID` and `GetUserByEmail`) read/write the two new columns.
+- `internal/adapters/httpapi/auth_handlers.go`: `registerRequest` gains
+  `accepted_terms_version`/`accepted_privacy_version` JSON fields, passed
+  through to `application.RegisterInput`.
+- `internal/adapters/httpapi/server_test.go`,
+  `internal/adapters/httpapi/reporting_handlers_test.go`: the four
+  HTTP-level register call sites now send both consent fields (previously
+  501/422'd once the field became required).
+- `tests/integration/postgres_test.go`: `startPostgres` previously
+  hand-parsed only `db/migrations/00001_core.sql` as the Testcontainers init
+  script, hardcoding a single migration file by name. With migration
+  `00002` adding a `NOT NULL` column, this would have silently skipped it
+  and broken every integration test (`column accepted_terms_version does
+  not exist`). Changed it to read and concatenate the `-- +goose Up`
+  section of every `*.sql` file in `db/migrations`, sorted by filename, so
+  future migrations are picked up automatically. Also updated `createUser`
+  to supply both consent fields (now `NOT NULL` in the real schema).
+- `openapi/openapi.yaml`: `RegisterRequest` gains `accepted_terms_version`,
+  `accepted_privacy_version` as required string properties (1–32 chars).
+
+### Database migrations
+
+- `db/migrations/00002_users_registration_consent.sql`: adds
+  `accepted_terms_version` and `accepted_privacy_version` (`text NOT NULL`)
+  to `users`. Uses a temporary `DEFAULT ''` during `ADD COLUMN` (dropped
+  immediately after) purely to satisfy `NOT NULL` against a table that
+  already has rows in dev databases; new rows must supply a real value
+  going forward since application-layer validation requires it.
+
+### Commands run and results
+
+1. `go test ./internal/application/... -run 'TestRegister'` (pre-implementation,
+   RED) → compile failure: `RegisterInput` had no `AcceptedTermsVersion`/
+   `AcceptedPrivacyVersion` fields, as expected before Step 3.
+2. `go test ./internal/application/... -run 'TestRegister|TestRefresh' -v`
+   (post-implementation, GREEN) → PASS
+   (`TestRegisterCreatesUserAndTokens`, `TestRegisterRejectsMissingConsent`,
+   `TestRefreshRotatesSessionAndRejectsReuse`, 3/3).
+3. `task migrate:up` → applied `00002_users_registration_consent.sql`
+   (`goose: successfully migrated database to version: 2`). This sandbox
+   cannot route from the host network namespace to the Compose Postgres
+   container's bridge IP (a pre-existing sandbox limitation, also noted in
+   the 2026-08-02 Phase 7a entry below for the fixed 5432 port); worked
+   around by running `goose` inside a short-lived container attached to the
+   same Compose network (`docker run --network
+   mobile-scaffold-auth_default ...`, connecting to the `postgres` service
+   by container DNS name instead of `localhost`), with the host's Go module
+   cache bind-mounted in so no network egress was needed for the build.
+   Verified with `psql \d users` that both columns exist as `NOT NULL`.
+4. `go test ./...` → PASS, all packages.
+5. `go test -race ./internal/...` → PASS, all packages.
+6. `task verify` (fmt:check, vet, test, test:race, build) → PASS.
+7. `task lint` (`golangci-lint run ./...`) → 35 findings, same counts and
+   categories as the pre-change baseline (`bodyclose: 21, gosec: 1,
+   govet: 12, nilerr: 1`), confirmed by running lint against `git stash`'d
+   (pre-change) code and diffing the finding counts — no new finding or new
+   category introduced by this change.
+8. `govulncheck ./...` → PASS. 0 vulnerabilities in code or called
+   dependencies.
+9. `task test:integration` (`go test -tags=integration -count=1
+   ./tests/integration/...`) → PASS, both
+   `TestPostgresLedgerAndBudgetConstraints` and
+   `TestPostgresReportingQueries`, against real Testcontainers-launched
+   Postgres with both migrations applied.
+
+### Deferred / not verified
+
+- No manual `task run` end-to-end smoke test, for the same sandbox
+  networking reason recorded in the Phase 7a entry below (fixed-port
+  Postgres unreachable from the host network namespace). Confidence rests
+  on the application unit tests (fake repository), and the Postgres
+  integration tests (real schema, real `NOT NULL` constraint, real
+  round-trip through `CreateUser`/`scanUser`).
+
+---
+
 ## 2026-08-02 — Phase 7a: Dashboard, cash-flow report, export (RPT-001..004)
 
 ### Requirement IDs implemented
