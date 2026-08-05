@@ -1,4 +1,4 @@
-import { formatRupiah } from './money'
+import { formatRupiah, parseRupiahInput } from './money'
 
 describe('formatRupiah', () => {
   it('formats a positive amount with thousands separators', () => {
@@ -15,5 +15,23 @@ describe('formatRupiah', () => {
 
   it('rounds fractional input to the nearest whole unit', () => {
     expect(formatRupiah(1000.6)).toBe('Rp1.001')
+  })
+})
+
+describe('parseRupiahInput', () => {
+  it('parses a thousands-separated string to minor units', () => {
+    expect(parseRupiahInput('150.000')).toBe(150000)
+  })
+
+  it('ignores a leading Rp prefix and spaces', () => {
+    expect(parseRupiahInput('Rp 1.234.567')).toBe(1234567)
+  })
+
+  it('returns 0 for an empty string', () => {
+    expect(parseRupiahInput('')).toBe(0)
+  })
+
+  it('returns 0 for a string with no digits', () => {
+    expect(parseRupiahInput('abc')).toBe(0)
   })
 })
