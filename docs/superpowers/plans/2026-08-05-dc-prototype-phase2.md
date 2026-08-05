@@ -359,10 +359,21 @@ git commit -m "feat(mobile): add parseRupiahInput and RupiahInput component"
   (e.g. `"5 Agu 2026"`), `formatMonthYearID(date: Date): string` (e.g.
   `"Agustus 2026"`), `startOfMonth(date: Date): Date`,
   `endOfMonth(date: Date): Date`, `addMonths(date: Date, months: number): Date`,
-  `daysAgo(date: Date, days: number): Date`. Consumed by Task 15
-  (transaction date quick-toggle), Task 20 (budget period defaults), Task
-  23 (Reports month navigation), Task 14 (transaction list item date
-  display).
+  `daysAgo(date: Date, days: number): Date`, `toDateOnly(date: Date): string`
+  (formats the Date's LOCAL components as `YYYY-MM-DD`, no UTC conversion —
+  added as a fix-round addendum after code review caught that
+  `toRFC3339(...).slice(0, 10)` silently shifts the calendar day backward
+  in this app's fixed `Asia/Jakarta` (UTC+7) timezone whenever the source
+  `Date` is local midnight, since `toISOString()` converts to UTC before
+  the caller can slice out a date-only substring; `toDateOnly` reads the
+  Date's own `getFullYear`/`getMonth`/`getDate` instead, so it is immune to
+  that shift). Consumed by Task 15 (transaction date quick-toggle), Task 20
+  (budget period defaults — via `toRFC3339`, not `toDateOnly`: `CreateBudgetRequest`'s
+  `start_date`/`end_date` are `date-time` fields where the full UTC instant
+  is exactly what's wanted, not a sliced date-only string), Task 23
+  (Reports month navigation — via `toDateOnly`, since `GET /v1/reports/cash-flow`'s
+  `start`/`end` query params are `date`-only format), Task 14 (transaction
+  list item date display, via `formatDateID`).
 
 Transactions in this phase deliberately don't get a full date picker: no
 date-picker library is installed (`@react-native-community/datetimepicker`
@@ -2675,15 +2686,20 @@ git commit -m "feat(mobile): add useCashFlowReport hook"
 **Interfaces:**
 - Consumes: `useCashFlowReport` (Task 22), `toTrendLines`/`toCategoryBarData`/
   `toBudgetVsActualBarData` (Task 6), `startOfMonth`/`endOfMonth`/
-  `addMonths`/`toRFC3339`/`formatMonthYearID` (Task 4), `formatRupiah`,
+  `addMonths`/`toDateOnly`/`formatMonthYearID` (Task 4), `formatRupiah`,
   `LineChart`/`BarChart` from `react-native-gifted-charts` (Task 21).
 - Produces: nothing new consumed elsewhere.
 
 `{start,end}` for `GET /v1/reports/cash-flow` use `date` format (not
-`date-time`) per the query parameter schema in `openapi.yaml` — the date
-helpers here produce full `Date` objects/RFC3339 timestamps, so this task
-slices to `YYYY-MM-DD` before querying (`toRFC3339(...).slice(0, 10)`)
-rather than sending a full timestamp the `date` format doesn't expect.
+`date-time`) per the query parameter schema in `openapi.yaml`, so this task
+formats with `toDateOnly` (Task 4's fix-round addendum), **not**
+`toRFC3339(...).slice(0, 10)` — the latter converts to UTC before slicing,
+which silently shifts the date backward by one day in this app's fixed
+`Asia/Jakarta` (UTC+7) timezone whenever `startOfMonth`/`endOfMonth`'s
+local-midnight `Date` crosses into the previous UTC day (e.g. local
+midnight Aug 1 becomes `2026-07-31T17:00:00.000Z`, so `.slice(0, 10)` would
+wrongly yield `"2026-07-31"`). `toDateOnly` reads the `Date`'s own local
+components instead, so it isn't affected by the UTC conversion.
 
 - [ ] **Step 1: Implement**
 
@@ -2696,7 +2712,7 @@ import { ChevronLeft, ChevronRight } from '@tamagui/lucide-icons-2'
 import { BarChart, LineChart } from 'react-native-gifted-charts'
 import { PocketCard } from '../../../src/components/PocketCard'
 import { formatRupiah } from '../../../src/format/money'
-import { addMonths, endOfMonth, formatMonthYearID, startOfMonth, toRFC3339 } from '../../../src/format/date'
+import { addMonths, endOfMonth, formatMonthYearID, startOfMonth, toDateOnly } from '../../../src/format/date'
 import { toBudgetVsActualBarData, toCategoryBarData, toTrendLines } from '../../../src/reports/chartData'
 import { useCashFlowReport } from '../../../src/reports/useCashFlowReport'
 
@@ -2708,8 +2724,8 @@ const COLORS = {
 
 export default function ReportsScreen() {
   const [month, setMonth] = useState(() => startOfMonth(new Date()))
-  const start = toRFC3339(startOfMonth(month)).slice(0, 10)
-  const end = toRFC3339(endOfMonth(month)).slice(0, 10)
+  const start = toDateOnly(startOfMonth(month))
+  const end = toDateOnly(endOfMonth(month))
   const report = useCashFlowReport({ start, end })
 
   return (
