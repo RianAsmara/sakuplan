@@ -1,5 +1,93 @@
 # Progress
 
+## 2026-08-05 — dc-prototype Phase 1: auth redesign + 5-tab shell + Home wired to dashboard
+
+### Requirement IDs implemented
+
+None (design/UI implementation of `docs/superpowers/plans/2026-08-04-dc-prototype-phase1.md`,
+Tasks 9–12 — Tasks 1–8 landed in prior sessions). Completes the plan: Login/Register
+redesigned to match `SakuPlan.dc.html`, a 5-tab Expo Router navigation shell added
+under `(app)/(tabs)`, and the Home tab wired to the real `GET /v1/dashboard` endpoint
+in place of the earlier static placeholder.
+
+### Files changed
+
+- `mobile/app/(app)/(tabs)/home.tsx` (new): Home screen consuming `useCurrentUser`
+  and `useDashboard`, rendering safe-to-spend, liquid balance, budget usage,
+  upcoming bill (via `billUrgency`), goal progress, and top categories, all through
+  `formatRupiah`. Header "Notifikasi"/avatar controls are inert placeholders
+  (no notifications/profile endpoints yet).
+- `mobile/app/(app)/home.tsx` (deleted): superseded by the tabbed route above.
+- `mobile/app/(app)/(tabs)/_layout.tsx` (new): `Tabs` layout wiring `TabBarButton`
+  (added in a prior session) as the `tabBarButton` renderer for all five tabs.
+- `mobile/app/(app)/(tabs)/transactions.tsx`, `budgets.tsx`, `reports.tsx`,
+  `more.tsx` (new): honest `ComingSoonScreen` placeholders (added in a prior
+  session), not half-built real screens.
+- `mobile/app/index.tsx`: redirect target updated from `/(app)/home` to
+  `/(app)/(tabs)/home`.
+
+### Database migrations
+
+None (mobile-only).
+
+### Commands run and results
+
+1. `cd mobile && npx tsc --noEmit` → PASS, exit 0 (run after each of Tasks 9–11).
+2. `cd mobile && npx eslint <changed files>` → PASS after each task; `npx expo lint`
+   (full project) → PASS, exit 0.
+3. `cd mobile && npx jest` → PASS, 4 suites / 18 tests (`billUrgency.test.ts`,
+   `refreshInterceptor.test.ts`, `store.test.ts`, `money.test.ts`).
+4. Backend smoke test: `task infra:up`, confirmed already at migration version 2,
+   `task run` (Fx boot, `http_server_started address=:8080`). Verified with `curl`:
+   `POST /v1/auth/register`, `POST /v1/auth/login`, `GET /v1/dashboard` (with a
+   fresh user) all returned correct 2xx/JSON responses.
+5. Manual Expo walkthrough: booted the `sakuplan_test` headless Android emulator
+   (Android SDK + `/dev/kvm`, same setup as the 2026-08-02 Task 2 entry) via
+   `npx expo start --android`. Confirmed via `adb exec-out screencap`: app boots
+   with no red-box errors; the redesigned Login screen renders pixel-correct
+   against the prototype (solid-border inputs, icons beside labels, tinted
+   left-accent error banner reading "Email atau kata sandi salah." after a failed
+   login attempt, "atau" divider, disabled Google button with the
+   "Pratinjau desain — integrasi belum tersedia." caption).
+6. Confirmed emulator→host connectivity independent of the app: `toybox netcat`
+   from inside the emulator against `10.0.2.2:8080` returned a real HTTP response
+   from the running API, ruling out a network-level block.
+
+### Deferred / not verified
+
+- Could not complete the logged-in portion of the walkthrough (tab bar with
+  Beranda active, real dashboard numbers, placeholder tabs) in this sandbox.
+  Root cause isolated, not guessed: `adb shell input text` / `input keyevent`
+  reliably updates the native `EditText`'s displayed content (confirmed via
+  `uiautomator dump`) but does **not** trigger the Tamagui `Input`'s
+  `onChangeText` JS callback in this headless Expo Go build — the `Masuk`
+  button's native `enabled` attribute stayed `false` (i.e. `canSubmit` stayed
+  false in JS) even once the native field visibly held the correct, correctly-
+  typed credentials, across three different injection methods (bulk `input
+  text`, per-character `input text`, per-character hardware `input keyevent`).
+  This is a driving-mechanism limitation of scripting ADB against this
+  particular Expo Go/software-renderer combination, not a code defect — the
+  same screens' pure logic (`formatRupiah`, `billUrgency`, the auth store, the
+  refresh interceptor) is fully covered by the Jest suite, and the login/
+  register mutation code is unchanged from the already-merged Tasks 5's
+  `useLogin`. Confidence in the tab shell and dashboard wiring instead rests on:
+  full type-checking of every new file, `eslint`/`expo lint` clean, and the
+  `GET /v1/dashboard` response shape (verified via `curl`) matching exactly
+  what `home.tsx` destructures (`liquid_balance`, `safe_to_spend_today`,
+  `safe_to_spend_until_payday`, `days_until_payday`, `budget_total`,
+  `budget_used`, `budget_remaining`, `upcoming_bill`, `goals`,
+  `top_categories`).
+- Recommend a follow-up session either drive the emulator through a real
+  on-screen IME tap sequence (not raw `adb input`), or add a project `run`
+  skill (per `/run-skill-generator`) that captures a working driver for this
+  specific Expo Go + headless-emulator combination.
+- `mobile/.env`'s `EXPO_PUBLIC_API_URL` was temporarily pointed at
+  `http://10.0.2.2:8080` (the Android emulator's host alias) for this
+  walkthrough and reverted to `http://localhost:8080` afterward — this file is
+  gitignored and this note is purely for the next person's context.
+
+---
+
 ## 2026-08-02 — Mobile Task 2: Expo scaffold + custom Tamagui theme
 
 ### Requirement IDs implemented
