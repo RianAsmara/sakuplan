@@ -1,4 +1,4 @@
-import { addMonths, daysAgo, endOfMonth, formatDateID, formatMonthYearID, startOfMonth, toRFC3339 } from './date'
+import { addMonths, daysAgo, endOfMonth, formatDateID, formatMonthYearID, startOfMonth, toDateOnly, toRFC3339 } from './date'
 
 describe('toRFC3339', () => {
   it('renders an ISO 8601 UTC timestamp', () => {
@@ -45,5 +45,15 @@ describe('daysAgo', () => {
   it('subtracts N days from the given date', () => {
     const yesterday = daysAgo(new Date(2026, 7, 5), 1)
     expect(yesterday.getDate()).toBe(4)
+  })
+})
+
+describe('toDateOnly', () => {
+  it('formats local date components as YYYY-MM-DD regardless of time-of-day', () => {
+    expect(toDateOnly(new Date(2026, 7, 5, 23, 59))).toBe('2026-08-05')
+  })
+
+  it('zero-pads single-digit months and days', () => {
+    expect(toDateOnly(new Date(2026, 0, 3))).toBe('2026-01-03')
   })
 })
