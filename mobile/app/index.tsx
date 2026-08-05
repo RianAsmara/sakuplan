@@ -15,5 +15,5 @@ export default function Index() {
       </YStack>
     )
   }
-  return <Redirect href={accessToken ? '/(app)/home' : '/(auth)/login'} />
+  return <Redirect href={accessToken ? '/(app)/(tabs)/home' : '/(auth)/login'} />
 }
