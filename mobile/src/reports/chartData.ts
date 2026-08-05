@@ -30,7 +30,11 @@ interface ChartBar {
 }
 
 function shortDayLabelID(iso: string): string {
-  return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+  // timeZone is pinned to Asia/Jakarta (this app's fixed timezone) so the
+  // rendered day/month don't shift on hosts with a UTC offset < +7, where an
+  // unqualified toLocaleDateString would otherwise render the previous local
+  // calendar day for a UTC midnight timestamp.
+  return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'Asia/Jakarta' })
 }
 
 export function toTrendLines(trend: TrendPoint[]): { income: ChartPoint[]; expenses: ChartPoint[] } {

@@ -593,7 +593,12 @@ git commit -m "feat(mobile): add budget allocation math helpers"
   verified against `gifted-charts-core`'s actual `lineDataItem`/`barDataItem`
   types (see Task 21) so Task 23 can pass these straight into
   `<LineChart>`/`<BarChart>` `data` props with no further mapping. Consumed
-  by Task 23 (Reports screen).
+  by Task 23 (Reports screen). `toTrendLines`'s internal `shortDayLabelID`
+  pins `timeZone: 'Asia/Jakarta'` on `toLocaleDateString` (fix-round
+  addendum after code review caught that an unqualified call renders the
+  previous calendar day on hosts with a UTC offset less than +7, since this
+  app is fixed to `Asia/Jakarta` — the same UTC-shift bug class Task 4's
+  `toDateOnly` addendum fixed).
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -696,7 +701,11 @@ interface ChartBar {
 }
 
 function shortDayLabelID(iso: string): string {
-  return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+  // timeZone is pinned to Asia/Jakarta (this app's fixed timezone) so the
+  // rendered day/month don't shift on hosts with a UTC offset < +7, where an
+  // unqualified toLocaleDateString would otherwise render the previous local
+  // calendar day for a UTC midnight timestamp.
+  return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'Asia/Jakarta' })
 }
 
 export function toTrendLines(trend: TrendPoint[]): { income: ChartPoint[]; expenses: ChartPoint[] } {
