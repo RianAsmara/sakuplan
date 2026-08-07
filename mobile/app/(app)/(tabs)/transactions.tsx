@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { FlatList } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Button, Input, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui'
 import { PocketCard } from '../../../src/components/PocketCard'
@@ -9,6 +10,8 @@ import { useAccounts } from '../../../src/accounts/useAccounts'
 import { AddAccountCard } from '../../../src/accounts/AddAccountCard'
 import { useCategories } from '../../../src/categories/useCategories'
 import { useCreateTransaction } from '../../../src/transactions/useCreateTransaction'
+import { useInfiniteTransactions } from '../../../src/transactions/useInfiniteTransactions'
+import { TransactionListItem } from '../../../src/transactions/TransactionListItem'
 import type { components } from '../../../src/api/client'
 
 type CreateTransactionType = components['schemas']['CreateTransactionType']
@@ -33,6 +36,13 @@ export default function TransactionsScreen() {
 
   const categories = useCategories(type === 'income' || type === 'expense' ? type : undefined)
   const createTransaction = useCreateTransaction()
+  const allCategories = useCategories()
+  const transactions = useInfiniteTransactions()
+  const categoriesById = useMemo(
+    () => new Map((allCategories.data ?? []).map((category) => [category.id, category])),
+    [allCategories.data]
+  )
+  const transactionItems = transactions.data?.pages.flatMap((page) => page.data) ?? []
 
   const hasAccounts = (accounts.data?.length ?? 0) > 0
   const canOfferTransfer = (accounts.data?.length ?? 0) >= 2
@@ -269,6 +279,54 @@ export default function TransactionsScreen() {
               </Button>
             </PocketCard>
           )}
+
+          {hasAccounts ? (
+            <YStack gap="$3">
+              <Text fontFamily="$body" fontSize="$1" color="$kulit">
+                RIWAYAT TRANSAKSI
+              </Text>
+              {transactions.isLoading ? (
+                <YStack alignItems="center" paddingTop="$4">
+                  <Spinner size="large" color="$primary" />
+                </YStack>
+              ) : transactions.isError ? (
+                <PocketCard>
+                  <Text fontFamily="$body" fontSize="$2" color="$danger">
+                    Gagal memuat riwayat transaksi. Coba lagi nanti.
+                  </Text>
+                </PocketCard>
+              ) : transactionItems.length === 0 ? (
+                <PocketCard tone="muted">
+                  <Text fontFamily="$body" fontSize="$2" color="$kulit" textAlign="center">
+                    Belum ada transaksi. Catat transaksi pertamamu di atas.
+                  </Text>
+                </PocketCard>
+              ) : (
+                <FlatList
+                  data={transactionItems}
+                  keyExtractor={(item) => item.id}
+                  scrollEnabled={false}
+                  ItemSeparatorComponent={() => <YStack height="$2" />}
+                  renderItem={({ item }) => (
+                    <TransactionListItem transaction={item} categoriesById={categoriesById} />
+                  )}
+                  onEndReached={() => {
+                    if (transactions.hasNextPage && !transactions.isFetchingNextPage) {
+                      transactions.fetchNextPage()
+                    }
+                  }}
+                  onEndReachedThreshold={0.5}
+                  ListFooterComponent={
+                    transactions.isFetchingNextPage ? (
+                      <YStack alignItems="center" paddingVertical="$3">
+                        <Spinner color="$primary" />
+                      </YStack>
+                    ) : null
+                  }
+                />
+              )}
+            </YStack>
+          ) : null}
         </YStack>
       </ScrollView>
     </SafeAreaView>
