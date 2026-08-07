@@ -511,3 +511,56 @@ The Fiber, pgx, Fx, Argon2id, JWT, and Testcontainers suites are included but re
 - OpenTelemetry and Prometheus adapters.
 - Rate limiting and production edge controls.
 - AI-provider explanation layer.
+
+---
+
+## 2026-08-07 — dc-prototype Phase 2: full verification pass (Task 27)
+
+### Requirement IDs implemented
+
+None (verification-only task — Task 27 of
+`docs/superpowers/plans/2026-08-05-dc-prototype-phase2.md`, the final task
+of the plan). Confirms Phase 2 of the `SakuPlan.dc.html` implementation is
+complete: Transactions (fast-entry form, infinite-scroll list, reversal),
+Budgets (active view, create-and-activate wizard with rule-based allocation
+recommendations), Reports (cash-flow trend/category/budget-vs-actual charts
+via `react-native-gifted-charts`), and More (profile edit, logout,
+logout-all, data export, inert placeholders for account deletion and
+notifications) are all wired to the real backend. No product areas remain
+on `ComingSoonScreen` placeholders except the two genuinely-unbuildable
+sub-features called out explicitly: account deletion (no backend endpoint)
+and notifications (no job-runner infrastructure — deferred pending its own
+NOTIF-00x phase, per the 2026-08-02 Phase 7a entry above).
+
+### Files changed
+
+None (verification only).
+
+### Database migrations
+
+None.
+
+### Commands run and results
+
+1. `cd mobile && npx jest` → PASS, 12 suites / 53 tests, including every
+   new test file from this plan (`idempotencyKey.test.ts`, `errors.test.ts`,
+   `money.test.ts`, `date.test.ts`, `budgetMath.test.ts`,
+   `chartData.test.ts`, `accountTypeLabels.test.ts`,
+   `transactionDisplay.test.ts`, `riskLevel.test.ts`) alongside Phase 1's
+   suites (`refreshInterceptor.test.ts`, `store.test.ts`,
+   `billUrgency.test.ts`).
+2. `cd mobile && npx tsc --noEmit` → PASS, exit 0.
+3. `cd mobile && npx expo lint` → PASS, exit 0 (1 pre-existing warning:
+   unused `Input` import in `budgets.tsx`; 0 errors).
+
+### Deferred / not verified
+
+- Step 3 (manual Expo walkthrough of Transaksi/Anggaran/Laporan/Lainnya on
+  a fresh, zero-account account) could not be performed in this
+  environment: `adb devices` returned an empty device list, and no iOS
+  simulator toolchain (`xcrun`) is present. An AVD (`sakuplan_test`) exists
+  from an earlier session but was not booted/running; `/dev/kvm` is
+  present. This mirrors Task 23's identical constraint (see
+  `.superpowers/sdd/2026-08-05-dc-prototype-phase2/task-23-report.md`).
+  Full detail, including raw command output: `.superpowers/sdd/
+  2026-08-05-dc-prototype-phase2/task-27-report.md`.
