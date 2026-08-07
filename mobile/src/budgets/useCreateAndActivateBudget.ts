@@ -11,15 +11,13 @@ export function useCreateAndActivateBudget() {
     mutationFn: async (input: CreateBudgetRequest) => {
       const draftResult = await api.POST('/v1/budgets', { body: input })
       if (draftResult.error || !draftResult.data) {
-        const status = (draftResult.response as unknown as { status: number }).status ?? 500
-        throw new ApiError('failed_to_create_budget_draft', status)
+        throw new ApiError('failed_to_create_budget_draft', draftResult.response.status)
       }
       const activateResult = await api.POST('/v1/budgets/{id}/activate', {
         params: { path: { id: draftResult.data.id } },
       })
       if (activateResult.error || !activateResult.data) {
-        const status = (activateResult.response as unknown as { status: number }).status ?? 500
-        throw new ApiError('failed_to_activate_budget', status)
+        throw new ApiError('failed_to_activate_budget', activateResult.response.status)
       }
       return activateResult.data
     },
