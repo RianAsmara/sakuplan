@@ -455,7 +455,6 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/GoalContribution' }
-        '409': { $ref: '#/components/responses/Error' }
   /v1/planning/safe-to-spend:
     get:
       tags: [Planning]
