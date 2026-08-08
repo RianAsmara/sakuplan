@@ -1555,6 +1555,7 @@ export interface operations {
                     "application/json": components["schemas"]["GoalContribution"];
                 };
             };
+            409: components["responses"]["Error"];
         };
     };
     getSafeToSpend: {
