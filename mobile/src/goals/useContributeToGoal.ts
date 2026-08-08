@@ -22,7 +22,8 @@ export function useContributeToGoal() {
         },
         body: { account_id: accountId, amount },
       })
-      if (error || !data) throw new ApiError('failed_to_contribute_to_goal', (response as any).status)
+      const status = response.status
+      if (error || !data) throw new ApiError('failed_to_contribute_to_goal', status)
       return data
     },
     onSuccess: () => {
