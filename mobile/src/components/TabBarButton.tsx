@@ -1,5 +1,6 @@
-import { Pressable, Text, type GestureResponderEvent } from 'react-native'
+import type { GestureResponderEvent } from 'react-native'
 import type { PropsWithChildren } from 'react'
+import { Button, Text } from 'tamagui'
 
 interface TabBarButtonProps {
   accessibilityState?: { selected?: boolean }
@@ -13,21 +14,22 @@ export function TabBarButton({
   label,
 }: PropsWithChildren<TabBarButtonProps>) {
   const active = accessibilityState?.selected ?? false
-  const color = active ? '#0E6B58' : '#7C6A5B'
+  const color = active ? '$terjaga' : '$kulit'
 
   return (
-    <Pressable
+    <Button
+      unstyled
+      flex={1}
+      alignItems="center"
+      paddingTop={14}
+      paddingBottom={12}
+      borderTopWidth={2}
+      borderTopColor={color}
       onPress={onPress}
-      style={{
-        flex: 1,
-        alignItems: 'center',
-        paddingTop: 14,
-        paddingBottom: 12,
-        borderTopWidth: 2,
-        borderTopColor: color,
-      }}
     >
-      <Text style={{ fontFamily: 'IBMPlexSans_500Medium', fontSize: 11, color }}>{label}</Text>
-    </Pressable>
+      <Text style={{ fontFamily: 'Inter_500Medium' }} fontSize={11} color={color}>
+        {label}
+      </Text>
+    </Button>
   )
 }

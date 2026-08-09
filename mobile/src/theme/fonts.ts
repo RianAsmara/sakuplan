@@ -1,25 +1,17 @@
 import {
-  useFonts as useFraunces,
-  Fraunces_600SemiBold,
-} from '@expo-google-fonts/fraunces'
-import {
-  useFonts as usePlexSans,
-  IBMPlexSans_400Regular,
-  IBMPlexSans_500Medium,
-  IBMPlexSans_600SemiBold,
-} from '@expo-google-fonts/ibm-plex-sans'
-import {
-  useFonts as usePlexMono,
-  IBMPlexMono_500Medium,
-} from '@expo-google-fonts/ibm-plex-mono'
+  useFonts as useInter,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter'
 
 export function useAppFontsLoaded(): boolean {
-  const [frauncesLoaded] = useFraunces({ Fraunces_600SemiBold })
-  const [plexSansLoaded] = usePlexSans({
-    IBMPlexSans_400Regular,
-    IBMPlexSans_500Medium,
-    IBMPlexSans_600SemiBold,
+  const [interLoaded] = useInter({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
   })
-  const [plexMonoLoaded] = usePlexMono({ IBMPlexMono_500Medium })
-  return frauncesLoaded && plexSansLoaded && plexMonoLoaded
+  return interLoaded
 }

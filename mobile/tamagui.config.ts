@@ -36,21 +36,21 @@ const tokens = createTokens({
 })
 
 const headingFont = createFont({
-  family: 'Fraunces_600SemiBold',
+  family: 'Inter_700Bold',
   size: { 1: 14, 2: 16, 3: 20, 4: 24, 5: 32, 6: 40, true: 20 },
-  weight: { 1: '400', 2: '600', true: '600' },
+  weight: { 1: '400', 2: '700', true: '700' },
   lineHeight: { 1: 18, 2: 22, 3: 26, 4: 30, 5: 40, 6: 48, true: 26 },
 })
 
 const bodyFont = createFont({
-  family: 'IBMPlexSans_400Regular',
+  family: 'Inter_400Regular',
   size: { 1: 12, 2: 14, 3: 16, 4: 18, 5: 20, 6: 24, true: 16 },
   weight: { 1: '400', 2: '500', true: '400' },
   lineHeight: { 1: 16, 2: 20, 3: 24, 4: 26, 5: 30, 6: 34, true: 24 },
 })
 
 const monoFont = createFont({
-  family: 'IBMPlexMono_500Medium',
+  family: 'Inter_500Medium',
   size: { 1: 14, 2: 16, 3: 20, 4: 28, 5: 32, 6: 40, true: 16 },
   weight: { 1: '500', true: '500' },
   lineHeight: { 1: 18, 2: 22, 3: 26, 4: 34, 5: 40, 6: 48, true: 22 },
