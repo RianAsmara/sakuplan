@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Button, Input, Text, XStack, YStack } from 'tamagui'
+import { Button, Text, XStack, YStack } from 'tamagui'
 import type { components } from '../api/client'
 import { PocketCard } from '../components/PocketCard'
+import { TextField } from '../components/TextField'
 import { formatDateID } from '../format/date'
 import { ApiError } from '../api/errors'
 import { formatSignedRupiah, transactionTypeMeta } from './transactionDisplay'
@@ -46,12 +47,10 @@ export function TransactionListItem({ transaction, categoriesById }: Transaction
 
       {canReverse && showReversalForm ? (
         <YStack gap="$2">
-          <Input
+          <TextField
             placeholder="Alasan pembatalan"
             value={reason}
             onChangeText={setReason}
-            color="$color"
-            focusStyle={{ borderColor: '$borderColorFocus' }}
           />
           {isConflict ? (
             <Text fontFamily="$body" fontSize="$1" color="$danger">

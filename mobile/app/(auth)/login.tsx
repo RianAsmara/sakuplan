@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { Link } from 'expo-router'
 import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Button, Input, Label, Text, XStack, YStack } from 'tamagui'
+import { Button, Label, Text, XStack, YStack } from 'tamagui'
 import { LogIn, Lock, Mail } from '@tamagui/lucide-icons-2'
 import { PocketCard } from '../../src/components/PocketCard'
+import { TextField } from '../../src/components/TextField'
 import { useLogin } from '../../src/auth/useLogin'
 
 // Design-only placeholder: no OAuth backend exists yet
@@ -61,15 +62,13 @@ export default function LoginScreen() {
                     Email
                   </Label>
                 </XStack>
-                <Input
+                <TextField
                   id="login-email"
                   value={email}
                   onChangeText={setEmail}
                   autoCapitalize="none"
                   keyboardType="email-address"
                   textContentType="emailAddress"
-                  color="$color"
-                  focusStyle={{ borderColor: '$borderColorFocus' }}
                 />
               </YStack>
 
@@ -80,14 +79,12 @@ export default function LoginScreen() {
                     Kata sandi
                   </Label>
                 </XStack>
-                <Input
+                <TextField
                   id="login-password"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
                   textContentType="password"
-                  color="$color"
-                  focusStyle={{ borderColor: '$borderColorFocus' }}
                 />
               </YStack>
 

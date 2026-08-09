@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import { FlatList } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Button, Input, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui'
+import { Button, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui'
 import { PocketCard } from '../../../src/components/PocketCard'
 import { RupiahInput } from '../../../src/components/RupiahInput'
+import { TextField } from '../../../src/components/TextField'
 import { ApiError } from '../../../src/api/errors'
 import { daysAgo, toRFC3339 } from '../../../src/format/date'
 import { useAccounts } from '../../../src/accounts/useAccounts'
@@ -246,12 +247,10 @@ export default function TransactionsScreen() {
                   <Text fontFamily="$body" fontSize="$1" color="$kulit">
                     ALASAN PENYESUAIAN
                   </Text>
-                  <Input
+                  <TextField
                     value={reason}
                     onChangeText={setReason}
                     placeholder="Contoh: Koreksi saldo awal"
-                    color="$color"
-                    focusStyle={{ borderColor: '$borderColorFocus' }}
                   />
                 </YStack>
               ) : (
@@ -259,11 +258,9 @@ export default function TransactionsScreen() {
                   <Text fontFamily="$body" fontSize="$1" color="$kulit">
                     CATATAN (OPSIONAL)
                   </Text>
-                  <Input
+                  <TextField
                     value={note}
                     onChangeText={setNote}
-                    color="$color"
-                    focusStyle={{ borderColor: '$borderColorFocus' }}
                   />
                 </YStack>
               )}

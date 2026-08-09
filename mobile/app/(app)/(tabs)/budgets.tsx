@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Button, Input, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui'
+import { Button, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui'
 import { PocketCard } from '../../../src/components/PocketCard'
 import { formatDateID, endOfMonth, startOfMonth, toRFC3339 } from '../../../src/format/date'
 import { formatRupiah } from '../../../src/format/money'

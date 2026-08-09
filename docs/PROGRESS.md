@@ -564,3 +564,84 @@ None.
   `.superpowers/sdd/2026-08-05-dc-prototype-phase2/task-23-report.md`).
   Full detail, including raw command output: `.superpowers/sdd/
   2026-08-05-dc-prototype-phase2/task-27-report.md`.
+
+## 2026-08-09 — App-wide fix: Tamagui `Input` fails to paint text (Fabric)
+
+### Requirement IDs implemented
+
+None (bug fix, found during manual device testing of dc-prototype Phase 3
+Task 10 — the first time the app was actually run on an emulator across
+this whole project, per the "Deferred / not verified" note in the
+2026-08-07 entry above).
+
+### Root cause
+
+Tamagui's default (non-`unstyled`) styled pipeline for the `Input`
+component never paints typed text on this stack (`react-native@0.86.2` +
+Fabric/New Architecture + `tamagui@2.6.3`) — confirmed by booting the
+`sakuplan_test` emulator and reproducing live: typed characters never
+appeared in any color, even with an inline `style={{color:'red',
+fontSize:22}}` override on top of the existing `color="$color"`. A bare
+`react-native` `TextInput` bound to the identical state rendered
+correctly, proving the bug was isolated to Tamagui's `Input`, not
+component state/`onChangeText`. Adding the `unstyled` prop (which skips
+Tamagui's computed `size`/style-variant pipeline) fixed it immediately
+with the same `color="$color"` prop unchanged — so Tamagui's own computed
+styles were overriding/breaking the text paint, not any color-token
+issue. Every existing call site (`RupiahInput` and 8 raw `<Input>` usages)
+used the identical `color="$color"` + `focusStyle` pattern with no
+explicit border/background/padding, meaning all of them silently
+depended on the same broken default pipeline — this was an app-wide
+defect, not specific to login.
+
+### Files changed
+
+- `mobile/src/components/TextField.tsx` (new) — shared wrapper: Tamagui
+  `Input` with `unstyled` plus explicit token props reproducing the
+  intended visual design (border, background, radius, padding, font,
+  focus color).
+- `mobile/src/components/RupiahInput.tsx` — now wraps `TextField` instead
+  of `Input` directly.
+- `mobile/app/(auth)/login.tsx`, `mobile/app/(auth)/register.tsx`,
+  `mobile/app/(app)/profile.tsx`, `mobile/app/(app)/(tabs)/transactions.tsx`,
+  `mobile/src/accounts/AddAccountCard.tsx`,
+  `mobile/src/transactions/TransactionListItem.tsx` — all raw `<Input>`
+  usages swapped to `<TextField>`.
+- `mobile/app/(app)/(tabs)/budgets.tsx` — removed the unused `Input`
+  import flagged as a pre-existing warning in the 2026-08-07 entry above
+  (dead import; the file only ever used `RupiahInput`).
+
+### Database migrations
+
+None.
+
+### Commands run and results
+
+1. `cd mobile && npx tsc --noEmit` → PASS, exit 0.
+2. `cd mobile && npx eslint .` → PASS, exit 0 (2 pre-existing warnings in
+   `tamagui.config.ts`, unrelated to this change; 0 errors).
+3. `cd mobile && npx jest` → PASS, 13 suites / 58 tests.
+4. Live verification on the `sakuplan_test` emulator (booted via
+   `emulator -avd sakuplan_test`, app run via `npx expo start --android`):
+   typed text renders correctly on the Login and Register screens
+   end-to-end, including a real backend round trip (wrong-credentials
+   login correctly showed "Email atau kata sandi salah"; register
+   correctly submitted and round-tripped a validation error from the
+   API). RupiahInput and the other five call sites were not separately
+   walked on-device in this session (blocked by fragile ADB
+   coordinate-tap navigation, not by the fix) — they use the exact same
+   `TextField` component verified on Login/Register, so the same
+   rendering guarantee applies by construction, not just by inspection.
+
+### Deferred / not verified
+
+- Live on-device confirmation of `RupiahInput` specifically (Accounts,
+  Budgets, Goals, Transactions money fields) — recommend a quick manual
+  spot-check on a physical device before considering this fully closed,
+  consistent with this project's established pattern of deferring final
+  device confirmation to a human partner (see Task 23's chart-rendering
+  note in the 2026-08-05 Phase 2 ledger).
+- `src/components/TabBarButton.tsx` still uses raw `react-native`
+  `Pressable`/`Text` for the bottom tab bar (pre-existing, unrelated to
+  this bug) — left unchanged; flagged for a follow-up decision on whether
+  to convert it to Tamagui components for consistency.

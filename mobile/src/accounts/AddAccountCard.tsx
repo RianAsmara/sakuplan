@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Button, Input, Text, XStack, YStack } from 'tamagui'
+import { Button, Text, XStack, YStack } from 'tamagui'
 import { PocketCard } from '../components/PocketCard'
 import { RupiahInput } from '../components/RupiahInput'
+import { TextField } from '../components/TextField'
 import { useCreateAccount } from './useCreateAccount'
 import { ACCOUNT_TYPES, accountTypeLabel } from './accountTypeLabels'
 import type { components } from '../api/client'
@@ -35,12 +36,10 @@ export function AddAccountCard() {
         <Text fontFamily="$body" fontSize="$1" color="$kulit">
           NAMA AKUN
         </Text>
-        <Input
+        <TextField
           value={name}
           onChangeText={setName}
           placeholder="Contoh: Dompet, BCA"
-          color="$color"
-          focusStyle={{ borderColor: '$borderColorFocus' }}
         />
       </YStack>
 

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Button, Checkbox, Input, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui'
+import { Button, Checkbox, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui'
 import { Check } from '@tamagui/lucide-icons-2'
 import { SubScreenHeader } from '../../src/components/SubScreenHeader'
 import { PocketCard } from '../../src/components/PocketCard'
 import { RupiahInput } from '../../src/components/RupiahInput'
+import { TextField } from '../../src/components/TextField'
 import { useCurrentUser } from '../../src/auth/useCurrentUser'
 import { useUpdateProfile } from '../../src/profile/useUpdateProfile'
 
@@ -70,11 +71,9 @@ export default function ProfileScreen() {
                 <Text fontFamily="$body" fontSize="$1" color="$kulit">
                   NAMA
                 </Text>
-                <Input
+                <TextField
                   value={displayName}
                   onChangeText={setDisplayName}
-                  color="$color"
-                  focusStyle={{ borderColor: '$borderColorFocus' }}
                 />
               </YStack>
 
@@ -104,12 +103,10 @@ export default function ProfileScreen() {
                 <Text fontFamily="$body" fontSize="$1" color="$kulit">
                   TANGGAL GAJIAN (1-31)
                 </Text>
-                <Input
+                <TextField
                   keyboardType="number-pad"
                   value={String(payday)}
                   onChangeText={(text) => setPayday(Number.parseInt(text, 10) || 1)}
-                  color="$color"
-                  focusStyle={{ borderColor: '$borderColorFocus' }}
                 />
               </YStack>
 
