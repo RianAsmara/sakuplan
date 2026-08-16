@@ -8,7 +8,12 @@ export function useLogout() {
     mutationFn: async () => {
       const refreshToken = await getRefreshToken()
       if (refreshToken) {
-        await api.POST('/v1/auth/logout', { body: { refresh_token: refreshToken } })
+        try {
+          await api.post('/v1/auth/logout', { refresh_token: refreshToken })
+        } catch {
+          // Best-effort: the session is cleared in onSettled below regardless
+          // of whether the server-side revoke succeeds.
+        }
       }
     },
     onSettled: async () => {
