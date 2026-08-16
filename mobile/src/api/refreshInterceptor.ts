@@ -2,13 +2,13 @@ import axios, {
   AxiosHeaders,
   type AxiosError,
   type AxiosInstance,
-  type AxiosRequestConfig,
+  type InternalAxiosRequestConfig,
 } from 'axios'
 import { useAuthStore } from '../auth/store'
 import { clearRefreshToken, getRefreshToken, saveRefreshToken } from '../auth/secureTokens'
 import type { components } from './generated/types'
 
-type RetryableConfig = AxiosRequestConfig & { _retry?: boolean }
+type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean }
 
 export function shouldAttemptRefresh(status: number | undefined, alreadyRetried: boolean): boolean {
   return status === 401 && !alreadyRetried
@@ -35,7 +35,7 @@ async function refreshSession(baseUrl: string): Promise<string | null> {
 }
 
 export function buildRetryConfig(config: RetryableConfig, newAccessToken: string): RetryableConfig {
-  const headers = AxiosHeaders.from(config.headers as any) as AxiosHeaders
+  const headers = AxiosHeaders.from(config.headers) as AxiosHeaders
   headers.set('Authorization', `Bearer ${newAccessToken}`)
   return { ...config, headers, _retry: true }
 }
