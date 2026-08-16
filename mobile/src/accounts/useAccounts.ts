@@ -1,13 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api/client'
+import type { operations } from '../api/client'
+
+type AccountsResponse = operations['listAccounts']['responses'][200]['content']['application/json']
 
 export function useAccounts() {
   return useQuery({
     queryKey: ['accounts'],
     queryFn: async () => {
-      const { data, error } = await api.GET('/v1/accounts')
-      if (error || !data) throw new Error('failed_to_load_accounts')
-      return data.data
+      try {
+        const { data } = await api.get<AccountsResponse>('/v1/accounts')
+        return data.data
+      } catch {
+        throw new Error('failed_to_load_accounts')
+      }
     },
   })
 }
