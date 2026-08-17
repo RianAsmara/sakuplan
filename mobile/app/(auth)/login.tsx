@@ -1,12 +1,12 @@
-import { useState } from 'react'
-import { Link } from 'expo-router'
-import { KeyboardAvoidingView, Platform } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { Button, Label, ScrollView, Text, XStack, YStack } from 'tamagui'
-import { LogIn, Lock, Mail } from '@tamagui/lucide-icons-2'
-import { PocketCard } from '../../src/components/PocketCard'
-import { TextField } from '../../src/components/TextField'
-import { useLogin } from '../../src/auth/useLogin'
+import { Activity, Lock, Mail } from "@tamagui/lucide-icons-2";
+import { Link } from "expo-router";
+import { useState } from "react";
+import { KeyboardAvoidingView, Platform } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Button, Label, ScrollView, Text, XStack, YStack } from "tamagui";
+import { useLogin } from "../../src/auth/useLogin";
+import { PocketCard } from "../../src/components/PocketCard";
+import { TextField } from "../../src/components/TextField";
 
 // Design-only placeholder: no OAuth backend exists yet
 // (see docs/design/sakuplan-claude-design-prompt.md, "Priority: redesign
@@ -15,24 +15,39 @@ import { useLogin } from '../../src/auth/useLogin'
 function handleGoogleSignIn() {}
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const login = useLogin()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const login = useLogin();
 
-  const canSubmit = email.trim().length > 0 && password.length > 0 && !login.isPending
+  const canSubmit =
+    email.trim().length > 0 && password.length > 0 && !login.isPending;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F6F3' }} edges={['top', 'bottom']}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: "#F5F6F3" }}
+      edges={["top", "bottom"]}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
         >
-          <YStack flex={1} backgroundColor="$background" padding="$5" justifyContent="center" gap="$6">
-            <Text fontFamily="$heading" fontSize="$5" textAlign="center" color="$color">
+          <YStack
+            flex={1}
+            backgroundColor="$background"
+            padding="$5"
+            justifyContent="center"
+            gap="$6"
+          >
+            <Text
+              fontFamily="$heading"
+              fontSize="$5"
+              textAlign="center"
+              color="$color"
+            >
               SakuPlan
             </Text>
 
@@ -58,7 +73,12 @@ export default function LoginScreen() {
               <YStack gap="$2">
                 <XStack alignItems="center" gap="$2">
                   <Mail size={14} color="$kulit" />
-                  <Label htmlFor="login-email" fontFamily="$body" fontSize="$2" color="$kulit">
+                  <Label
+                    htmlFor="login-email"
+                    fontFamily="$body"
+                    fontSize="$2"
+                    color="$kulit"
+                  >
                     Email
                   </Label>
                 </XStack>
@@ -75,7 +95,12 @@ export default function LoginScreen() {
               <YStack gap="$2">
                 <XStack alignItems="center" gap="$2">
                   <Lock size={14} color="$kulit" />
-                  <Label htmlFor="login-password" fontFamily="$body" fontSize="$2" color="$kulit">
+                  <Label
+                    htmlFor="login-password"
+                    fontFamily="$body"
+                    fontSize="$2"
+                    color="$kulit"
+                  >
                     Kata sandi
                   </Label>
                 </XStack>
@@ -89,14 +114,19 @@ export default function LoginScreen() {
               </YStack>
 
               <Button
-                icon={LogIn}
+                size="$6"
                 backgroundColor="$primary"
                 color="$primaryText"
                 disabled={!canSubmit}
                 opacity={canSubmit ? 1 : 0.5}
                 onPress={() => login.mutate({ email, password })}
               >
-                {login.isPending ? 'Memuat...' : 'Masuk'}
+                <Button.Icon>
+                  <Activity />
+                </Button.Icon>
+                <Button.Text fontFamily="$body" fontSize="$3">
+                  {login.isPending ? "Memuat..." : "Masuk"}
+                </Button.Text>
               </Button>
 
               <XStack alignItems="center" gap="$3">
@@ -109,15 +139,23 @@ export default function LoginScreen() {
 
               <YStack gap="$2">
                 <Button
+                  size="$6"
+                  width="100%"
                   backgroundColor="$white"
                   borderWidth={1.5}
                   borderColor="$borderColor"
-                  color="$color"
                   onPress={handleGoogleSignIn}
                 >
-                  Masuk dengan Google
+                  <Button.Text fontFamily="$body" fontSize="$3" color="$color">
+                    Masuk dengan Google
+                  </Button.Text>
                 </Button>
-                <Text fontFamily="$body" fontSize="$1" color="$kulit" textAlign="center">
+                <Text
+                  fontFamily="$body"
+                  fontSize="$1"
+                  color="$kulit"
+                  textAlign="center"
+                >
                   Pratinjau desain — integrasi belum tersedia.
                 </Text>
               </YStack>
@@ -127,7 +165,12 @@ export default function LoginScreen() {
                   Belum punya akun?
                 </Text>
                 <Link href="/(auth)/register">
-                  <Text fontFamily="$body" fontSize="$2" color="$primary" textDecorationLine="underline">
+                  <Text
+                    fontFamily="$body"
+                    fontSize="$2"
+                    color="$primary"
+                    textDecorationLine="underline"
+                  >
                     Daftar
                   </Text>
                 </Link>
@@ -137,5 +180,5 @@ export default function LoginScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
-  )
+  );
 }

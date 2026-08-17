@@ -1,12 +1,20 @@
-import { useState } from 'react'
-import { Link } from 'expo-router'
-import { KeyboardAvoidingView, Platform } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { Button, Checkbox, Label, ScrollView, Text, XStack, YStack } from 'tamagui'
-import { Check, Lock, Mail, User, UserPlus } from '@tamagui/lucide-icons-2'
-import { PocketCard } from '../../src/components/PocketCard'
-import { TextField } from '../../src/components/TextField'
-import { useRegister } from '../../src/auth/useRegister'
+import { Check, Lock, Mail, User } from "@tamagui/lucide-icons-2";
+import { Link } from "expo-router";
+import { useState } from "react";
+import { KeyboardAvoidingView, Platform } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  Button,
+  Checkbox,
+  Label,
+  ScrollView,
+  Text,
+  XStack,
+  YStack,
+} from "tamagui";
+import { useRegister } from "../../src/auth/useRegister";
+import { PocketCard } from "../../src/components/PocketCard";
+import { TextField } from "../../src/components/TextField";
 
 // Design-only placeholder: no OAuth backend exists yet
 // (see docs/design/sakuplan-claude-design-prompt.md, "Priority: redesign
@@ -15,34 +23,48 @@ import { useRegister } from '../../src/auth/useRegister'
 function handleGoogleSignIn() {}
 
 export default function RegisterScreen() {
-  const [displayName, setDisplayName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [consentAccepted, setConsentAccepted] = useState(false)
-  const register = useRegister()
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [consentAccepted, setConsentAccepted] = useState(false);
+  const register = useRegister();
 
-  const passwordsMatch = password.length > 0 && password === confirmPassword
+  const passwordsMatch = password.length > 0 && password === confirmPassword;
   const canSubmit =
     displayName.trim().length > 0 &&
     email.trim().length > 0 &&
     password.length >= 12 &&
     passwordsMatch &&
     consentAccepted &&
-    !register.isPending
+    !register.isPending;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F6F3' }} edges={['top', 'bottom']}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: "#F5F6F3" }}
+      edges={["top", "bottom"]}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
         >
-          <YStack flex={1} backgroundColor="$background" padding="$5" justifyContent="center" gap="$6">
-            <Text fontFamily="$heading" fontSize="$5" textAlign="center" color="$color">
+          <YStack
+            flex={1}
+            backgroundColor="$background"
+            padding="$5"
+            justifyContent="center"
+            gap="$6"
+          >
+            <Text
+              fontFamily="$heading"
+              fontSize="$5"
+              textAlign="center"
+              color="$color"
+            >
               SakuPlan
             </Text>
 
@@ -68,7 +90,12 @@ export default function RegisterScreen() {
               <YStack gap="$2">
                 <XStack alignItems="center" gap="$2">
                   <User size={14} color="$kulit" />
-                  <Label htmlFor="register-name" fontFamily="$body" fontSize="$2" color="$kulit">
+                  <Label
+                    htmlFor="register-name"
+                    fontFamily="$body"
+                    fontSize="$2"
+                    color="$kulit"
+                  >
                     Nama
                   </Label>
                 </XStack>
@@ -82,7 +109,12 @@ export default function RegisterScreen() {
               <YStack gap="$2">
                 <XStack alignItems="center" gap="$2">
                   <Mail size={14} color="$kulit" />
-                  <Label htmlFor="register-email" fontFamily="$body" fontSize="$2" color="$kulit">
+                  <Label
+                    htmlFor="register-email"
+                    fontFamily="$body"
+                    fontSize="$2"
+                    color="$kulit"
+                  >
                     Email
                   </Label>
                 </XStack>
@@ -99,7 +131,12 @@ export default function RegisterScreen() {
               <YStack gap="$2">
                 <XStack alignItems="center" gap="$2">
                   <Lock size={14} color="$kulit" />
-                  <Label htmlFor="register-password" fontFamily="$body" fontSize="$2" color="$kulit">
+                  <Label
+                    htmlFor="register-password"
+                    fontFamily="$body"
+                    fontSize="$2"
+                    color="$kulit"
+                  >
                     Kata sandi
                   </Label>
                 </XStack>
@@ -115,7 +152,12 @@ export default function RegisterScreen() {
               <YStack gap="$2">
                 <XStack alignItems="center" gap="$2">
                   <Lock size={14} color="$kulit" />
-                  <Label htmlFor="register-confirm" fontFamily="$body" fontSize="$2" color="$kulit">
+                  <Label
+                    htmlFor="register-confirm"
+                    fontFamily="$body"
+                    fontSize="$2"
+                    color="$kulit"
+                  >
                     Konfirmasi kata sandi
                   </Label>
                 </XStack>
@@ -135,20 +177,27 @@ export default function RegisterScreen() {
                 <Checkbox
                   id="register-consent"
                   checked={consentAccepted}
-                  onCheckedChange={(value) => setConsentAccepted(value === true)}
-                  backgroundColor={consentAccepted ? '$primary' : undefined}
+                  onCheckedChange={(value) =>
+                    setConsentAccepted(value === true)
+                  }
+                  backgroundColor={consentAccepted ? "$primary" : undefined}
                   borderColor="$kulit"
                 >
                   <Checkbox.Indicator>
                     <Check color="$primaryText" />
                   </Checkbox.Indicator>
                 </Checkbox>
-                <Text fontFamily="$body" fontSize="$1" color="$kulit" flexShrink={1}>
-                  Saya menyetujui{' '}
+                <Text
+                  fontFamily="$body"
+                  fontSize="$1"
+                  color="$kulit"
+                  flexShrink={1}
+                >
+                  Saya menyetujui{" "}
                   <Text color="$primary" textDecorationLine="underline">
                     Ketentuan Layanan
-                  </Text>{' '}
-                  dan{' '}
+                  </Text>{" "}
+                  dan{" "}
                   <Text color="$primary" textDecorationLine="underline">
                     Kebijakan Privasi
                   </Text>
@@ -156,14 +205,18 @@ export default function RegisterScreen() {
               </XStack>
 
               <Button
-                icon={UserPlus}
+                size="$6"
                 backgroundColor="$primary"
                 color="$primaryText"
                 disabled={!canSubmit}
                 opacity={canSubmit ? 1 : 0.5}
-                onPress={() => register.mutate({ email, password, displayName })}
+                onPress={() =>
+                  register.mutate({ email, password, displayName })
+                }
               >
-                {register.isPending ? 'Memuat...' : 'Daftar'}
+                <Button.Text fontFamily="$body" fontSize="$3">
+                  {register.isPending ? "Memuat..." : "Daftar"}
+                </Button.Text>
               </Button>
 
               <XStack alignItems="center" gap="$3">
@@ -176,15 +229,23 @@ export default function RegisterScreen() {
 
               <YStack gap="$2">
                 <Button
+                  size="$6"
+                  width="100%"
                   backgroundColor="$white"
                   borderWidth={1.5}
                   borderColor="$borderColor"
-                  color="$color"
                   onPress={handleGoogleSignIn}
                 >
-                  Daftar dengan Google
+                  <Button.Text fontFamily="$body" fontSize="$3" color="$color">
+                    Masuk dengan Google
+                  </Button.Text>
                 </Button>
-                <Text fontFamily="$body" fontSize="$1" color="$kulit" textAlign="center">
+                <Text
+                  fontFamily="$body"
+                  fontSize="$1"
+                  color="$kulit"
+                  textAlign="center"
+                >
                   Pratinjau desain — integrasi belum tersedia.
                 </Text>
               </YStack>
@@ -194,7 +255,12 @@ export default function RegisterScreen() {
                   Sudah punya akun?
                 </Text>
                 <Link href="/(auth)/login">
-                  <Text fontFamily="$body" fontSize="$2" color="$primary" textDecorationLine="underline">
+                  <Text
+                    fontFamily="$body"
+                    fontSize="$2"
+                    color="$primary"
+                    textDecorationLine="underline"
+                  >
                     Masuk
                   </Text>
                 </Link>
@@ -204,5 +270,5 @@ export default function RegisterScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
-  )
+  );
 }
