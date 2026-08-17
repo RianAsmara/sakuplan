@@ -1,0 +1,308 @@
+import { styled, Text, XStack, YStack, View } from 'tamagui'
+
+/**
+ * The whole type system, as components. Nothing in a screen should set fontFamily,
+ * fontSize or fontWeight by hand — if a size is missing here, it is missing from the
+ * design, and that is worth a question rather than an invention.
+ *
+ * Names map 1:1 to the table in DESIGN_TOKENS.md.
+ */
+
+// --- Fraunces. Wordmark and onboarding/auth headings only. ---
+
+export const Wordmark = styled(Text, {
+  fontFamily: '$display',
+  fontWeight: '600',
+  color: '$terjaga',
+  variants: {
+    size: {
+      s: { fontSize: 20, lineHeight: 26 }, // home
+      m: { fontSize: 22, lineHeight: 28 }, // onboarding
+      l: { fontSize: 24, lineHeight: 30 }, // auth
+    },
+  } as const,
+  defaultVariants: { size: 's' },
+})
+
+export const DisplayHeading = styled(Text, {
+  fontFamily: '$display',
+  fontWeight: '600',
+  fontSize: 24,
+  lineHeight: 30,
+  color: '$tinta',
+})
+
+export const AuthHeading = styled(Text, {
+  fontFamily: '$display',
+  fontWeight: '600',
+  fontSize: 20,
+  lineHeight: 26,
+  color: '$tinta',
+})
+
+// --- IBM Plex Sans. Everything else. ---
+
+/** Tab screen title. 24/32 SemiBold, left-aligned. */
+export const TabTitle = styled(Text, {
+  fontFamily: '$body',
+  fontWeight: '600',
+  fontSize: 24,
+  lineHeight: 32,
+  color: '$tinta',
+})
+
+/** Detail screen title. 18/24 SemiBold, one line. */
+export const DetailTitle = styled(Text, {
+  fontFamily: '$body',
+  fontWeight: '600',
+  fontSize: 18,
+  lineHeight: 24,
+  color: '$tinta',
+  numberOfLines: 1,
+  ellipsizeMode: 'tail',
+})
+
+/** "Perlu perhatian", "Riwayat", "Identitas" … */
+export const SectionHeading = styled(Text, {
+  fontFamily: '$body',
+  fontWeight: '600',
+  fontSize: 14,
+  lineHeight: 20,
+  color: '$tinta',
+})
+
+/** "Akun" / "Perencanaan" / "Aplikasi" group labels in Lainnya. */
+export const GroupLabel = styled(Text, {
+  fontFamily: '$body',
+  fontWeight: '500',
+  fontSize: 11,
+  lineHeight: 16,
+  letterSpacing: 0.22,
+  color: '$kulit',
+})
+
+export const Body = styled(Text, {
+  fontFamily: '$body',
+  fontWeight: '400',
+  fontSize: 14,
+  lineHeight: 20,
+  color: '$tinta',
+})
+
+export const BodyS = styled(Text, {
+  fontFamily: '$body',
+  fontWeight: '400',
+  fontSize: 13,
+  lineHeight: 19,
+  color: '$tinta',
+})
+
+export const Meta = styled(Text, {
+  fontFamily: '$body',
+  fontWeight: '400',
+  fontSize: 12,
+  lineHeight: 17,
+  color: '$kulit',
+})
+
+export const MetaS = styled(Text, {
+  fontFamily: '$body',
+  fontWeight: '400',
+  fontSize: 11,
+  lineHeight: 16,
+  color: '$kulit',
+})
+
+/** 10px, tracked out. Chart labels and the "SARAN AI · …" eyebrow. */
+export const Micro = styled(Text, {
+  fontFamily: '$body',
+  fontWeight: '400',
+  fontSize: 10,
+  lineHeight: 14,
+  letterSpacing: 0.4,
+  color: '$kulit',
+})
+
+// --- IBM Plex Mono. Numbers and field labels. ---
+
+/**
+ * Every currency figure. `tabular` is on by default and must stay on — it is what keeps
+ * the ledger columns from shifting as digits change.
+ */
+export const Amount = styled(Text, {
+  fontFamily: '$mono',
+  fontWeight: '500',
+  color: '$tinta',
+  fontVariant: ['tabular-nums'],
+  variants: {
+    size: {
+      13: { fontSize: 13, lineHeight: 17 },
+      14: { fontSize: 14, lineHeight: 18 },
+      15: { fontSize: 15, lineHeight: 20 },
+      16: { fontSize: 16, lineHeight: 21 },
+      17: { fontSize: 17, lineHeight: 22 },
+      26: { fontSize: 26, lineHeight: 30 },
+      28: { fontSize: 28, lineHeight: 32 },
+      36: { fontSize: 36, lineHeight: 40 },
+      42: { fontSize: 42, lineHeight: 46 }, // home hero: line-height 1.1
+    },
+  } as const,
+  defaultVariants: { size: 14 },
+})
+
+/** Uppercase mono form label. Always paired with an optional 14px icon. */
+export const FieldLabel = styled(Text, {
+  fontFamily: '$mono',
+  fontWeight: '500',
+  fontSize: 11,
+  lineHeight: 15,
+  letterSpacing: 0.44,
+  color: '$kulit',
+})
+
+// --- Layout ---
+
+/** Main-app screen body. 20px gutters, 20 top, 28 bottom. */
+export const Screen = styled(YStack, {
+  flex: 1,
+  backgroundColor: '$kertas',
+  paddingHorizontal: 20,
+  paddingTop: 20,
+  paddingBottom: 28,
+})
+
+/** Onboarding and auth use wider gutters. */
+export const FlowScreen = styled(YStack, {
+  flex: 1,
+  backgroundColor: '$kertas',
+  paddingHorizontal: 24,
+  paddingBottom: 24,
+})
+
+/** 1px horizontal rule. Applied as the TOP border of each list row. */
+export const Hairline = styled(View, {
+  height: 1,
+  backgroundColor: '$hairline',
+  alignSelf: 'stretch',
+})
+
+/**
+ * A ledger row: full-width, space-between, hairline on top.
+ * `pv` matches the design's per-list padding (9 / 12 / 13 / 14).
+ */
+export const LedgerRow = styled(XStack, {
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  borderTopWidth: 1,
+  borderTopColor: '$hairline',
+  variants: {
+    pv: {
+      ':number': (n) => ({ paddingVertical: n }),
+    },
+  } as const,
+  defaultVariants: { pv: 13 },
+})
+
+/** Solid-border input. The default everywhere except onboarding. */
+export const inputStyle = {
+  borderWidth: 1.5,
+  borderColor: '$kulit',
+  borderRadius: 8,
+  backgroundColor: '$putih',
+  paddingHorizontal: 14,
+  paddingVertical: 13,
+  fontFamily: '$body',
+  fontSize: 14,
+  color: '$tinta',
+} as const
+
+/** Focus treatment: border goes brand green, plus a 3px soft ring. */
+export const inputFocusStyle = {
+  borderColor: '$terjaga',
+  shadowColor: 'rgba(0,107,94,0.15)',
+  shadowRadius: 0,
+  shadowOpacity: 1,
+  shadowOffset: { width: 0, height: 0 },
+  // RN has no spread-only shadow; on native, emulate the ring with an outline View
+  // or accept the border-only focus. Do not fake it with elevation.
+} as const
+
+/** Primary action. Full-width brand green. */
+export const PrimaryButton = styled(XStack, {
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 8,
+  backgroundColor: '$terjaga',
+  borderRadius: 8,
+  paddingVertical: 15,
+  pressStyle: { scale: 0.97 },
+  animation: 'quick',
+})
+
+/** Secondary action. Outlined, transparent fill. */
+export const SecondaryButton = styled(XStack, {
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 8,
+  borderWidth: 1.5,
+  borderColor: '$kulit',
+  borderRadius: 8,
+  backgroundColor: 'transparent',
+  paddingVertical: 15,
+  pressStyle: { scale: 0.97 },
+  animation: 'quick',
+})
+
+export const ButtonLabel = styled(Text, {
+  fontFamily: '$body',
+  fontWeight: '500',
+  fontSize: 14,
+  lineHeight: 20,
+})
+
+/** Small inline text action: "Ubah", "Tandai lunas", "Lihat anggaran". */
+export const InlineAction = styled(Text, {
+  fontFamily: '$body',
+  fontWeight: '500',
+  fontSize: 12,
+  lineHeight: 16,
+  color: '$terjaga',
+  pressStyle: { opacity: 0.7 },
+})
+
+/**
+ * Selection chip. 32px tall by design — below the 44px minimum, so callers MUST pass
+ * hitSlop to the pressable wrapper. Keep the visual size; expand only the touch area.
+ */
+export const Chip = styled(XStack, {
+  alignItems: 'center',
+  justifyContent: 'center',
+  minHeight: 32,
+  paddingHorizontal: 14,
+  paddingVertical: 8,
+  borderRadius: 14,
+  borderWidth: 1,
+  pressStyle: { scale: 0.95 },
+  animation: 'quick',
+  variants: {
+    selected: {
+      true: { backgroundColor: '$terjaga', borderColor: '$terjaga' },
+      false: { backgroundColor: '$putih', borderColor: '$kulit' },
+    },
+  } as const,
+  defaultVariants: { selected: false },
+})
+
+export const ChipLabel = styled(Text, {
+  fontFamily: '$body',
+  fontWeight: '400',
+  fontSize: 12,
+  lineHeight: 16,
+  variants: {
+    selected: {
+      true: { color: '$putih' },
+      false: { color: '$tinta' },
+    },
+  } as const,
+  defaultVariants: { selected: false },
+})

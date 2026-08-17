@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0}
+input,button{font-family:inherit;outline:none}
+button,[style*="cursor:pointer"],[style*="cursor: pointer"]{transition:transform .12s cubic-bezier(.4,0,.2,1),opacity .12s ease,box-shadow .12s ease}
+button:hover,[style*="cursor:pointer"]:hover{opacity:.88}
+a{color:#006B5E}
+a:hover{color:#18251F}
+::placeholder{color:#66736C;opacity:.6}
+input{transition:border-color .12s ease}
+</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;width:430px;max-width:100vw;min-height:100vh;margin:0 auto;background:#F7F8F4;color:#18251F;font-family:'IBM Plex Sans',sans-serif;box-shadow:0 0 40px rgba(24,37,31,0.10);position:relative">
+
+<sc-if value="{{ showOnboarding }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;min-height:100vh;padding:28px 24px 24px">
+  <div style="font:600 22px Fraunces,serif;color:#006B5E;margin-bottom:4px">SakuPlan</div>
+  <div style="font:500 11px 'IBM Plex Mono',monospace;color:#66736C;letter-spacing:.04em;margin-bottom:28px">LANGKAH {{ obStepLabel }} DARI 4</div>
+
+  <sc-if value="{{ isOb0 }}" hint-placeholder-val="{{ true }}">
+  <div style="flex:1">
+    <div style="font:600 24px Fraunces,serif;margin-bottom:8px">Halo. Siapa nama kamu?</div>
+    <div style="font:400 14px/1.5 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:24px">Dan kapan tanggal gajianmu setiap bulan?</div>
+    <div style="display:flex;align-items:center;gap:6px;font:500 11px 'IBM Plex Mono',monospace;color:#66736C;letter-spacing:.04em;margin-bottom:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/></svg>NAMA</div>
+    <input value="{{ obName }}" onChange="{{ setObName }}" placeholder="Nama kamu" style="width:100%;padding:14px;border:1.5px dashed #AEB9B2;border-radius:8px;background:#fff;font:400 15px 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:20px" style-focus="border-color:#006B5E"/>
+    <div style="font:500 11px 'IBM Plex Mono',monospace;color:#66736C;letter-spacing:.04em;margin-bottom:6px">TANGGAL GAJIAN</div>
+    <input value="{{ obPayday }}" onChange="{{ setObPayday }}" inputMode="numeric" placeholder="25" style="width:100%;padding:14px;border:1.5px dashed #AEB9B2;border-radius:8px;background:#fff;font:500 15px 'IBM Plex Mono',monospace;color:#18251F;margin-bottom:8px" style-focus="border-color:#006B5E"/>
+    <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#66736C">Setiap tanggal {{ obPayday }} tiap bulan.</div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isOb1 }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1">
+    <div style="font:600 24px Fraunces,serif;margin-bottom:8px">Berapa penghasilan bulananmu?</div>
+    <div style="font:400 14px/1.5 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:24px">Ini dasar perhitungan aman-belanja kamu.</div>
+    <div style="font:500 11px 'IBM Plex Mono',monospace;color:#66736C;letter-spacing:.04em;margin-bottom:6px">PENGHASILAN PER BULAN</div>
+    <div style="display:flex;align-items:center;border:1.5px dashed #AEB9B2;border-radius:8px;background:#fff;padding:14px">
+      <span style="font:500 15px 'IBM Plex Mono',monospace;color:#66736C;margin-right:6px">Rp</span>
+      <input value="{{ obIncome }}" onChange="{{ setObIncome }}" inputMode="numeric" placeholder="8500000" style="flex:1;border:none;background:transparent;font:500 15px 'IBM Plex Mono',monospace;color:#18251F" />
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isOb2 }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1">
+    <div style="font:600 24px Fraunces,serif;margin-bottom:8px">Buat anggaran pertamamu</div>
+    <div style="font:400 14px/1.5 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:20px">Alokasikan penghasilanmu ke kategori utama. Bisa diubah kapan saja nanti.</div>
+    <sc-for list="{{ obCats }}" as="cat" hint-placeholder-count="3">
+      <div style="display:flex;align-items:center;justify-content:space-between;border:1.5px dashed #AEB9B2;border-radius:8px;background:#fff;padding:12px 14px;margin-bottom:10px">
+        <div style="font:400 14px 'IBM Plex Sans',sans-serif">{{ cat.name }}</div>
+        <div style="display:flex;align-items:center">
+          <span style="font:500 13px 'IBM Plex Mono',monospace;color:#66736C;margin-right:4px">Rp</span>
+          <input value="{{ cat.amount }}" onChange="{{ cat.onChange }}" inputMode="numeric" style="width:90px;border:none;background:transparent;font:500 13px 'IBM Plex Mono',monospace;color:#18251F;text-align:right"/>
+        </div>
+      </div>
+    </sc-for>
+    <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#66736C;margin-top:6px">Total dialokasikan: {{ obCatsTotalFmt }}</div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isOb3 }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1">
+    <div style="font:600 24px Fraunces,serif;margin-bottom:8px">Semua siap, {{ obName }}.</div>
+    <div style="font:400 14px/1.5 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:24px">Berikut ringkasan sebelum kamu mulai.</div>
+    <div style="border:1.5px dashed #AEB9B2;border-radius:8px;background:#fff;padding:16px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font:400 13px 'IBM Plex Sans',sans-serif;color:#66736C">Penghasilan/bulan</span><span style="font:500 14px 'IBM Plex Mono',monospace">{{ obIncomeFmt }}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font:400 13px 'IBM Plex Sans',sans-serif;color:#66736C">Tanggal gajian</span><span style="font:500 14px 'IBM Plex Mono',monospace">{{ obPayday }}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="font:400 13px 'IBM Plex Sans',sans-serif;color:#66736C">Total anggaran</span><span style="font:500 14px 'IBM Plex Mono',monospace">{{ obCatsTotalFmt }}</span></div>
+    </div>
+  </div>
+  </sc-if>
+
+  <div style="display:flex;gap:10px;margin-top:16px">
+    <sc-if value="{{ obShowBack }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ obBack }}" style="flex:1;padding:15px;border:1.5px solid #66736C;border-radius:8px;background:transparent;color:#18251F;font:500 14px 'IBM Plex Sans',sans-serif" style-active="transform:scale(0.97)">Kembali</button>
+    </sc-if>
+    <sc-if value="{{ obShowNext }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ obNext }}" style="flex:2;padding:15px;border:none;border-radius:8px;background:#006B5E;color:#fff;font:500 14px 'IBM Plex Sans',sans-serif" style-active="transform:scale(0.97)">Lanjut</button>
+    </sc-if>
+    <sc-if value="{{ obShowFinish }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ obFinish }}" style="flex:2;padding:15px;border:none;border-radius:8px;background:#006B5E;color:#fff;font:500 14px 'IBM Plex Sans',sans-serif" style-active="transform:scale(0.97)">Mulai Pakai SakuPlan</button>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showAuth }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;min-height:100vh;padding:32px 24px 24px">
+  <button onClick="{{ closeAuth }}" style="align-self:flex-start;border:none;background:transparent;color:#006B5E;font:500 14px 'IBM Plex Sans',sans-serif;padding:4px 0;margin-bottom:20px" style-active="transform:scale(0.95)">&larr; Kembali</button>
+  <div style="text-align:center;margin-bottom:28px">
+    <div style="font:600 24px Fraunces,serif;color:#006B5E;margin-bottom:6px">SakuPlan</div>
+    <div style="font:400 13px 'IBM Plex Sans',sans-serif;color:#66736C">Kelola pengeluaran dan lihat berapa yang aman kamu belanjakan hari ini.</div>
+  </div>
+
+  <div style="border:1.5px dashed #AEB9B2;border-radius:12px;background:#fff;box-shadow:0 6px 20px rgba(24,37,31,0.10);padding:24px">
+
+    <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <div style="font:600 20px Fraunces,serif;margin-bottom:20px">Masuk</div>
+      <sc-if value="{{ loginError }}" hint-placeholder-val="{{ false }}">
+        <div style="border-left:3px solid #C3443D;background:rgba(195,68,61,0.06);padding:10px 12px;border-radius:4px;font:400 12px/1.5 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:16px">{{ loginError }}</div>
+      </sc-if>
+      <div style="display:flex;align-items:center;gap:6px;font:500 11px 'IBM Plex Mono',monospace;color:#66736C;letter-spacing:.04em;margin-bottom:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,6 12,13 2,6"/></svg>Email</div>
+      <input value="{{ loginEmail }}" onChange="{{ setLoginEmail }}" placeholder="nama@email.com" style="width:100%;padding:13px 14px;border:1.5px solid #66736C;border-radius:8px;background:#fff;font:400 14px 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:16px" style-focus="border-color:#006B5E;box-shadow:0 0 0 3px rgba(0,107,94,0.15)"/>
+      <div style="display:flex;align-items:center;gap:6px;font:500 11px 'IBM Plex Mono',monospace;color:#66736C;letter-spacing:.04em;margin-bottom:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Kata sandi</div>
+      <input type="password" value="{{ loginPassword }}" onChange="{{ setLoginPassword }}" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" style="width:100%;padding:13px 14px;border:1.5px solid #66736C;border-radius:8px;background:#fff;font:400 14px 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:22px" style-focus="border-color:#006B5E;box-shadow:0 0 0 3px rgba(0,107,94,0.15)"/>
+      <button onClick="{{ submitLogin }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:15px;border:none;border-radius:8px;background:#006B5E;color:#fff;font:500 14px 'IBM Plex Sans',sans-serif;margin-bottom:20px" style-active="transform:scale(0.97)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>Masuk</button>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <div style="flex:1;height:1px;background:#F7F8F4"></div>
+        <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#66736C">atau</div>
+        <div style="flex:1;height:1px;background:#F7F8F4"></div>
+      </div>
+
+      <button onClick="{{ noopGoogle }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:13px;border:1.5px solid #66736C;border-radius:8px;background:#fff;color:#18251F;font:500 14px 'IBM Plex Sans',sans-serif" style-active="transform:scale(0.97)">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"/></svg>
+        Masuk dengan Google
+      </button>
+      
+      <div style="text-align:center;font:400 13px 'IBM Plex Sans',sans-serif;color:#66736C;margin-top:22px">Belum punya akun? <span onClick="{{ goToRegister }}" style="color:#006B5E;cursor:pointer">Daftar</span></div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isRegister }}" hint-placeholder-val="{{ false }}">
+    <div>
+      <div style="font:600 20px Fraunces,serif;margin-bottom:20px">Buat Akun</div>
+      <sc-if value="{{ registerError }}" hint-placeholder-val="{{ false }}">
+        <div style="border-left:3px solid #C3443D;background:rgba(195,68,61,0.06);padding:10px 12px;border-radius:4px;font:400 12px/1.5 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:16px">{{ registerError }}</div>
+      </sc-if>
+      <div style="display:flex;align-items:center;gap:6px;font:500 11px 'IBM Plex Mono',monospace;color:#66736C;letter-spacing:.04em;margin-bottom:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/></svg>Nama</div>
+      <input value="{{ registerName }}" onChange="{{ setRegisterName }}" placeholder="Nama kamu" style="width:100%;padding:13px 14px;border:1.5px solid #66736C;border-radius:8px;background:#fff;font:400 14px 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:16px" style-focus="border-color:#006B5E;box-shadow:0 0 0 3px rgba(0,107,94,0.15)"/>
+      <div style="display:flex;align-items:center;gap:6px;font:500 11px 'IBM Plex Mono',monospace;color:#66736C;letter-spacing:.04em;margin-bottom:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,6 12,13 2,6"/></svg>Email</div>
+      <input value="{{ registerEmail }}" onChange="{{ setRegisterEmail }}" placeholder="nama@email.com" style="width:100%;padding:13px 14px;border:1.5px solid #66736C;border-radius:8px;background:#fff;font:400 14px 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:16px" style-focus="border-color:#006B5E;box-shadow:0 0 0 3px rgba(0,107,94,0.15)"/>
+      <div style="display:flex;align-items:center;gap:6px;font:500 11px 'IBM Plex Mono',monospace;color:#66736C;letter-spacing:.04em;margin-bottom:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Kata sandi</div>
+      <input type="password" value="{{ registerPassword }}" onChange="{{ setRegisterPassword }}" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" style="width:100%;padding:13px 14px;border:1.5px solid #66736C;border-radius:8px;background:#fff;font:400 14px 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:16px" style-focus="border-color:#006B5E;box-shadow:0 0 0 3px rgba(0,107,94,0.15)"/>
+      <div style="display:flex;align-items:center;gap:6px;font:500 11px 'IBM Plex Mono',monospace;color:#66736C;letter-spacing:.04em;margin-bottom:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Konfirmasi kata sandi</div>
+      <input type="password" value="{{ registerConfirm }}" onChange="{{ setRegisterConfirm }}" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" style="width:100%;padding:13px 14px;border:1.5px solid #66736C;border-radius:8px;background:#fff;font:400 14px 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:22px" style-focus="border-color:#006B5E;box-shadow:0 0 0 3px rgba(0,107,94,0.15)"/>
+      <button onClick="{{ submitRegister }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:15px;border:none;border-radius:8px;background:#006B5E;color:#fff;font:500 14px 'IBM Plex Sans',sans-serif;margin-bottom:20px" style-active="transform:scale(0.97)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>Daftar</button>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <div style="flex:1;height:1px;background:#F7F8F4"></div>
+        <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#66736C">atau</div>
+        <div style="flex:1;height:1px;background:#F7F8F4"></div>
+      </div>
+
+      <button onClick="{{ noopGoogle }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:13px;border:1.5px solid #66736C;border-radius:8px;background:#fff;color:#18251F;font:500 14px 'IBM Plex Sans',sans-serif" style-active="transform:scale(0.97)">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"/></svg>
+        Daftar dengan Google
+      </button>
+      
+      <div style="text-align:center;font:400 13px 'IBM Plex Sans',sans-serif;color:#66736C;margin-top:22px">Sudah punya akun? <span onClick="{{ goToLogin }}" style="color:#006B5E;cursor:pointer">Masuk</span></div>
+    </div>
+    </sc-if>
+
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showMainApp }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;overflow-y:auto;padding:20px 20px 28px">
+
+<sc-if value="{{ isSubScreen }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;align-items:center;height:56px;margin:-20px -20px 12px;padding:0 16px;background:#F7F8F4;border-bottom:1px solid #D8DDD7">
+    <button onClick="{{ goBack }}" aria-label="Kembali" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:none;background:transparent;border-radius:8px;color:#006B5E;padding:0;cursor:pointer" style-active="background:#EEF3EF">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    </button>
+    <div style="flex:1;font:600 18px 'IBM Plex Sans',sans-serif;line-height:24px;color:#18251F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-left:8px">{{ subTitle }}</div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+    <div style="font:600 20px Fraunces,serif;color:#006B5E">SakuPlan</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button onClick="{{ goNotif }}" style="border:none;background:transparent;font:400 13px 'IBM Plex Sans',sans-serif;color:#18251F;position:relative;padding:4px 0" style-active="transform:scale(0.95)">Notifikasi<sc-if value="{{ hasUnread }}" hint-placeholder-val="{{ false }}"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#C3443D;margin-left:5px"></span></sc-if></button>
+      <button onClick="{{ goProfile }}" style="width:30px;height:30px;border-radius:50%;border:1.5px solid #006B5E;background:#fff;color:#006B5E;font:500 12px 'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center;padding:0" style-active="transform:scale(0.9)">{{ userInitial }}</button>
+    </div>
+  </div>
+  <div style="font:400 13px 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:18px">Halo, {{ userName }}. Kelola pengeluaran dan lihat berapa yang aman kamu belanjakan hari ini.</div>
+
+  <div onClick="{{ goSTS }}" style="border:1.5px dashed {{ stsBorderColor }};border-radius:8px;background:{{ stsBg }};padding:20px;margin-bottom:20px;cursor:pointer" style-active="transform:scale(0.98)">
+    <div style="font:500 12px 'IBM Plex Sans',sans-serif;color:{{ stsLabelColor }};letter-spacing:.02em;margin-bottom:6px">{{ stsLabel }}</div>
+    <div style="font:500 42px 'IBM Plex Mono',monospace;color:{{ stsAmountColor }};line-height:1.1">{{ stsAmountFmt }}</div>
+    <div style="font:400 13px 'IBM Plex Sans',sans-serif;color:#66736C;margin-top:8px">{{ stsSupportingCopy }} &rsaquo;</div>
+  </div>
+
+  <div style="display:flex;margin-bottom:20px">
+    <div style="flex:1">
+      <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:6px">Saldo tersedia</div>
+      <div style="font:500 17px 'IBM Plex Mono',monospace;color:#18251F">{{ liquidFmt }}</div>
+    </div>
+    <div style="width:1px;background:#D8DDD7;margin:0 16px"></div>
+    <div style="flex:1">
+      <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:6px">Pengeluaran bulan ini</div>
+      <div style="font:500 17px 'IBM Plex Mono',monospace;color:#18251F">{{ budgetSpentFmt }}</div>
+    </div>
+  </div>
+
+  <sc-if value="{{ hasAttention }}" hint-placeholder-val="{{ false }}">
+  <div style="margin-bottom:20px">
+    <div style="font:600 14px 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:10px">Perlu perhatian</div>
+    <div style="border-radius:8px;background:rgba(195,68,61,0.06);overflow:hidden">
+      <sc-for list="{{ attentionItems }}" as="a" hint-placeholder-count="1">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 14px;border-top:1px solid rgba(195,68,61,0.12)">
+          <div>
+            <div style="font:400 14px 'IBM Plex Sans',sans-serif;color:#18251F">{{ a.title }}</div>
+            <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#C3443D;margin-top:2px">{{ a.detail }}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+            <div style="font:500 15px 'IBM Plex Mono',monospace;color:#18251F">{{ a.amountFmt }}</div>
+            <button onClick="{{ a.action }}" style="border:none;background:transparent;color:#C3443D;font:500 12px 'IBM Plex Sans',sans-serif;padding:2px 0" style-active="transform:scale(0.95)">{{ a.actionLabel }}</button>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <div onClick="{{ goGoals }}" style="border:1.5px dashed #AEB9B2;border-radius:8px;background:#fff;padding:14px;margin-bottom:20px;cursor:pointer" style-active="transform:scale(0.98)">
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+      <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#66736C">{{ topGoalName }}</div>
+      <div style="font:500 13px 'IBM Plex Mono',monospace;color:#D2A21B">{{ topGoalPct }}%</div>
+    </div>
+    <div style="height:6px;border-radius:3px;background:#F7F8F4;overflow:hidden;margin-bottom:6px"><div style="height:100%;width:{{ topGoalPct }}%;background:#D2A21B;border-right:2px dashed #fff"></div></div>
+    <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#66736C">{{ topGoalContributedFmt }} dari {{ topGoalTargetFmt }}</div>
+  </div>
+
+  <div style="margin-bottom:20px">
+    <div style="font:600 14px 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:10px">Pengeluaran terbesar bulan ini</div>
+    <sc-for list="{{ topCategories }}" as="tc" hint-placeholder-count="3">
+      <div style="display:flex;justify-content:space-between;padding:9px 0;border-top:1px solid #D8DDD7">
+        <span style="font:400 14px 'IBM Plex Sans',sans-serif;color:#18251F">{{ tc.name }}</span>
+        <span style="font:500 14px 'IBM Plex Mono',monospace">{{ tc.spentFmt }}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ hasAI }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ goAI }}" style="border:1.5px dashed #D2A21B;border-radius:8px;background:rgba(210,162,27,0.05);padding:12px 14px;cursor:pointer" style-active="transform:scale(0.98)">
+      <div style="font:400 10px 'IBM Plex Sans',sans-serif;color:#D2A21B;letter-spacing:.04em;margin-bottom:3px">SARAN AI &middot; MENUNGGU PERSETUJUAN</div>
+      <div style="font:400 13px 'IBM Plex Sans',sans-serif;color:#66736C">{{ aiCount }} rekomendasi anggaran &middot; <span style="color:#18251F;font-weight:500">Tinjau rekomendasi &rsaquo;</span></div>
+    </div>
+  </sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isTransactions }}" hint-placeholder-val="{{ false }}">
+<div>
+  <div style="margin-bottom:22px">
+    <div style="font:600 24px 'IBM Plex Sans',sans-serif;line-height:32px;color:#18251F">Transaksi</div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <button onClick="{{ setQaExpense }}" style="flex:1;padding:10px;border:none;border-radius:6px;font:500 13px 'IBM Plex Sans',sans-serif;background:{{ qaExpenseBg }};color:{{ qaExpenseFg }}" style-active="transform:scale(0.97)">Pengeluaran</button>
+    <button onClick="{{ setQaIncome }}" style="flex:1;padding:10px;border:none;border-radius:6px;font:500 13px 'IBM Plex Sans',sans-serif;background:{{ qaIncomeBg }};color:{{ qaIncomeFg }}" style-active="transform:scale(0.97)">Pemasukan</button>
+  </div>
+  <div style="display:flex;align-items:center;border:1.5px solid #66736C;border-radius:8px;padding:14px;margin-bottom:14px">
+    <span style="font:500 26px 'IBM Plex Mono',monospace;color:#66736C;margin-right:6px">Rp</span>
+    <input value="{{ qaAmount }}" onChange="{{ setQaAmount }}" inputMode="numeric" placeholder="0" style="flex:1;border:none;background:transparent;font:500 26px 'IBM Plex Mono',monospace;color:#18251F"/>
+  </div>
+  <sc-if value="{{ qaIsExpense }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+    <sc-for list="{{ categoryOptions }}" as="c" hint-placeholder-count="5">
+      <button onClick="{{ c.onSelect }}" style="padding:8px 14px;border-radius:14px;border:1px solid {{ c.borderColor }};background:{{ c.bg }};color:{{ c.fg }};font:400 12px 'IBM Plex Sans',sans-serif;min-height:32px" style-active="transform:scale(0.95)">{{ c.name }}</button>
+    </sc-for>
+  </div>
+  </sc-if>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+    <sc-for list="{{ accountOptions }}" as="a" hint-placeholder-count="3">
+      <button onClick="{{ a.onSelect }}" style="padding:8px 14px;border-radius:14px;border:1px solid {{ a.borderColor }};background:{{ a.bg }};color:{{ a.fg }};font:400 12px 'IBM Plex Sans',sans-serif;min-height:32px" style-active="transform:scale(0.95)">{{ a.name }}</button>
+    </sc-for>
+  </div>
+  <input value="{{ qaNote }}" onChange="{{ setQaNote }}" placeholder="Catatan (opsional)" style="width:100%;padding:12px;border:1px solid #D8DDD7;background:#fff;border-radius:6px;font:400 13px 'IBM Plex Sans',sans-serif;margin-bottom:14px" style-focus="border-color:#006B5E"/>
+  <button onClick="{{ addTransaction }}" style="width:100%;padding:14px;border:none;border-radius:8px;background:#006B5E;color:#fff;font:500 14px 'IBM Plex Sans',sans-serif;margin-bottom:24px" style-active="transform:scale(0.97)">Simpan</button>
+
+  <div style="font:600 14px 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:6px">Riwayat</div>
+  <sc-for list="{{ txnList }}" as="t" hint-placeholder-count="6">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid #D8DDD7">
+      <div>
+        <div style="font:400 14px 'IBM Plex Sans',sans-serif">{{ t.desc }}</div>
+        <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#66736C;margin-top:2px">{{ t.dateLabel }} &middot; {{ t.category }} &middot; {{ t.account }}</div>
+      </div>
+      <div style="font:500 14px 'IBM Plex Mono',monospace;color:{{ t.color }}">{{ t.amountFmt }}</div>
+    </div>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isBudgets }}" hint-placeholder-val="{{ false }}">
+<div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px">
+    <div style="font:600 24px 'IBM Plex Sans',sans-serif;line-height:32px;color:#18251F">Anggaran</div>
+    <sc-if value="{{ hasAI }}" hint-placeholder-val="{{ false }}"><button onClick="{{ goAI }}" style="border:none;background:transparent;color:#D2A21B;font:500 12px 'IBM Plex Sans',sans-serif;margin-top:6px" style-active="transform:scale(0.95)">{{ aiCount }} saran AI &rsaquo;</button></sc-if>
+  </div>
+  <sc-for list="{{ budgetList }}" as="b" hint-placeholder-count="5">
+    <div style="padding:14px 0;border-top:1px solid #D8DDD7">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <span style="font:400 14px 'IBM Plex Sans',sans-serif">{{ b.name }}</span>
+        <span style="font:500 13px 'IBM Plex Mono',monospace;color:{{ b.pctColor }}">{{ b.pct }}%</span>
+      </div>
+      <div style="height:5px;border-radius:3px;background:#F7F8F4;overflow:hidden;margin-bottom:8px"><div style="height:100%;width:{{ b.barWidth }}%;background:{{ b.barColor }}"></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font:400 12px 'IBM Plex Sans',sans-serif;color:{{ b.summaryColor }}">{{ b.summaryLabel }}</span>
+        <sc-if value="{{ b.isNotEditing }}" hint-placeholder-val="{{ true }}"><button onClick="{{ b.startEdit }}" style="border:none;background:transparent;color:#006B5E;font:400 12px 'IBM Plex Sans',sans-serif" style-active="transform:scale(0.95)">Ubah</button></sc-if>
+      </div>
+      <sc-if value="{{ b.isEditing }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input value="{{ b.editAmt }}" onChange="{{ b.setEditAmt }}" inputMode="numeric" style="flex:1;border:1px solid #66736C;border-radius:6px;padding:9px;font:500 13px 'IBM Plex Mono',monospace"/>
+          <button onClick="{{ b.saveEdit }}" style="padding:9px 14px;border:none;border-radius:6px;background:#006B5E;color:#fff;font:500 12px 'IBM Plex Sans',sans-serif" style-active="transform:scale(0.95)">Simpan</button>
+        </div>
+      </sc-if>
+    </div>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isReports }}" hint-placeholder-val="{{ false }}">
+<div>
+  <div style="margin-bottom:22px">
+    <div style="font:600 24px 'IBM Plex Sans',sans-serif;line-height:32px;color:#18251F">Laporan</div>
+    <div style="font:400 14px 'IBM Plex Sans',sans-serif;color:#66736C;margin-top:5px">Ringkasan kondisi keuanganmu</div>
+  </div>
+  <div style="border:1.5px dashed #AEB9B2;border-radius:8px;background:#fff;padding:16px;margin-bottom:24px">
+    <div style="font:600 14px 'IBM Plex Sans',sans-serif;color:#18251F">Arus kas 6 bulan terakhir</div>
+    <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:10px">{{ reportPeriodLabel }}</div>
+    <svg viewBox="0 0 380 130" style="width:100%;height:126px">
+      <line x1="0" y1="20" x2="380" y2="20" stroke="#F7F8F4" stroke-width="1"/>
+      <line x1="0" y1="70" x2="380" y2="70" stroke="#F7F8F4" stroke-width="1"/>
+      <line x1="0" y1="120" x2="380" y2="120" stroke="#F7F8F4" stroke-width="1"/>
+      <polyline points="{{ incomeLinePoints }}" fill="none" stroke="#006B5E" stroke-width="2"/>
+      <polyline points="{{ expenseLinePoints }}" fill="none" stroke="#C3443D" stroke-width="2" stroke-dasharray="4 3"/>
+    </svg>
+    <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+      <span style="font:400 10px 'IBM Plex Sans',sans-serif;color:#66736C">{{ monthLabels.0.label }}</span>
+      <span style="font:400 10px 'IBM Plex Sans',sans-serif;color:#66736C">{{ monthLabels.1.label }}</span>
+      <span style="font:400 10px 'IBM Plex Sans',sans-serif;color:#66736C">{{ monthLabels.2.label }}</span>
+      <span style="font:400 10px 'IBM Plex Sans',sans-serif;color:#66736C">{{ monthLabels.3.label }}</span>
+      <span style="font:400 10px 'IBM Plex Sans',sans-serif;color:#66736C">{{ monthLabels.4.label }}</span>
+      <span style="font:400 10px 'IBM Plex Sans',sans-serif;color:#66736C">{{ monthLabels.5.label }}</span>
+    </div>
+    <div style="display:flex;gap:16px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:6px;font:400 11px 'IBM Plex Sans',sans-serif;color:#66736C"><span style="width:14px;height:2px;background:#006B5E;display:inline-block"></span>Pemasukan</div>
+      <div style="display:flex;align-items:center;gap:6px;font:400 11px 'IBM Plex Sans',sans-serif;color:#66736C"><span style="width:14px;height:2px;background:#C3443D;display:inline-block"></span>Pengeluaran</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding-top:12px;border-top:1px solid #F7F8F4">
+      <div><div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:3px">Pemasukan</div><div style="font:500 14px 'IBM Plex Mono',monospace">{{ reportIncomeFmt }}</div></div>
+      <div><div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:3px">Pengeluaran</div><div style="font:500 14px 'IBM Plex Mono',monospace">{{ reportExpenseFmt }}</div></div>
+      <div><div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:3px">Arus kas bersih</div><div style="font:500 14px 'IBM Plex Mono',monospace;color:{{ reportNetColor }}">{{ reportNetFmt }}</div></div>
+    </div>
+  </div>
+  <div style="font:600 14px 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:12px">Pengeluaran per kategori</div>
+  <sc-for list="{{ categoryBars }}" as="cb" hint-placeholder-count="5">
+    <div style="padding:10px 0;border-top:1px solid #D8DDD7">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font:400 13px 'IBM Plex Sans',sans-serif">{{ cb.name }}</span><span style="font:500 13px 'IBM Plex Mono',monospace">{{ cb.spentFmt }}</span></div>
+      <div style="height:6px;border-radius:3px;background:#F7F8F4;overflow:hidden"><div style="height:100%;width:{{ cb.pct }}%;background:#006B5E"></div></div>
+    </div>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isMore }}" hint-placeholder-val="{{ false }}">
+<div>
+  <div style="margin-bottom:22px">
+    <div style="font:600 24px 'IBM Plex Sans',sans-serif;line-height:32px;color:#18251F">Lainnya</div>
+  </div>
+
+  <div style="font:500 11px 'IBM Plex Sans',sans-serif;color:#66736C;letter-spacing:.02em;margin-bottom:2px">Akun</div>
+  <button onClick="{{ goProfile }}" style="width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;padding:14px 0;border:none;border-top:1px solid #D8DDD7;background:transparent;font:400 14px 'IBM Plex Sans',sans-serif;color:#18251F" style-active="opacity:0.7"><span style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#66736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-6 8-6s8 2 8 6"/></svg>Profil &amp; preferensi</span> <span style="color:#66736C">&rsaquo;</span></button>
+  <button onClick="{{ goAccounts }}" style="width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;padding:14px 0;border:none;border-top:1px solid #D8DDD7;background:transparent;font:400 14px 'IBM Plex Sans',sans-serif;color:#18251F" style-active="opacity:0.7"><span style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#66736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2"/><path d="M3 7v11a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2Z"/><circle cx="16" cy="14" r="1.2" fill="#66736C" stroke="none"/></svg>Akun &amp; saldo</span> <span style="color:#66736C">&rsaquo;</span></button>
+
+  <div style="font:500 11px 'IBM Plex Sans',sans-serif;color:#66736C;letter-spacing:.02em;margin:20px 0 2px">Perencanaan</div>
+  <button onClick="{{ goBills }}" style="width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;padding:14px 0;border:none;border-top:1px solid #D8DDD7;background:transparent;font:400 14px 'IBM Plex Sans',sans-serif;color:#18251F" style-active="opacity:0.7"><span style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#66736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3v18l-2-1.5L13 21l-2-1.5L9 21l-2-1.5L5 21V3z"/><path d="M9 7h6M9 11h6"/></svg>Tagihan berulang</span> <span style="color:#66736C">&rsaquo;</span></button>
+  <button onClick="{{ goGoals }}" style="width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;padding:14px 0;border:none;border-top:1px solid #D8DDD7;background:transparent;font:400 14px 'IBM Plex Sans',sans-serif;color:#18251F" style-active="opacity:0.7"><span style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#66736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="#66736C" stroke="none"/></svg>Target tabungan</span> <span style="color:#66736C">&rsaquo;</span></button>
+  <button onClick="{{ goAI }}" style="width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;padding:14px 0;border:none;border-top:1px solid #D8DDD7;background:transparent;font:400 14px 'IBM Plex Sans',sans-serif;color:#18251F" style-active="opacity:0.7"><span style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D2A21B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/><circle cx="12" cy="12" r="3.5"/></svg>Rekomendasi AI</span> <span style="color:#D2A21B">{{ aiLabel }} &rsaquo;</span></button>
+
+  <div style="font:500 11px 'IBM Plex Sans',sans-serif;color:#66736C;letter-spacing:.02em;margin:20px 0 2px">Aplikasi</div>
+  <button onClick="{{ goNotif }}" style="width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;padding:14px 0;border:none;border-top:1px solid #D8DDD7;background:transparent;font:400 14px 'IBM Plex Sans',sans-serif;color:#18251F" style-active="opacity:0.7"><span style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#66736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>Notifikasi</span> <span style="color:#66736C">{{ unreadLabel }} &rsaquo;</span></button>
+  <button onClick="{{ goPrivacy }}" style="width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;padding:14px 0;border:none;border-top:1px solid #D8DDD7;background:transparent;font:400 14px 'IBM Plex Sans',sans-serif;color:#18251F" style-active="opacity:0.7"><span style="display:flex;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#66736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3.5V11c0 5-3.4 8.4-8 9.5-4.6-1.1-8-4.5-8-9.5V6.5z"/></svg>Privasi &amp; keamanan</span> <span style="color:#66736C">&rsaquo;</span></button>
+</div>
+</sc-if>
+
+<sc-if value="{{ isAccounts }}" hint-placeholder-val="{{ false }}">
+<div>
+  <div style="margin-bottom:20px">
+    <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:6px">Total saldo</div>
+    <div style="font:500 28px 'IBM Plex Mono',monospace;color:#18251F">{{ totalBalanceFmt }}</div>
+  </div>
+  <sc-for list="{{ accountList }}" as="a" hint-placeholder-count="4">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-top:1px solid #D8DDD7">
+      <div>
+        <div style="font:400 14px 'IBM Plex Sans',sans-serif">{{ a.name }}</div>
+        <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#66736C;margin-top:2px">{{ a.type }}</div>
+      </div>
+      <div style="font:500 16px 'IBM Plex Mono',monospace">{{ a.balanceFmt }}</div>
+    </div>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isBills }}" hint-placeholder-val="{{ false }}">
+<div>
+  <sc-for list="{{ billList }}" as="b" hint-placeholder-count="5">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-top:1px solid #D8DDD7">
+      <div>
+        <div style="font:400 14px 'IBM Plex Sans',sans-serif">{{ b.name }}</div>
+        <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:{{ b.statusColor }};margin-top:3px">{{ b.statusLabel }}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="font:500 15px 'IBM Plex Mono',monospace">{{ b.amountFmt }}</div>
+        <sc-if value="{{ b.canPay }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ b.markPaid }}" style="border:none;background:transparent;color:#006B5E;font:500 12px 'IBM Plex Sans',sans-serif;padding:6px 0;white-space:nowrap" style-active="transform:scale(0.95)">Tandai lunas</button>
+        </sc-if>
+      </div>
+    </div>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isGoals }}" hint-placeholder-val="{{ false }}">
+<div>
+  <sc-for list="{{ goalList }}" as="g" hint-placeholder-count="2">
+    <div style="border:1.5px dashed #AEB9B2;border-radius:8px;background:#fff;padding:16px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <span style="font:400 14px 'IBM Plex Sans',sans-serif">{{ g.name }}</span>
+        <span style="font:500 13px 'IBM Plex Mono',monospace;color:#D2A21B">{{ g.pct }}%</span>
+      </div>
+      <div style="height:6px;border-radius:3px;background:#F7F8F4;overflow:hidden;margin-bottom:8px"><div style="height:100%;width:{{ g.pct }}%;background:#D2A21B;border-right:2px dashed #fff"></div></div>
+      <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:10px">{{ g.contributedFmt }} dari {{ g.targetFmt }} &middot; target {{ g.deadlineLabel }}</div>
+      <sc-if value="{{ g.isNotAdding }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ g.startAdd }}" style="width:100%;padding:11px;border:1.5px solid #006B5E;border-radius:6px;background:transparent;color:#006B5E;font:500 13px 'IBM Plex Sans',sans-serif" style-active="transform:scale(0.97)">Tambah Dana</button>
+      </sc-if>
+      <sc-if value="{{ g.isAdding }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:8px">
+          <input value="{{ g.addAmt }}" onChange="{{ g.setAddAmt }}" inputMode="numeric" placeholder="Jumlah" style="flex:1;border:1px solid #66736C;border-radius:6px;padding:9px;font:500 13px 'IBM Plex Mono',monospace"/>
+          <button onClick="{{ g.saveAdd }}" style="padding:9px 14px;border:none;border-radius:6px;background:#006B5E;color:#fff;font:500 12px 'IBM Plex Sans',sans-serif" style-active="transform:scale(0.95)">Simpan</button>
+        </div>
+      </sc-if>
+    </div>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSTS }}" hint-placeholder-val="{{ false }}">
+<div>
+  <div style="border:1.5px dashed #006B5E;border-radius:8px;background:rgba(0,107,94,0.06);padding:18px;margin-bottom:16px">
+    <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:6px">AMAN DIBELANJAKAN HARI INI</div>
+    <div style="font:500 36px 'IBM Plex Mono',monospace;color:#006B5E">{{ safeTodayFmt }}</div>
+    <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#66736C;margin-top:6px">{{ safeUntilPaydayFmt }} &divide; {{ daysLabel }} hari sampai gajian</div>
+  </div>
+  <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:8px">RINCIAN PERHITUNGAN</div>
+  <div style="border:1.5px dashed #AEB9B2;border-radius:8px;background:#fff;padding:16px">
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #EEF3EF"><span style="font:400 13px 'IBM Plex Sans',sans-serif">Saldo cair (tunai, bank, e-wallet)</span><span style="font:500 13px 'IBM Plex Mono',monospace">{{ liquidFmt }}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #EEF3EF"><span style="font:400 13px 'IBM Plex Sans',sans-serif;color:#C3443D">&minus; Tagihan belum lunas</span><span style="font:500 13px 'IBM Plex Mono',monospace;color:#C3443D">{{ unpaidBillsFmt }}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #EEF3EF"><span style="font:400 13px 'IBM Plex Sans',sans-serif;color:#C3443D">&minus; Sisa anggaran bulan ini</span><span style="font:500 13px 'IBM Plex Mono',monospace;color:#C3443D">{{ remainingBudgetFmt }}</span></div>
+    <div style="display:flex;justify-content:space-between;padding:10px 0"><span style="font:500 13px 'IBM Plex Sans',sans-serif">= Aman sampai gajian</span><span style="font:500 14px 'IBM Plex Mono',monospace;color:#006B5E">{{ safeUntilPaydayFmt }}</span></div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isNotif }}" hint-placeholder-val="{{ false }}">
+<div>
+  <sc-for list="{{ notifList }}" as="n" hint-placeholder-count="4">
+    <div onClick="{{ n.markRead }}" style="display:flex;gap:10px;padding:14px 0;border-top:1px solid #D8DDD7;cursor:pointer;opacity:{{ n.opacity }}" style-active="opacity:0.7">
+      <div style="width:7px;height:7px;border-radius:50%;background:{{ n.dotColor }};margin-top:5px;flex-shrink:0"></div>
+      <div style="font:{{ n.weight }} 13px/1.5 'IBM Plex Sans',sans-serif;color:#18251F">{{ n.text }}</div>
+    </div>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isAI }}" hint-placeholder-val="{{ false }}">
+<div>
+  <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:14px">Ini rekomendasi, bukan angka final. Kamu yang memutuskan.</div>
+  <sc-for list="{{ aiList }}" as="s" hint-placeholder-count="3">
+    <div style="border:1.5px dashed #D2A21B;border-radius:8px;background:rgba(210,162,27,0.05);padding:16px;margin-bottom:12px">
+      <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#D2A21B;letter-spacing:.04em;margin-bottom:8px">USULAN &middot; {{ s.kindLabel }}</div>
+      <div style="font:400 14px 'IBM Plex Sans',sans-serif;margin-bottom:8px">{{ s.category }}</div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid rgba(210,162,27,0.18)"><span style="font:400 12px 'IBM Plex Sans',sans-serif;color:#66736C">Saat ini</span><span style="font:500 14px 'IBM Plex Mono',monospace">{{ s.currentFmt }}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0 10px;border-top:1px solid rgba(210,162,27,0.18)"><span style="font:400 12px 'IBM Plex Sans',sans-serif;color:#66736C">Usulan</span><span style="font:500 14px 'IBM Plex Mono',monospace;color:#D2A21B">{{ s.suggestedFmt }}</span></div>
+      <div style="font:400 12px/1.5 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:12px">{{ s.reason }}</div>
+      <div style="display:flex;gap:8px">
+        <button onClick="{{ s.reject }}" style="flex:1;padding:10px;border:1.5px solid #66736C;border-radius:6px;background:transparent;color:#18251F;font:500 13px 'IBM Plex Sans',sans-serif" style-active="transform:scale(0.96)">Tolak</button>
+        <button onClick="{{ s.approve }}" style="flex:1;padding:10px;border:none;border-radius:6px;background:#006B5E;color:#fff;font:500 13px 'IBM Plex Sans',sans-serif" style-active="transform:scale(0.96)">Terapkan</button>
+      </div>
+    </div>
+  </sc-for>
+  <sc-if value="{{ aiEmpty }}" hint-placeholder-val="{{ false }}">
+    <div style="border:1.5px dashed #AEB9B2;border-radius:8px;background:#fff;padding:20px;text-align:center;font:400 13px 'IBM Plex Sans',sans-serif;color:#66736C">Tidak ada rekomendasi baru saat ini.</div>
+  </sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isPrivacy }}" hint-placeholder-val="{{ false }}">
+<div>
+  <div style="font:600 14px 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:8px">Sesi aktif</div>
+  <sc-for list="{{ sessionList }}" as="s" hint-placeholder-count="2">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-top:1px solid #D8DDD7">
+      <div>
+        <div style="font:400 13px 'IBM Plex Sans',sans-serif">{{ s.device }}</div>
+        <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#66736C;margin-top:2px">{{ s.active }}</div>
+      </div>
+      <sc-if value="{{ s.showRevoke }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ s.revoke }}" style="display:flex;align-items:center;gap:5px;border:none;background:transparent;color:#C3443D;font:400 12px 'IBM Plex Sans',sans-serif" style-active="transform:scale(0.95)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C3443D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Keluar</button>
+      </sc-if>
+    </div>
+  </sc-for>
+
+  <div style="font:600 14px 'IBM Plex Sans',sans-serif;color:#18251F;margin:24px 0 10px">Data</div>
+  <button onClick="{{ requestExport }}" style="width:100%;text-align:left;padding:0;border:none;background:transparent;color:#006B5E;font:500 13px 'IBM Plex Sans',sans-serif;margin-bottom:8px" style-active="opacity:0.7">Ekspor data saya &rsaquo;</button>
+  <sc-if value="{{ exportReq }}" hint-placeholder-val="{{ false }}"><div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#66736C">Permintaan ekspor terkirim. File akan dikirim ke emailmu.</div></sc-if>
+
+  <div style="font:600 14px 'IBM Plex Sans',sans-serif;color:#C3443D;margin:28px 0 10px">Zona bahaya</div>
+  <div style="border:1.5px solid #C3443D;border-radius:8px;background:rgba(195,68,61,0.05);padding:16px">
+    <sc-if value="{{ deleteNotReq }}" hint-placeholder-val="{{ true }}">
+      <div style="font:400 12px/1.5 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:10px">Menghapus akun akan menghapus seluruh riwayat transaksi, anggaran, dan target tabunganmu secara permanen.</div>
+      <button onClick="{{ requestDelete }}" style="width:100%;padding:12px;border:none;border-radius:6px;background:#C3443D;color:#fff;font:500 13px 'IBM Plex Sans',sans-serif" style-active="transform:scale(0.97)">Hapus akun</button>
+    </sc-if>
+    <sc-if value="{{ deleteReq }}" hint-placeholder-val="{{ false }}">
+      <div style="font:400 12px/1.5 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:8px">Ketik HAPUS untuk konfirmasi. Tindakan ini tidak bisa dibatalkan.</div>
+      <input value="{{ deleteConfirmText }}" onChange="{{ setDeleteConfirmText }}" style="width:100%;padding:11px;border:1px solid #C3443D;border-radius:6px;font:500 13px 'IBM Plex Mono',monospace;margin-bottom:8px"/>
+      <button onClick="{{ confirmDelete }}" disabled="{{ deleteDisabled }}" style="width:100%;padding:12px;border:none;border-radius:6px;background:#C3443D;color:#fff;font:500 13px 'IBM Plex Sans',sans-serif;opacity:{{ deleteBtnOpacity }}">Konfirmasi hapus</button>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+<div>
+  <div style="font:600 14px 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:10px">Identitas</div>
+  <div style="margin-bottom:24px">
+    <div style="display:flex;align-items:center;gap:6px;font:500 11px 'IBM Plex Mono',monospace;color:#66736C;letter-spacing:.04em;margin-bottom:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#66736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/></svg>NAMA TAMPILAN</div>
+    <input value="{{ profileName }}" onChange="{{ setProfileName }}" style="width:100%;padding:12px 14px;border:1.5px solid #66736C;border-radius:8px;background:#fff;font:400 14px 'IBM Plex Sans',sans-serif;color:#18251F" style-focus="border-color:#006B5E;box-shadow:0 0 0 3px rgba(0,107,94,0.15)"/>
+  </div>
+
+  <div style="font:600 14px 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:10px">Gajian dan anggaran</div>
+  <div style="margin-bottom:24px">
+    <div style="font:500 11px 'IBM Plex Mono',monospace;color:#66736C;letter-spacing:.04em;margin-bottom:6px">TANGGAL GAJIAN SETIAP BULAN</div>
+    <input value="{{ profilePaydayDay }}" onChange="{{ setProfilePaydayDay }}" inputMode="numeric" style="width:100%;padding:12px 14px;border:1.5px solid #66736C;border-radius:8px;background:#fff;font:500 14px 'IBM Plex Mono',monospace;color:#18251F;margin-bottom:8px" style-focus="border-color:#006B5E;box-shadow:0 0 0 3px rgba(0,107,94,0.15)"/>
+    <div style="font:400 12px/1.5 'IBM Plex Sans',sans-serif;color:#66736C;margin-bottom:18px">Jika tanggal ini tidak ada di suatu bulan, gajian jatuh di hari terakhir bulan itu. Gajian berikutnya: {{ profileNextPaydayLabel }}.</div>
+    <div style="font:500 11px 'IBM Plex Mono',monospace;color:#66736C;letter-spacing:.04em;margin-bottom:6px">BATAS AMAN MINIMUM</div>
+    <div style="display:flex;align-items:center;border:1.5px solid #66736C;border-radius:8px;padding:12px 14px">
+      <span style="font:500 14px 'IBM Plex Mono',monospace;color:#66736C;margin-right:6px">Rp</span>
+      <input value="{{ profileSafetyBuffer }}" onChange="{{ setProfileSafetyBuffer }}" inputMode="numeric" style="flex:1;border:none;background:transparent;font:500 14px 'IBM Plex Mono',monospace;color:#18251F"/>
+    </div>
+    <div style="font:400 12px/1.5 'IBM Plex Sans',sans-serif;color:#66736C;margin-top:8px">Selalu disisihkan dari perhitungan aman-belanja sebagai jaga-jaga.</div>
+  </div>
+
+  <div style="font:600 14px 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:10px">AI</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:24px;border-bottom:1px solid #D8DDD7;margin-bottom:24px">
+    <div>
+      <div style="font:400 14px 'IBM Plex Sans',sans-serif">Izinkan rekomendasi AI</div>
+      <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#66736C;margin-top:2px">AI hanya memberikan usulan. Perubahan anggaran tetap memerlukan persetujuanmu.</div>
+    </div>
+    <button onClick="{{ toggleAiConsent }}" style="width:44px;height:26px;border-radius:13px;border:none;background:{{ aiConsentTrack }};position:relative;flex-shrink:0;padding:0" style-active="transform:scale(0.95)">
+      <div style="width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:3px;left:{{ aiConsentKnobLeft }}px;transition:left .15s"></div>
+    </button>
+  </div>
+
+  <div style="font:600 14px 'IBM Plex Sans',sans-serif;color:#18251F;margin-bottom:6px">Sistem</div>
+  <div style="display:flex;justify-content:space-between;padding:13px 0;border-top:1px solid #D8DDD7"><span style="font:400 13px 'IBM Plex Sans',sans-serif;color:#66736C">Bahasa</span><span style="font:400 13px 'IBM Plex Sans',sans-serif">Bahasa Indonesia</span></div>
+  <div style="display:flex;justify-content:space-between;padding:13px 0;border-top:1px solid #D8DDD7"><span style="font:400 13px 'IBM Plex Sans',sans-serif;color:#66736C">Zona waktu</span><span style="font:400 13px 'IBM Plex Sans',sans-serif">Asia/Jakarta</span></div>
+  <div style="display:flex;justify-content:space-between;padding:13px 0;border-top:1px solid #D8DDD7"><span style="font:400 13px 'IBM Plex Sans',sans-serif;color:#66736C">Mata uang</span><span style="font:500 13px 'IBM Plex Mono',monospace">IDR</span></div>
+</div>
+</sc-if>
+
+</div>
+
+<sc-if value="{{ isSubScreen }}" hint-placeholder-val="{{ false }}">
+<span></span>
+</sc-if>
+<sc-if value="{{ showTabBar }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-shrink:0;border-top:1.5px dashed #AEB9B2;background:#fff">
+  <button onClick="{{ goHome }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:14px 4px 12px;border:none;background:transparent;border-top:2px solid {{ tabHomeColor }};font:500 11px 'IBM Plex Sans',sans-serif;color:{{ tabHomeColor }}" style-active="transform:scale(0.95)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-4h4v4a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V9.5"/></svg>Beranda</button>
+  <button onClick="{{ goTransactions }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:14px 4px 12px;border:none;background:transparent;border-top:2px solid {{ tabTxnColor }};font:500 11px 'IBM Plex Sans',sans-serif;color:{{ tabTxnColor }}" style-active="transform:scale(0.95)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3v18l-2-1.5L13 21l-2-1.5L9 21l-2-1.5L5 21V3z"/><path d="M9 8h6M9 12h6"/></svg>Transaksi</button>
+  <button onClick="{{ goBudgets }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:14px 4px 12px;border:none;background:transparent;border-top:2px solid {{ tabBudColor }};font:500 11px 'IBM Plex Sans',sans-serif;color:{{ tabBudColor }}" style-active="transform:scale(0.95)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M7 3h10"/></svg>Anggaran</button>
+  <button onClick="{{ goReports }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:14px 4px 12px;border:none;background:transparent;border-top:2px solid {{ tabRepColor }};font:500 11px 'IBM Plex Sans',sans-serif;color:{{ tabRepColor }}" style-active="transform:scale(0.95)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 15v3M12 11v7M17 7v11"/></svg>Laporan</button>
+  <button onClick="{{ goMore }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:14px 4px 12px;border:none;background:transparent;border-top:2px solid {{ tabMoreColor }};font:500 11px 'IBM Plex Sans',sans-serif;color:{{ tabMoreColor }}" style-active="transform:scale(0.95)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>Lainnya</button>
+</div>
+</sc-if>
+
+</div>
+</sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const TERJAGA='#006B5E', LELUASA='#D2A21B', PERINGATAN='#C3443D', KULIT='#66736C', TINTA='#18251F';
+const MONTHS=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+const TODAY=new Date(2026,7,4);
+
+function nextPaydayDate(day, today){
+  day = Math.max(1, Math.min(31, day||25));
+  function candidateFor(year,month){
+    const lastDay = new Date(year, month+1, 0).getDate();
+    return new Date(year, month, Math.min(day, lastDay));
+  }
+  let cand = candidateFor(today.getFullYear(), today.getMonth());
+  if(cand <= today){
+    let nm = today.getMonth()+1, ny = today.getFullYear();
+    if(nm>11){ nm=0; ny++; }
+    cand = candidateFor(ny, nm);
+  }
+  return cand;
+}
+
+function fmt(n){
+  const r=Math.round(n||0); const neg=r<0;
+  const s=Math.abs(r).toLocaleString('id-ID');
+  return (neg?'-':'')+'Rp'+s;
+}
+function fmtDate(iso){ const d=new Date(iso+'T00:00:00'); return d.getDate()+' '+MONTHS[d.getMonth()]; }
+function fmtDateLong(iso){ const d=new Date(iso+'T00:00:00'); return d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear(); }
+function daysBetween(a,b){ return Math.round((b-a)/86400000); }
+function toLocalIso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+class Component extends DCLogic {
+  state = {
+    screen: 'home',
+    showOnboarding: false,
+    authScreen: null,
+    loginEmail: '', loginPassword: '', loginError: '',
+    registerName: '', registerEmail: '', registerPassword: '', registerConfirm: '', registerError: '',
+    obStep: 0,
+    obName: '', obPayday: '25', obIncome: '8500000',
+    obCats: [
+      {name:'Makan & Minum', amount:'2000000'},
+      {name:'Transportasi', amount:'800000'},
+      {name:'Belanja Rumah Tangga', amount:'1200000'}
+    ],
+    userName: 'Dewi',
+    paydayDay: '25', safetyBuffer: '500000', aiConsent: true,
+    accounts: [
+      {id:1,name:'Kas Tunai',type:'Tunai',balance:850000},
+      {id:2,name:'BCA',type:'Bank',balance:4200000},
+      {id:3,name:'GoPay',type:'E-Wallet',balance:320000},
+      {id:4,name:'Tabungan Darurat',type:'Tabungan',balance:6000000}
+    ],
+    transactions: [
+      {id:1,date:'2026-08-04',desc:'Kopi Kenangan',category:'Makan & Minum',account:'Kas Tunai',amount:-35000},
+      {id:2,date:'2026-08-03',desc:'Gojek',category:'Transportasi',account:'GoPay',amount:-45000},
+      {id:3,date:'2026-08-03',desc:'Indomaret',category:'Belanja Rumah Tangga',account:'BCA',amount:-128000},
+      {id:4,date:'2026-08-02',desc:'Gaji Agustus',category:'Pemasukan',account:'BCA',amount:8500000},
+      {id:5,date:'2026-08-02',desc:'Bioskop CGV',category:'Hiburan',account:'Kas Tunai',amount:-150000},
+      {id:6,date:'2026-08-01',desc:'Iuran RT',category:'Lain-lain',account:'Kas Tunai',amount:-150000},
+      {id:7,date:'2026-07-31',desc:'Transfer ke Dana Darurat',category:'Tabungan',account:'BCA',amount:-500000}
+    ],
+    budgets: [
+      {id:1,name:'Makan & Minum',allocated:2000000,spent:1230000},
+      {id:2,name:'Transportasi',allocated:800000,spent:540000},
+      {id:3,name:'Belanja Rumah Tangga',allocated:1200000,spent:980000},
+      {id:4,name:'Hiburan',allocated:500000,spent:610000},
+      {id:5,name:'Lain-lain',allocated:400000,spent:120000}
+    ],
+    bills: [
+      {id:1,name:'Iuran RT',amount:150000,due:'2026-08-01',status:'overdue'},
+      {id:2,name:'BPJS Kesehatan',amount:150000,due:'2026-08-05',status:'paid'},
+      {id:3,name:'Listrik PLN',amount:450000,due:'2026-08-10',status:'upcoming'},
+      {id:4,name:'Internet IndiHome',amount:350000,due:'2026-08-15',status:'upcoming'},
+      {id:5,name:'Cicilan Motor',amount:1200000,due:'2026-08-20',status:'upcoming'}
+    ],
+    goals: [
+      {id:1,name:'Dana Darurat',target:20000000,contributed:6000000,deadline:'2026-12-31'},
+      {id:2,name:'Liburan Bali',target:8000000,contributed:2400000,deadline:'2027-06-30'}
+    ],
+    notifications: [
+      {id:1,text:'Tagihan Iuran RT sudah lewat jatuh tempo 3 hari.',read:false},
+      {id:2,text:'Anggaran Hiburan sudah terlampaui bulan ini.',read:false},
+      {id:3,text:'Gaji Rp8.500.000 sudah masuk ke BCA.',read:true},
+      {id:4,text:'3 minggu lagi menuju gajian.',read:true}
+    ],
+    aiSuggestions: [
+      {id:1,kind:'update',category:'Hiburan',current:500000,suggested:650000,reason:'Pengeluaran Hiburan melebihi Rp500.000 selama 3 bulan berturut-turut.'},
+      {id:2,kind:'update',category:'Belanja Rumah Tangga',current:1200000,suggested:1050000,reason:'Rata-rata pemakaian 3 bulan terakhir Rp1.050.000, lebih rendah dari alokasi saat ini.'},
+      {id:3,kind:'new',category:'Kesehatan',current:0,suggested:300000,reason:'Terdeteksi pengeluaran rutin BPJS & obat yang belum punya kategori anggaran.'}
+    ],
+    sessions: [
+      {id:1,device:'iPhone 15 — Jakarta',current:true,active:'Aktif sekarang'},
+      {id:2,device:'Chrome, Windows — Jakarta',current:false,active:'2 hari lalu'}
+    ],
+    qaAmount:'', qaType:'expense', qaCategory:'', qaAccount:'Kas Tunai', qaNote:'',
+    goalAddId:null, goalAddAmt:'',
+    budgetEditId:null, budgetEditAmt:'',
+    exportReq:false, deleteReq:false, deleteConfirmText:''
+  };
+
+  go(screen){ this.setState({screen}); }
+
+  computeDerived(){
+    const accounts=this.state.accounts;
+    const liquid = accounts.filter(a=>a.type!=='Tabungan').reduce((s,a)=>s+a.balance,0);
+    const unpaidBills = this.state.bills.filter(b=>b.status!=='paid').reduce((s,b)=>s+b.amount,0);
+    const remainingBudget = this.state.budgets.reduce((s,b)=>s+Math.max(b.allocated-b.spent,0),0);
+    const safetyBuffer = parseInt(this.state.safetyBuffer,10)||0;
+    const paydayDate = nextPaydayDate(parseInt(this.state.paydayDay,10), TODAY);
+    const safeUntilPayday = liquid-unpaidBills-remainingBudget-safetyBuffer;
+    let days = daysBetween(TODAY,paydayDate); if(days<1) days=1;
+    const safeToday = safeUntilPayday/days;
+    return {liquid,unpaidBills,remainingBudget,safetyBuffer,safeUntilPayday,days,safeToday,paydayDate};
+  }
+
+  addTransaction(){
+    const amt = parseInt(this.state.qaAmount,10);
+    if(!amt || amt<=0) return;
+    const sign = this.state.qaType==='expense' ? -1 : 1;
+    const category = this.state.qaType==='income' ? 'Pemasukan' : (this.state.qaCategory || 'Lain-lain');
+    const accName = this.state.qaAccount;
+    const accounts = this.state.accounts.map(a => a.name===accName ? {...a, balance: a.balance + sign*amt} : a);
+    let budgets = this.state.budgets;
+    if(sign<0){
+      budgets = budgets.map(b => b.name===category ? {...b, spent: b.spent+amt} : b);
+    }
+    const txn = { id: Date.now(), date:'2026-08-04', desc: this.state.qaNote || category, category, account: accName, amount: sign*amt };
+    this.setState({ accounts, budgets, transactions: [txn, ...this.state.transactions], qaAmount:'', qaNote:'', qaCategory:'' });
+  }
+
+  markBillPaid(id){
+    const bill = this.state.bills.find(b=>b.id===id);
+    if(!bill || bill.status==='paid') return;
+    const bills = this.state.bills.map(b => b.id===id ? {...b, status:'paid'} : b);
+    const accounts = this.state.accounts.map(a => a.name==='BCA' ? {...a, balance: a.balance - bill.amount} : a);
+    const txn = { id: Date.now(), date:'2026-08-04', desc:'Bayar '+bill.name, category:'Tagihan', account:'BCA', amount: -bill.amount };
+    this.setState({ bills, accounts, transactions: [txn, ...this.state.transactions] });
+  }
+
+  saveGoalAdd(){
+    const amt = parseInt(this.state.goalAddAmt,10);
+    if(!amt || amt<=0){ this.setState({goalAddId:null, goalAddAmt:''}); return; }
+    const goal = this.state.goals.find(g=>g.id===this.state.goalAddId);
+    const goals = this.state.goals.map(g => g.id===this.state.goalAddId ? {...g, contributed: g.contributed+amt} : g);
+    const accounts = this.state.accounts.map(a => a.name==='BCA' ? {...a, balance: a.balance-amt} : a);
+    const txn = { id: Date.now(), date:'2026-08-04', desc:'Transfer ke '+(goal?goal.name:'Tabungan'), category:'Tabungan', account:'BCA', amount:-amt };
+    this.setState({ goals, accounts, transactions:[txn, ...this.state.transactions], goalAddId:null, goalAddAmt:'' });
+  }
+
+  saveBudgetEdit(){
+    const amt = parseInt(this.state.budgetEditAmt,10);
+    if(!amt || amt<0){ this.setState({budgetEditId:null, budgetEditAmt:''}); return; }
+    const budgets = this.state.budgets.map(b => b.id===this.state.budgetEditId ? {...b, allocated:amt} : b);
+    this.setState({ budgets, budgetEditId:null, budgetEditAmt:'' });
+  }
+
+  approveAI(id){
+    const s = this.state.aiSuggestions.find(x=>x.id===id);
+    if(!s) return;
+    let budgets = this.state.budgets;
+    if(s.kind==='update'){
+      budgets = budgets.map(b => b.name===s.category ? {...b, allocated:s.suggested} : b);
+    } else {
+      budgets = [...budgets, {id:Date.now(), name:s.category, allocated:s.suggested, spent:0}];
+    }
+    this.setState({ budgets, aiSuggestions: this.state.aiSuggestions.filter(x=>x.id!==id) });
+  }
+
+  rejectAI(id){
+    this.setState({ aiSuggestions: this.state.aiSuggestions.filter(x=>x.id!==id) });
+  }
+
+  renderVals(){
+    const st=this.state;
+    const d=this.computeDerived();
+    const subTitles = { accounts:'Akun & saldo', bills:'Tagihan berulang', goals:'Target tabungan', safeToSpendDetail:'Rincian aman belanja', notifications:'Notifikasi', aiReview:'Rekomendasi AI', privacy:'Privasi & keamanan', profile:'Profil & preferensi' };
+    const backTargets = { accounts:'more', bills:'more', goals:'more', safeToSpendDetail:'home', notifications:'more', aiReview:'more', privacy:'more', profile:'home' };
+    const isSub = Object.prototype.hasOwnProperty.call(subTitles, st.screen);
+
+    const unreadCount = st.notifications.filter(n=>!n.read).length;
+    const aiCount = st.aiSuggestions.length;
+
+    // budgets sorted by spent desc for top categories
+    const topCats = [...st.budgets].sort((a,b)=>b.spent-a.spent).slice(0,3).map(b=>({name:b.name, spentFmt: fmt(b.spent)}));
+
+    const nextBill = [...st.bills].filter(b=>b.status!=='paid').sort((a,b)=> a.due.localeCompare(b.due))[0];
+    let nextBillDueLabel='', nextBillColor=KULIT;
+    if(nextBill){
+      const dueDate = new Date(nextBill.due+'T00:00:00');
+      const diff = daysBetween(TODAY, dueDate);
+      if(nextBill.status==='overdue' || diff<0){ nextBillDueLabel = 'Lewat jatuh tempo ' + Math.abs(diff) + ' hari'; nextBillColor=PERINGATAN; }
+      else if(diff===0){ nextBillDueLabel = 'Jatuh tempo hari ini'; nextBillColor=PERINGATAN; }
+      else { nextBillDueLabel = 'Jatuh tempo ' + diff + ' hari lagi'; nextBillColor=KULIT; }
+    }
+
+    const topGoal = [...st.goals].sort((a,b)=> (b.contributed/b.target) - (a.contributed/a.target))[0];
+
+    const overdueBills = st.bills.filter(b=>b.status==='overdue' || (b.status!=='paid' && daysBetween(TODAY, new Date(b.due+'T00:00:00'))<0));
+    const exceededBudgets = st.budgets.filter(b=>b.spent>b.allocated);
+    const attentionItems = [
+      ...overdueBills.map(b=>{
+        const diff = Math.abs(daysBetween(TODAY, new Date(b.due+'T00:00:00')));
+        return { title: b.name, detail: 'Terlambat '+diff+' hari', amountFmt: fmt(b.amount), actionLabel: 'Tandai dibayar', action: ()=>this.markBillPaid(b.id) };
+      }),
+      ...exceededBudgets.map(b=>({ title: 'Anggaran '+b.name+' terlampaui', detail: 'Melebihi anggaran '+fmt(b.spent-b.allocated)+' · terpakai '+fmt(b.spent)+' dari '+fmt(b.allocated), amountFmt: fmt(b.spent-b.allocated), actionLabel: 'Lihat anggaran', action: ()=>this.go('budgets') }))
+    ];
+
+    const budgetTotalAllocated = st.budgets.reduce((s,b)=>s+b.allocated,0);
+    const budgetTotalSpent = st.budgets.reduce((s,b)=>s+b.spent,0);
+
+    const catNames = st.budgets.map(b=>b.name);
+
+    const chartMonths=['Mar','Apr','Mei','Jun','Jul','Agt'];
+    const incomeVals=[8500000,8500000,8500000,8500000,8500000,8500000];
+    const expenseVals=[3200000,3900000,3600000,4400000,4100000,3480000];
+    const maxV=9000000;
+    const toY=(v)=> 130 - (v/maxV)*110;
+    const stepX=380/(chartMonths.length-1);
+    const incomeLinePoints = incomeVals.map((v,i)=> (i*stepX).toFixed(1)+','+toY(v).toFixed(1)).join(' ');
+    const expenseLinePoints = expenseVals.map((v,i)=> (i*stepX).toFixed(1)+','+toY(v).toFixed(1)).join(' ');
+    const monthLabels = chartMonths.map((m,i)=>({ label:m, x:(i*stepX).toFixed(1) }));
+    const lastIncome = incomeVals[incomeVals.length-1], lastExpense = expenseVals[expenseVals.length-1];
+    const reportNet = lastIncome-lastExpense;
+
+    const maxCatSpent = Math.max(...st.budgets.map(b=>b.spent), 1);
+
+    return {
+      showOnboarding: st.showOnboarding,
+      showAuth: !!st.authScreen,
+      showMainApp: !st.showOnboarding && !st.authScreen,
+      isLogin: st.authScreen==='login', isRegister: st.authScreen==='register',
+      openLogin: ()=>this.setState({authScreen:'login', loginError:''}),
+      openRegister: ()=>this.setState({authScreen:'register', registerError:''}),
+      closeAuth: ()=>this.setState({authScreen:null}),
+      goToRegister: ()=>this.setState({authScreen:'register', registerError:''}),
+      goToLogin: ()=>this.setState({authScreen:'login', loginError:''}),
+      noopGoogle: ()=>{},
+      loginEmail: st.loginEmail, setLoginEmail: e=>this.setState({loginEmail:e.target.value}),
+      loginPassword: st.loginPassword, setLoginPassword: e=>this.setState({loginPassword:e.target.value}),
+      loginError: st.loginError,
+      submitLogin: ()=>{
+        if(!st.loginEmail || !st.loginPassword){ this.setState({loginError:'Email dan kata sandi wajib diisi.'}); return; }
+        this.setState({loginError:'', authScreen:null});
+      },
+      registerName: st.registerName, setRegisterName: e=>this.setState({registerName:e.target.value}),
+      registerEmail: st.registerEmail, setRegisterEmail: e=>this.setState({registerEmail:e.target.value}),
+      registerPassword: st.registerPassword, setRegisterPassword: e=>this.setState({registerPassword:e.target.value}),
+      registerConfirm: st.registerConfirm, setRegisterConfirm: e=>this.setState({registerConfirm:e.target.value}),
+      registerError: st.registerError,
+      submitRegister: ()=>{
+        if(!st.registerName || !st.registerEmail || !st.registerPassword){ this.setState({registerError:'Semua kolom wajib diisi.'}); return; }
+        if(st.registerPassword !== st.registerConfirm){ this.setState({registerError:'Konfirmasi kata sandi tidak cocok.'}); return; }
+        this.setState({registerError:'', authScreen:null});
+      },
+      obStepLabel: st.obStep+1,
+      isOb0: st.obStep===0, isOb1: st.obStep===1, isOb2: st.obStep===2, isOb3: st.obStep===3,
+      obShowBack: st.obStep>0,
+      obShowNext: st.obStep<3,
+      obShowFinish: st.obStep===3,
+      obName: st.obName,
+      setObName: e=>this.setState({obName:e.target.value}),
+      obPayday: st.obPayday,
+      setObPayday: e=>this.setState({obPayday:e.target.value.replace(/[^0-9]/g,'')}),
+      obIncome: st.obIncome,
+      setObIncome: e=>this.setState({obIncome:e.target.value.replace(/[^0-9]/g,'')}),
+      obIncomeFmt: fmt(parseInt(st.obIncome,10)||0),
+      obCats: st.obCats.map((c,i)=>({ name:c.name, amount:c.amount, onChange: e=>{
+        const obCats=[...this.state.obCats]; obCats[i]={...obCats[i], amount: e.target.value.replace(/[^0-9]/g,'')}; this.setState({obCats});
+      }})),
+      obCatsTotalFmt: fmt(st.obCats.reduce((s,c)=>s+(parseInt(c.amount,10)||0),0)),
+      obNext: ()=> this.setState({obStep: Math.min(st.obStep+1,3)}),
+      obBack: ()=> this.setState({obStep: Math.max(st.obStep-1,0)}),
+      obFinish: ()=> this.setState({ showOnboarding:false, obStep:0, userName: st.obName || st.userName }),
+      openOnboarding: ()=> this.setState({ showOnboarding:true, obStep:0 }),
+
+      isSubScreen: isSub,
+      subTitle: subTitles[st.screen] || '',
+      goBack: ()=> this.go(backTargets[st.screen] || 'home'),
+      showTabBar: !isSub,
+
+      isHome: st.screen==='home', isTransactions: st.screen==='transactions', isBudgets: st.screen==='budgets',
+      isReports: st.screen==='reports', isMore: st.screen==='more',
+      isAccounts: st.screen==='accounts', isBills: st.screen==='bills', isGoals: st.screen==='goals',
+      isSTS: st.screen==='safeToSpendDetail', isNotif: st.screen==='notifications', isAI: st.screen==='aiReview', isPrivacy: st.screen==='privacy', isProfile: st.screen==='profile',
+
+      goHome: ()=>this.go('home'), goTransactions: ()=>this.go('transactions'), goBudgets: ()=>this.go('budgets'),
+      goReports: ()=>this.go('reports'), goMore: ()=>this.go('more'), goAccounts: ()=>this.go('accounts'),
+      goBills: ()=>this.go('bills'), goGoals: ()=>this.go('goals'), goSTS: ()=>this.go('safeToSpendDetail'),
+      goNotif: ()=>this.go('notifications'), goAI: ()=>this.go('aiReview'), goPrivacy: ()=>this.go('privacy'), goProfile: ()=>this.go('profile'),
+
+      tabHomeColor: st.screen==='home'?TERJAGA:KULIT, tabTxnColor: st.screen==='transactions'?TERJAGA:KULIT,
+      tabBudColor: st.screen==='budgets'?TERJAGA:KULIT, tabRepColor: st.screen==='reports'?TERJAGA:KULIT,
+      tabMoreColor: st.screen==='more'?TERJAGA:KULIT,
+
+      userName: st.userName,
+      userInitial: (st.userName||'?').trim().charAt(0).toUpperCase() || '?',
+      hasUnread: unreadCount>0,
+      unreadLabel: unreadCount>0 ? unreadCount : '',
+      hasAI: aiCount>0 && st.aiConsent,
+      aiCount,
+      profileName: st.userName, setProfileName: e=>this.setState({userName:e.target.value}),
+      profilePaydayDay: st.paydayDay, setProfilePaydayDay: e=>this.setState({paydayDay:e.target.value.replace(/[^0-9]/g,'')}),
+      profileSafetyBuffer: st.safetyBuffer, setProfileSafetyBuffer: e=>this.setState({safetyBuffer:e.target.value.replace(/[^0-9]/g,'')}),
+      profileNextPaydayLabel: fmtDateLong(toLocalIso(d.paydayDate)),
+      aiConsentTrack: st.aiConsent ? TERJAGA : 'rgba(102,115,108,0.35)',
+      aiConsentKnobLeft: st.aiConsent ? 21 : 3,
+      toggleAiConsent: ()=>this.setState({aiConsent: !st.aiConsent}),
+      aiLabel: aiCount>0 ? aiCount : '',
+
+      safeTodayFmt: fmt(d.safeToday),
+      safeUntilPaydayFmt: fmt(d.safeUntilPayday),
+      daysLabel: d.days,
+
+      hasAttention: attentionItems.length>0,
+      attentionItems,
+
+      stsLabel: d.safeToday<0 ? 'Batas harian terlampaui' : 'Aman dibelanjakan hari ini',
+      stsLabelColor: d.safeToday<0 ? PERINGATAN : '#66736C',
+      stsAmountFmt: fmt(Math.abs(d.safeToday)),
+      stsAmountColor: d.safeToday<0 ? PERINGATAN : TERJAGA,
+      stsBorderColor: d.safeToday<0 ? PERINGATAN : '#66736C',
+      stsBg: d.safeToday<0 ? 'rgba(195,68,61,0.04)' : '#fff',
+      stsSupportingCopy: d.safeToday<0
+        ? 'Di atas batas aman · '+d.days+' hari menuju gajian'
+        : 'Aman hingga gajian: '+fmt(d.safeUntilPayday)+' · '+d.days+' hari menuju gajian',
+      liquidFmt: fmt(d.liquid),
+      unpaidBillsFmt: fmt(d.unpaidBills),
+      remainingBudgetFmt: fmt(d.remainingBudget),
+      budgetSpentFmt: fmt(budgetTotalSpent),
+      budgetAllocatedFmt: fmt(budgetTotalAllocated),
+      budgetPct: Math.min(100, Math.round((budgetTotalSpent/budgetTotalAllocated)*100)) || 0,
+
+      nextBillName: nextBill ? nextBill.name : 'Tidak ada tagihan',
+      nextBillAmountFmt: nextBill ? fmt(nextBill.amount) : '-',
+      nextBillDueLabel,
+      nextBillColor,
+
+      topGoalName: topGoal ? topGoal.name : '',
+      topGoalPct: topGoal ? Math.min(100, Math.round((topGoal.contributed/topGoal.target)*100)) : 0,
+      topGoalContributedFmt: topGoal ? fmt(topGoal.contributed) : '',
+      topGoalTargetFmt: topGoal ? fmt(topGoal.target) : '',
+
+      topCategories: topCats,
+
+      qaAmount: st.qaAmount,
+      setQaAmount: e=>this.setState({qaAmount: e.target.value.replace(/[^0-9]/g,'')}),
+      qaNote: st.qaNote,
+      setQaNote: e=>this.setState({qaNote: e.target.value}),
+      qaIsExpense: st.qaType==='expense',
+      setQaExpense: ()=>this.setState({qaType:'expense'}),
+      setQaIncome: ()=>this.setState({qaType:'income', qaCategory:''}),
+      qaExpenseBg: st.qaType==='expense'?TERJAGA:'#F7F8F4', qaExpenseFg: st.qaType==='expense'?'#fff':TINTA,
+      qaIncomeBg: st.qaType==='income'?TERJAGA:'#F7F8F4', qaIncomeFg: st.qaType==='income'?'#fff':TINTA,
+      categoryOptions: catNames.map(name => ({ name, onSelect: ()=>this.setState({qaCategory:name}),
+        bg: st.qaCategory===name?TERJAGA:'#fff', fg: st.qaCategory===name?'#fff':TINTA, borderColor: st.qaCategory===name?TERJAGA:KULIT })),
+      accountOptions: st.accounts.filter(a=>a.type!=='Tabungan').map(a => ({ name:a.name, onSelect: ()=>this.setState({qaAccount:a.name}),
+        bg: st.qaAccount===a.name?TERJAGA:'#fff', fg: st.qaAccount===a.name?'#fff':TINTA, borderColor: st.qaAccount===a.name?TERJAGA:KULIT })),
+      addTransaction: ()=>this.addTransaction(),
+      txnList: [...st.transactions].sort((a,b)=> b.id-a.id).map(t=>({
+        desc:t.desc, category:t.category, account:t.account, dateLabel: fmtDate(t.date),
+        amountFmt: (t.amount>=0?'+':'')+fmt(t.amount), color: t.amount>=0?TERJAGA:TINTA
+      })),
+
+      budgetList: st.budgets.map(b=>{
+        const pct = Math.round((b.spent/b.allocated)*100) || 0;
+        const over = b.spent>b.allocated;
+        const isEditing = st.budgetEditId===b.id;
+        return {
+          name:b.name, spentFmt: fmt(b.spent), allocatedFmt: fmt(b.allocated),
+          pct, pctColor: over?PERINGATAN:KULIT, barWidth: Math.min(pct,100), barColor: over?PERINGATAN:TERJAGA,
+          summaryLabel: over ? ('Melebihi anggaran '+fmt(b.spent-b.allocated)) : (fmt(b.spent)+' dari '+fmt(b.allocated)),
+          summaryColor: over?PERINGATAN:KULIT,
+          isEditing, isNotEditing: !isEditing, editAmt: isEditing?st.budgetEditAmt:'',
+          setEditAmt: e=>this.setState({budgetEditAmt: e.target.value.replace(/[^0-9]/g,'')}),
+          startEdit: ()=>this.setState({budgetEditId:b.id, budgetEditAmt:String(b.allocated)}),
+          saveEdit: ()=>this.saveBudgetEdit()
+        };
+      }),
+
+      incomeLinePoints, expenseLinePoints, monthLabels,
+      reportPeriodLabel: 'Agustus (bulan berjalan)',
+      reportIncomeFmt: fmt(lastIncome), reportExpenseFmt: fmt(lastExpense), reportNetFmt: fmt(reportNet), reportNetColor: reportNet>=0?TERJAGA:PERINGATAN,
+      categoryBars: st.budgets.map(b=>({ name:b.name, spentFmt: fmt(b.spent), pct: Math.round((b.spent/maxCatSpent)*100) })),
+
+      accountList: st.accounts.map(a=>({ name:a.name, type:a.type, balanceFmt: fmt(a.balance) })),
+      totalBalanceFmt: fmt(st.accounts.reduce((s,a)=>s+a.balance,0)),
+
+      billList: st.bills.map(b=>{
+        const dueDate=new Date(b.due+'T00:00:00');
+        const diff=daysBetween(TODAY,dueDate);
+        let statusLabel, statusColor;
+        if(b.status==='paid'){ statusLabel='Lunas · '+fmtDateLong(b.due); statusColor=TERJAGA; }
+        else if(b.status==='overdue' || diff<0){ statusLabel='Lewat jatuh tempo '+Math.abs(diff)+' hari'; statusColor=PERINGATAN; }
+        else if(diff===0){ statusLabel='Jatuh tempo hari ini'; statusColor=PERINGATAN; }
+        else { statusLabel='Jatuh tempo '+fmtDateLong(b.due)+' ('+diff+' hari lagi)'; statusColor=KULIT; }
+        return { name:b.name, amountFmt: fmt(b.amount), statusLabel, statusColor, canPay: b.status!=='paid', markPaid: ()=>this.markBillPaid(b.id) };
+      }),
+
+      goalList: st.goals.map(g=>{
+        const isAdding = st.goalAddId===g.id;
+        return {
+          name:g.name, pct: Math.min(100, Math.round((g.contributed/g.target)*100)),
+          contributedFmt: fmt(g.contributed), targetFmt: fmt(g.target), deadlineLabel: fmtDateLong(g.deadline),
+          isAdding, isNotAdding: !isAdding, addAmt: isAdding?st.goalAddAmt:'',
+          setAddAmt: e=>this.setState({goalAddAmt: e.target.value.replace(/[^0-9]/g,'')}),
+          startAdd: ()=>this.setState({goalAddId:g.id, goalAddAmt:''}),
+          saveAdd: ()=>this.saveGoalAdd()
+        };
+      }),
+
+      notifList: [...st.notifications].map(n=>({
+        text:n.text, opacity: n.read?0.6:1, dotColor: n.read?KULIT:PERINGATAN, weight: n.read?400:500,
+        markRead: ()=> this.setState({ notifications: this.state.notifications.map(x=>x.id===n.id?{...x,read:true}:x) })
+      })),
+
+      aiList: st.aiSuggestions.map(s=>({
+        category:s.category, kindLabel: s.kind==='new'?'Kategori Baru':'Ubah Alokasi',
+        currentFmt: fmt(s.current), suggestedFmt: fmt(s.suggested), reason:s.reason,
+        approve: ()=>this.approveAI(s.id), reject: ()=>this.rejectAI(s.id)
+      })),
+      aiEmpty: st.aiSuggestions.length===0,
+
+      sessionList: st.sessions.map(s=>({
+        device:s.device, active:s.active, showRevoke: !s.current,
+        revoke: ()=> this.setState({ sessions: this.state.sessions.filter(x=>x.id!==s.id) })
+      })),
+      exportReq: st.exportReq,
+      requestExport: ()=>this.setState({exportReq:true}),
+      deleteReq: st.deleteReq, deleteNotReq: !st.deleteReq,
+      requestDelete: ()=>this.setState({deleteReq:true, deleteConfirmText:''}),
+      deleteConfirmText: st.deleteConfirmText,
+      setDeleteConfirmText: e=>this.setState({deleteConfirmText: e.target.value}),
+      deleteDisabled: st.deleteConfirmText!=='HAPUS',
+      deleteBtnOpacity: st.deleteConfirmText==='HAPUS' ? 1 : 0.4,
+      confirmDelete: ()=>{ if(st.deleteConfirmText==='HAPUS'){ this.setState({deleteReq:false, deleteConfirmText:''}); } }
+    };
+  }
+}
+
+</script>
+</body>
+</html>
