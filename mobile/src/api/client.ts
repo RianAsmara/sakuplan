@@ -1,10 +1,9 @@
-import createClient from 'openapi-fetch'
-import type { paths } from './generated/types'
-import { installAuthMiddleware } from './refreshInterceptor'
+import { create } from 'axios'
+import { installAuthInterceptors } from './refreshInterceptor'
 
 const baseUrl = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080'
 
-export const api = createClient<paths>({ baseUrl })
-installAuthMiddleware(api, baseUrl)
+export const api = create({ baseURL: baseUrl })
+installAuthInterceptors(api, baseUrl)
 
-export type { paths, components } from './generated/types'
+export type { components, operations } from './generated/types'

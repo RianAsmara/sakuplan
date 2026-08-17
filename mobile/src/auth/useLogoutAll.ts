@@ -6,7 +6,12 @@ import { useAuthStore } from './store'
 export function useLogoutAll() {
   return useMutation({
     mutationFn: async () => {
-      await api.POST('/v1/auth/logout-all')
+      try {
+        await api.post('/v1/auth/logout-all')
+      } catch {
+        // Best-effort: the session is cleared in onSettled below regardless
+        // of whether the server-side revoke succeeds.
+      }
     },
     onSettled: async () => {
       await clearRefreshToken()

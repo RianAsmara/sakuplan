@@ -645,3 +645,85 @@ None.
   `Pressable`/`Text` for the bottom tab bar (pre-existing, unrelated to
   this bug) — left unchanged; flagged for a follow-up decision on whether
   to convert it to Tamagui components for consistency.
+
+---
+
+## 2026-08-16 — Mobile HTTP client migration: openapi-fetch → axios
+
+### Requirement IDs implemented
+
+None (infrastructure migration, user-directed — see
+`docs/superpowers/specs/2026-08-16-mobile-axios-migration-design.md`).
+
+### Motivation
+
+Two drivers: (1) a real bug found during first physical-device testing —
+React Native's `fetch()` resolves with its own `FetchResponse` class, which
+is not `instanceof` the environment's global `Response`, so `openapi-fetch`'s
+middleware guard (`result instanceof Response`) threw on every request; (2)
+explicit user preference for `axios` going forward.
+
+### Files changed
+
+- `mobile/src/api/client.ts` — `axios.create({ baseURL })` instead of
+  `openapi-fetch`'s `createClient`.
+- `mobile/src/api/refreshInterceptor.ts` — axios request/response
+  interceptors instead of an openapi-fetch middleware object; retry is now a
+  plain config re-invocation instead of a `Request`-cloning `WeakMap` dance.
+- `mobile/src/api/refreshInterceptor.test.ts` — rewritten against the new
+  `shouldAttemptRefresh(status, alreadyRetried)` / `buildRetryConfig`
+  signatures.
+- `mobile/src/api/errors.ts` — added `statusFromError(error, fallbackStatus)`,
+  replacing a `(response as unknown as { status: number }).status ?? 500`
+  cast that three hooks previously needed.
+- All 24 hook files calling the API client (accounts, auth, bills, budgets,
+  categories, dashboard, goals, profile, reports, transactions) — converted
+  from openapi-fetch's `{ data, error, response }` resolve-always contract to
+  axios try/catch, typed via `components`/`operations` from the generated
+  OpenAPI types.
+- `mobile/package.json` — `axios` added, `openapi-fetch` removed.
+
+### Database migrations
+
+None.
+
+### Commands run and results
+
+1. `cd mobile && npx tsc --noEmit` → exit 0 (no output, 0 errors)
+2. `cd mobile && npx eslint .` → 0 errors, 2 pre-existing warnings in `tamagui.config.ts` (unrelated):
+   ```
+   /data/Gawai Duniawi/SaaS/sakuplan/.claude/worktrees/mobile-axios-migration/mobile/tamagui.config.ts
+     112:3   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-empty-interface')
+     113:13  warning  An interface declaring no members is equivalent to its supertype                                          @typescript-eslint/no-empty-object-type
+
+   ✖ 2 problems (0 errors, 2 warnings)
+   ```
+3. `cd mobile && npx jest` → PASS:
+   ```
+   PASS src/api/idempotencyKey.test.ts
+   PASS src/bills/nextBillOccurrence.test.ts
+   PASS src/budgets/riskLevel.test.ts
+   PASS src/dashboard/billUrgency.test.ts
+   PASS src/auth/store.test.ts
+   PASS src/transactions/transactionDisplay.test.ts
+   PASS src/accounts/accountTypeLabels.test.ts
+   PASS src/reports/chartData.test.ts
+   PASS src/budgets/budgetMath.test.ts
+   PASS src/format/date.test.ts
+   PASS src/api/refreshInterceptor.test.ts
+   PASS src/format/money.test.ts
+   PASS src/api/errors.test.ts
+
+   Test Suites: 13 passed, 13 total
+   Tests:       58 passed, 58 total
+   Snapshots:   0 total
+   Time:        2.115 s, estimated 5 s
+   Ran all test suites.
+   ```
+
+### Deferred / not verified
+
+- Manual on-device retest of the login/token-refresh flow under axios (same
+  physical device and demo account used for the original bug report) — flag
+  to the human partner per this project's established pattern of deferring
+  final device confirmation (see the 2026-08-09 entry above).

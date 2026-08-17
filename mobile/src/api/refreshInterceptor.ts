@@ -1,95 +1,71 @@
-import type { Client, Middleware } from 'openapi-fetch'
+import axios, {
+  AxiosHeaders,
+  type AxiosError,
+  type AxiosInstance,
+  type InternalAxiosRequestConfig,
+} from 'axios'
 import { useAuthStore } from '../auth/store'
 import { clearRefreshToken, getRefreshToken, saveRefreshToken } from '../auth/secureTokens'
-import type { paths } from './generated/types'
+import type { components } from './generated/types'
 
-// Store cloned requests before they are consumed by fetch.
-// Keyed by the original request object so we can retrieve it in onResponse.
-const requestClones = new WeakMap<Request, Request>()
+type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean }
 
-export function shouldAttemptRefresh(response: Response, alreadyRetried: boolean): boolean {
-  return response.status === 401 && !alreadyRetried
+export function shouldAttemptRefresh(status: number | undefined, alreadyRetried: boolean): boolean {
+  return status === 401 && !alreadyRetried
 }
 
 async function refreshSession(baseUrl: string): Promise<string | null> {
   const refreshToken = await getRefreshToken()
   if (!refreshToken) return null
 
-  const res = await fetch(`${baseUrl}/v1/auth/refresh`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh_token: refreshToken }),
-  })
-  if (!res.ok) return null
-
-  const body = (await res.json()) as {
-    access_token: string
-    refresh_token: string
-    user: import('./generated/types').components['schemas']['User']
+  try {
+    const { data } = await axios.post<components['schemas']['TokenPair']>(
+      `${baseUrl}/v1/auth/refresh`,
+      { refresh_token: refreshToken },
+    )
+    await saveRefreshToken(data.refresh_token)
+    useAuthStore.getState().setSession(data.access_token, data.user)
+    return data.access_token
+  } catch {
+    // Treat any failure (invalid/expired token, network error, malformed
+    // response, etc.) as a failed refresh - the caller clears the session
+    // either way.
+    return null
   }
-  await saveRefreshToken(body.refresh_token)
-  useAuthStore.getState().setSession(body.access_token, body.user)
-  return body.access_token
 }
 
-export function buildRetryRequest(clonedRequest: Request, newAccessToken: string): Request {
-  const retryRequest = new Request(clonedRequest, {
-    headers: new Headers(clonedRequest.headers),
+export function buildRetryConfig(config: RetryableConfig, newAccessToken: string): RetryableConfig {
+  const headers = AxiosHeaders.from(config.headers) as AxiosHeaders
+  headers.set('Authorization', `Bearer ${newAccessToken}`)
+  return { ...config, headers, _retry: true }
+}
+
+export function installAuthInterceptors(client: AxiosInstance, baseUrl: string): void {
+  client.interceptors.request.use((config) => {
+    const token = useAuthStore.getState().accessToken
+    if (token) {
+      config.headers.set('Authorization', `Bearer ${token}`)
+    }
+    return config
   })
-  retryRequest.headers.set('Authorization', `Bearer ${newAccessToken}`)
-  retryRequest.headers.set('X-Retry-After-Refresh', '1')
-  return retryRequest
-}
 
-export function installAuthMiddleware(client: Client<paths>, baseUrl: string): void {
-  const middleware: Middleware = {
-    async onRequest({ request }) {
-      // Clone the request before fetch consumes its body
-      requestClones.set(request, request.clone())
-
-      const token = useAuthStore.getState().accessToken
-      if (token) {
-        request.headers.set('Authorization', `Bearer ${token}`)
-      }
-      return request
-    },
-    async onResponse({ request, response }) {
-      const alreadyRetried = request.headers.has('X-Retry-After-Refresh')
-      if (!shouldAttemptRefresh(response, alreadyRetried)) {
-        return response
+  client.interceptors.response.use(
+    (response) => response,
+    async (error: AxiosError) => {
+      const config = error.config as RetryableConfig | undefined
+      const alreadyRetried = config?._retry === true
+      if (!config || !shouldAttemptRefresh(error.response?.status, alreadyRetried)) {
+        return Promise.reject(error)
       }
 
-      let newAccessToken: string | null = null
-      try {
-        newAccessToken = await refreshSession(baseUrl)
-      } catch {
-        // Treat thrown errors (network, JSON parse, etc.) as refresh failure
-        await clearRefreshToken()
-        useAuthStore.getState().clearSession()
-        return response
-      }
-
+      const newAccessToken = await refreshSession(baseUrl)
       if (!newAccessToken) {
         await clearRefreshToken()
         useAuthStore.getState().clearSession()
-        return response
+        return Promise.reject(error)
       }
 
-      // Retrieve the cloned (unconsumed) request
-      const clonedRequest = requestClones.get(request)
-      if (!clonedRequest) {
-        // Fallback: if clone not found, clear session and return original response
-        await clearRefreshToken()
-        useAuthStore.getState().clearSession()
-        return response
-      }
-
-      const retryRequest = buildRetryRequest(clonedRequest, newAccessToken)
-      // Note: X-Retry-After-Refresh header is defense-in-depth for potential
-      // future middleware reordering; raw fetch() call bypasses middleware chain,
-      // so this header is not checked by onResponse on the retry path.
-      return fetch(retryRequest)
+      return client(buildRetryConfig(config, newAccessToken))
     },
-  }
-  client.use(middleware)
+  )
 }
