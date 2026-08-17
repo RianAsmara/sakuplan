@@ -1,37 +1,36 @@
-import { styled, YStack } from 'tamagui'
+import type { ReactNode } from 'react'
+import { YStack, type YStackProps } from 'tamagui'
+import { DashedBox } from './DashedBox'
 
-export const PocketCard = styled(YStack, {
-  name: 'PocketCard',
-  backgroundColor: '$white',
-  borderWidth: 1.5,
-  borderColor: '$borderColor',
-  borderStyle: 'dashed',
-  borderRadius: '$2',
-  padding: '$4',
-  gap: '$3',
-  width: '100%',
-  maxWidth: 440,
-  alignSelf: 'center',
+type PocketCardProps = YStackProps & {
+  children?: ReactNode
+  elevated?: boolean
+  tone?: 'muted'
+}
 
-  variants: {
-    elevated: {
-      true: {
-        borderRadius: '$3',
-        padding: '$5',
-        gap: '$4',
-        shadowColor: '$tinta',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 4,
-      },
-    },
-    tone: {
-      muted: {
-        backgroundColor: 'transparent',
-        shadowOpacity: 0,
-        elevation: 0,
-      },
-    },
-  } as const,
-})
+export function PocketCard({ children, elevated = false, tone, ...rest }: PocketCardProps) {
+  const isMuted = tone === 'muted'
+  return (
+    <YStack width="100%" maxWidth={440} alignSelf="center" {...rest}>
+      <DashedBox
+        color="#AEB9B2"
+        radius={elevated ? 12 : 8}
+        style={{ alignSelf: 'stretch', width: '100%', flexGrow: 1 }}
+      >
+        <YStack
+          backgroundColor={isMuted ? 'transparent' : '$white'}
+          padding={elevated ? '$5' : '$4'}
+          gap={elevated ? '$4' : '$3'}
+          shadowColor={elevated && !isMuted ? '$tinta' : undefined}
+          shadowOffset={elevated && !isMuted ? { width: 0, height: 6 } : undefined}
+          shadowOpacity={elevated ? (isMuted ? 0 : 0.1) : undefined}
+          shadowRadius={elevated && !isMuted ? 20 : undefined}
+          elevation={elevated ? (isMuted ? 0 : 4) : undefined}
+          {...rest}
+        >
+          {children}
+        </YStack>
+      </DashedBox>
+    </YStack>
+  )
+}
