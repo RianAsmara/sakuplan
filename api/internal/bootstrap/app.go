@@ -18,43 +18,50 @@ import (
 	"go.uber.org/fx"
 )
 
+// coreProviders wires everything shared by every entry point (the HTTP
+// server and the seed CLI): config, database, repositories, and
+// application services. Entry-point-specific wiring (the HTTP server
+// itself, or a seed invocation) is added on top by New() / NewSeed().
+func coreProviders() fx.Option {
+	return fx.Provide(
+		config.Load,
+		newLogger,
+		newPool,
+		postgres.NewStore,
+		fx.Annotate(postgres.NewHealthChecker, fx.As(new(ports.HealthChecker))),
+		fx.Annotate(system.NewClock, fx.As(new(ports.Clock))),
+		fx.Annotate(system.NewIDGenerator, fx.As(new(ports.IDGenerator))),
+		newPasswordHasher,
+		newJWTManager,
+		fx.Annotate(security.NewRefreshManager, fx.As(new(ports.RefreshTokenManager))),
+		newUnitOfWork,
+		fx.Annotate(postgres.NewUserRepo, fx.As(new(domain.UserRepository))),
+		fx.Annotate(postgres.NewSessionRepo, fx.As(new(domain.SessionRepository))),
+		fx.Annotate(postgres.NewAccountRepo, fx.As(new(domain.AccountRepository))),
+		fx.Annotate(postgres.NewCategoryRepo, fx.As(new(domain.CategoryRepository))),
+		fx.Annotate(postgres.NewTransactionRepo, fx.As(new(domain.TransactionRepository))),
+		fx.Annotate(postgres.NewBudgetRepo, fx.As(new(domain.BudgetRepository))),
+		fx.Annotate(postgres.NewBillRepo, fx.As(new(domain.BillRepository))),
+		fx.Annotate(postgres.NewGoalRepo, fx.As(new(domain.GoalRepository))),
+		fx.Annotate(postgres.NewAuditRepo, fx.As(new(domain.AuditRepository))),
+		newAuthService,
+		application.NewUserService,
+		application.NewAccountService,
+		application.NewCategoryService,
+		application.NewTransactionService,
+		application.NewBudgetService,
+		application.NewBillService,
+		application.NewGoalService,
+		application.NewPlanningService,
+		application.NewRecommendationService,
+		application.NewReportingService,
+	)
+}
+
 func New() *fx.App {
 	return fx.New(
-		fx.Provide(
-			config.Load,
-			newLogger,
-			newPool,
-			postgres.NewStore,
-			fx.Annotate(postgres.NewHealthChecker, fx.As(new(ports.HealthChecker))),
-			fx.Annotate(system.NewClock, fx.As(new(ports.Clock))),
-			fx.Annotate(system.NewIDGenerator, fx.As(new(ports.IDGenerator))),
-			newPasswordHasher,
-			newJWTManager,
-			fx.Annotate(security.NewRefreshManager, fx.As(new(ports.RefreshTokenManager))),
-			newUnitOfWork,
-			fx.Annotate(postgres.NewUserRepo, fx.As(new(domain.UserRepository))),
-			fx.Annotate(postgres.NewSessionRepo, fx.As(new(domain.SessionRepository))),
-			fx.Annotate(postgres.NewAccountRepo, fx.As(new(domain.AccountRepository))),
-			fx.Annotate(postgres.NewCategoryRepo, fx.As(new(domain.CategoryRepository))),
-			fx.Annotate(postgres.NewTransactionRepo, fx.As(new(domain.TransactionRepository))),
-			fx.Annotate(postgres.NewBudgetRepo, fx.As(new(domain.BudgetRepository))),
-			fx.Annotate(postgres.NewBillRepo, fx.As(new(domain.BillRepository))),
-			fx.Annotate(postgres.NewGoalRepo, fx.As(new(domain.GoalRepository))),
-			fx.Annotate(postgres.NewAuditRepo, fx.As(new(domain.AuditRepository))),
-			newAuthService,
-			application.NewUserService,
-			application.NewAccountService,
-			application.NewCategoryService,
-			application.NewTransactionService,
-			application.NewBudgetService,
-			application.NewBillService,
-			application.NewGoalService,
-			application.NewPlanningService,
-			application.NewRecommendationService,
-			application.NewReportingService,
-			newHTTPServices,
-			httpapi.NewServer,
-		),
+		coreProviders(),
+		fx.Provide(newHTTPServices, httpapi.NewServer),
 		fx.Invoke(runHTTPServer),
 	)
 }

@@ -47,6 +47,13 @@ tasks:
     cmds:
       - go run ./cmd/api
 
+  seed:
+    desc: Seed the database with a demo user and sample data for manual testing
+    dir: '{{.API_DIR}}'
+    dotenv: ['../.env']
+    cmds:
+      - go run ./cmd/seed
+
   fmt:
     desc: Format Go code
     dir: '{{.API_DIR}}'
