@@ -14,11 +14,12 @@ export function PocketCard({ children, elevated = false, tone, ...rest }: Pocket
     <YStack width="100%" maxWidth={440} alignSelf="center" {...rest}>
       <DashedBox
         color="#AEB9B2"
+        fill={isMuted ? 'transparent' : '#FFFFFF'}
         radius={elevated ? 12 : 8}
         style={{ alignSelf: 'stretch', width: '100%', flexGrow: 1 }}
       >
         <YStack
-          backgroundColor={isMuted ? 'transparent' : '$white'}
+          backgroundColor="transparent"
           padding={elevated ? '$5' : '$4'}
           gap={elevated ? '$4' : '$3'}
           shadowColor={elevated && !isMuted ? '$tinta' : undefined}

@@ -21,8 +21,8 @@ describe('formatRupiah', () => {
     expect(formatRupiah(100000000)).toBe('Rp100.000.000')
   })
 
-  it('formats an exact multiple of a thousand with no fractional remainder', () => {
-    expect(formatRupiah(1000000)).toBe('Rp1.000.000')
+  it('formats an exact multiple-of-3-digits value without a leading separator', () => {
+    expect(formatRupiah(100)).toBe('Rp100')
   })
 })
 

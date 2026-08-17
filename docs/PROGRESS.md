@@ -727,3 +727,143 @@ None.
   physical device and demo account used for the original bug report) — flag
   to the human partner per this project's established pattern of deferring
   final device confirmation (see the 2026-08-09 entry above).
+
+---
+
+## 2026-08-17 — Design Handoff Phase A — Foundation (tokens, deterministic formatting, primitives)
+
+### Requirement IDs implemented
+
+None (this is the "Design Handoff Phase A — Foundation" phase — adopting
+`design_handoff_sakuplan_rn`'s exact color/space/size/radius tokens,
+deterministic currency/date formatting, and a first set of shared
+primitive components — not a numbered backend requirement; see
+`docs/superpowers/specs/2026-08-16-design-handoff-phase-a-*` for the
+originating spec/plan). This entry also covers the final whole-branch
+review fix wave applied after all 7 tasks were individually implemented
+and reviewed.
+
+Note: this branch **reverses the Inter font switch** made in commit
+`9ed0418` ("style(mobile): use Tamagui Button/ScrollView everywhere,
+switch to Inter font") earlier the same day on `main`. Commit `87f3fe3`
+on this branch loads Fraunces (display), IBM Plex Sans (body), and IBM
+Plex Mono (numerals/mono) instead, per the design handoff's exact
+typography spec. Inter is no longer the app's font.
+
+### Files changed
+
+- `mobile/tamagui.config.ts` — exact color/space/size/radius design
+  tokens from `design_handoff_sakuplan_rn`.
+- `mobile/src/theme/fonts.ts` — Fraunces / IBM Plex Sans / IBM Plex Mono
+  font loading, replacing the Inter switch from `9ed0418`.
+- `mobile/package.json` — font package dependencies updated accordingly.
+- `mobile/src/format/money.ts`, `mobile/src/format/money.test.ts` —
+  deterministic Rupiah formatting (see bug fix below).
+- `mobile/src/format/date.ts` — deterministic date formatting (see bug
+  fix below).
+- `mobile/src/components/PocketCard.tsx` — dashed-border card; bug fix,
+  see below.
+- `mobile/src/components/DashedBox.tsx` (new) — SVG-drawn dashed
+  border/fill primitive used by `PocketCard` and the tab bar rule.
+- `mobile/src/components/primitives.tsx` (new) — shared typography,
+  layout, button, and chip primitives.
+- `mobile/src/components/ProgressBar.tsx` (new) — budget/goal/report
+  progress bar variants.
+- `mobile/src/components/AppHeader.tsx` (new) — `DetailHeader` /
+  `TabHeader` components.
+- `mobile/src/components/TabBar.tsx` (new) — custom bottom tab bar.
+
+### Database migrations
+
+None.
+
+### Bugs fixed along the way
+
+1. **Non-deterministic currency/date formatting.** `formatRupiah` and
+   `formatDateID` previously used `toLocaleString` / `toLocaleDateString`,
+   which depend on the JS engine's ICU data — a device-dependent Hermes
+   bug class (identical inputs can format differently, or throw, across
+   devices/OS versions with partial ICU). Rewritten to format
+   deterministically without `Intl`.
+2. **`PocketCard`'s dashed border broken on Android.** The card previously
+   used `borderStyle: 'dashed'` together with `borderRadius`, which
+   React Native cannot reliably render together on Android (solid
+   corners, wrong dash phase, or no border at all on some API levels).
+   Fixed by drawing the border with SVG via the new `DashedBox`
+   component (commit `c29b86a`).
+3. **Regression introduced by fix #2, caught in this same review round.**
+   The SVG fix above initially wrapped `PocketCard`'s children in a
+   second, opaque `YStack` (`backgroundColor: '$white'` when not muted)
+   nested *inside* `DashedBox`. Because `DashedBox` renders its `<Svg>`
+   border before `{children}` in JSX, and React Native paints siblings in
+   tree order regardless of `position: 'absolute'` on the earlier one,
+   that opaque inner layer painted over the dashed border on every
+   non-muted card — silently hiding it again on all existing screens
+   that use `PocketCard`. This was caught in the final whole-branch
+   review (not a separate, later-discovered incident) and fixed in the
+   same work by moving the background color onto `DashedBox`'s own
+   `fill` prop (an SVG `<Rect fill>`, so a literal hex string is correct
+   here, matching `DashedBox`'s existing `color="#AEB9B2"` border prop)
+   and setting the inner `YStack`'s `backgroundColor` to always be
+   `'transparent'`.
+
+### Commands run and results
+
+1. `cd mobile && npx tsc --noEmit` → exit 0, no output.
+2. `cd mobile && npx eslint .` → 0 errors, 2 pre-existing warnings in
+   `tamagui.config.ts` (unrelated to this change):
+   ```
+   /data/Gawai Duniawi/SaaS/sakuplan/.claude/worktrees/design-handoff-phase-a/mobile/tamagui.config.ts
+     213:3   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-empty-interface')
+     214:13  warning  An interface declaring no members is equivalent to its supertype                                          @typescript-eslint/no-empty-object-type
+
+   ✖ 2 problems (0 errors, 2 warnings)
+   ```
+3. `cd mobile && npx jest` → PASS:
+   ```
+   PASS src/dashboard/billUrgency.test.ts
+   PASS src/transactions/transactionDisplay.test.ts
+   PASS src/accounts/accountTypeLabels.test.ts
+   PASS src/format/money.test.ts
+   PASS src/reports/chartData.test.ts
+   PASS src/auth/store.test.ts
+   PASS src/format/date.test.ts
+   PASS src/budgets/budgetMath.test.ts
+   PASS src/budgets/riskLevel.test.ts
+   PASS src/bills/nextBillOccurrence.test.ts
+   PASS src/api/idempotencyKey.test.ts
+   PASS src/api/errors.test.ts
+   PASS src/api/refreshInterceptor.test.ts
+
+   Test Suites: 13 passed, 13 total
+   Tests:       66 passed, 66 total
+   Snapshots:   0 total
+   Time:        2.072 s
+   Ran all test suites.
+   ```
+
+### Deferred / not verified
+
+- Manual on-device visual confirmation that `PocketCard`'s dashed border
+  is actually visible again on every screen that renders one (Home,
+  More, Goals, Accounts, Safe-to-Spend, Transactions, `AddAccountCard`)
+  is still recommended before considering this fully closed — a
+  physical device (`adb` serial `HAAA5PUC89NN5PWK`) and an emulator AVD
+  (`sakuplan_test`) were both available in this environment, but a full
+  on-device app boot/login walkthrough was not completed in this
+  session. This matches this project's established pattern of deferring
+  final device confirmation to a human partner (see the 2026-08-09 entry
+  above, and the axios-migration entry's identical deferral).
+- A third instance of the same non-deterministic-formatting bug class
+  exists in `mobile/src/reports/chartData.ts`, which still calls
+  `toLocaleDateString`. Left untouched — out of this phase's scope —
+  tracked as a follow-up for a later phase.
+- None of the new components added in this phase (`primitives.tsx`,
+  `ProgressBar.tsx`, `AppHeader.tsx`, `TabBar.tsx`) are wired into any
+  screen or navigation route yet; they exist as a foundation for later
+  phases only.
+- Two additional review findings from the same final review round were
+  explicitly deferred by the controller as later-phase follow-ups, not
+  fixed here: `PocketCard`'s `{...rest}` double-spread (outer `YStack`
+  and inner content `YStack` both receive the same `rest` props), and
+  `TabBar`'s unguarded `LABELS` lookup.
