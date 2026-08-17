@@ -1,13 +1,34 @@
+// Fixed Indonesian month tables. These match what `toLocaleDateString('id-ID', ...)`
+// currently produces in this project's test/build environment (verified directly) -
+// hardcoding them makes the output identical on every device instead of depending on
+// whichever ICU data (if any) Hermes finds on that device at runtime.
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+const MONTHS_LONG = [
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember',
+]
+
 export function toRFC3339(date: Date): string {
   return date.toISOString()
 }
 
 export function formatDateID(iso: string): string {
-  return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+  const d = new Date(iso)
+  return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`
 }
 
 export function formatMonthYearID(date: Date): string {
-  return date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
+  return `${MONTHS_LONG[date.getMonth()]} ${date.getFullYear()}`
 }
 
 export function startOfMonth(date: Date): Date {

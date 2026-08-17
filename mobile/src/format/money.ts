@@ -1,8 +1,13 @@
 export function formatRupiah(minorUnits: number): string {
   const rounded = Math.round(minorUnits)
   const negative = rounded < 0
-  const digits = Math.abs(rounded).toLocaleString('id-ID')
-  return `${negative ? '-' : ''}Rp${digits}`
+  const digits = String(Math.abs(rounded))
+  let grouped = ''
+  for (let i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 === 0) grouped += '.'
+    grouped += digits[i]
+  }
+  return `${negative ? '-' : ''}Rp${grouped}`
 }
 
 export function parseRupiahInput(raw: string): number {

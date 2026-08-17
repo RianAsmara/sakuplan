@@ -16,6 +16,14 @@ describe('formatRupiah', () => {
   it('rounds fractional input to the nearest whole unit', () => {
     expect(formatRupiah(1000.6)).toBe('Rp1.001')
   })
+
+  it('formats a value with a middle group of all zeros', () => {
+    expect(formatRupiah(100000000)).toBe('Rp100.000.000')
+  })
+
+  it('formats an exact multiple of a thousand with no fractional remainder', () => {
+    expect(formatRupiah(1000000)).toBe('Rp1.000.000')
+  })
 })
 
 describe('parseRupiahInput', () => {
