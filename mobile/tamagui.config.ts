@@ -2,13 +2,26 @@ import { createAnimations } from '@tamagui/animations-react-native'
 import { createFont, createTamagui, createTokens } from 'tamagui'
 
 const color = {
-  kertas: '#F5F6F3',
-  tinta: '#1E2A22',
-  terjaga: '#0E6B58',
-  leluasa: '#C9A227',
-  kulit: '#7C6A5B',
-  peringatan: '#B23B33',
+  kertas: '#F7F8F4',
+  tinta: '#18251F',
+  terjaga: '#006B5E',
+  leluasa: '#D2A21B',
+  kulit: '#66736C',
+  peringatan: '#C3443D',
   white: '#FFFFFF',
+  putih: '#FFFFFF',
+  hairline: '#D8DDD7',
+  garisPutus: '#AEB9B2',
+  tekan: '#EEF3EF',
+  terjagaFill: 'rgba(0,107,94,0.06)',
+  terjagaRing: 'rgba(0,107,94,0.15)',
+  peringatanFill: 'rgba(195,68,61,0.06)',
+  peringatanFillSoft: 'rgba(195,68,61,0.05)',
+  peringatanFillFaint: 'rgba(195,68,61,0.04)',
+  peringatanRule: 'rgba(195,68,61,0.12)',
+  leluasaFill: 'rgba(210,162,27,0.05)',
+  leluasaRule: 'rgba(210,162,27,0.18)',
+  kulitTrack: 'rgba(102,115,108,0.35)',
 }
 
 // Derives a lighter/darker shade of a hex color. Positive `amount` lightens
@@ -29,31 +42,119 @@ function shade(hex: string, amount: number): string {
 
 const tokens = createTokens({
   color,
-  space: { 0: 0, 1: 4, 2: 8, 3: 12, 4: 16, 5: 24, 6: 32, 7: 48, true: 16 },
-  size: { 0: 0, 1: 4, 2: 8, 3: 12, 4: 16, 5: 24, 6: 32, 7: 48, 8: 64, true: 16 },
-  radius: { 0: 0, 1: 4, 2: 8, 3: 12, true: 8 },
+  space: {
+    0: 0,
+    0.5: 2,
+    0.75: 3,
+    1: 4,
+    1.25: 5,
+    1.5: 6,
+    2: 8,
+    2.5: 10,
+    3: 12,
+    3.5: 14,
+    4: 16,
+    4.5: 18,
+    5: 20,
+    5.5: 22,
+    6: 24,
+    6.5: 26,
+    7: 28,
+    8: 32,
+    true: 16,
+  },
+  size: {
+    0: 0,
+    1: 4,
+    2: 8,
+    3: 12,
+    4: 16,
+    5: 20,
+    6: 24,
+    8: 32,
+    touch: 44,
+    header: 56,
+    avatar: 30,
+    toggleW: 44,
+    toggleH: 26,
+    true: 16,
+  },
+  radius: {
+    0: 0,
+    1: 3,
+    1.5: 4,
+    2: 6,
+    3: 8,
+    4: 12,
+    chip: 14,
+    round: 999,
+    true: 8,
+  },
   zIndex: { 0: 0, 1: 100, 2: 200, true: 0 },
 })
 
 const headingFont = createFont({
-  family: 'Inter_700Bold',
-  size: { 1: 14, 2: 16, 3: 20, 4: 24, 5: 32, 6: 40, true: 20 },
-  weight: { 1: '400', 2: '700', true: '700' },
-  lineHeight: { 1: 18, 2: 22, 3: 26, 4: 30, 5: 40, 6: 48, true: 26 },
+  family: 'Fraunces_600SemiBold',
+  size: { 4: 20, 5: 22, 6: 24, true: 24 },
+  weight: { 6: '600' },
+  lineHeight: { 4: 26, 5: 28, 6: 30, true: 30 },
+  letterSpacing: { 6: 0 },
+  face: { '600': { normal: 'Fraunces_600SemiBold' } },
 })
 
 const bodyFont = createFont({
-  family: 'Inter_400Regular',
-  size: { 1: 12, 2: 14, 3: 16, 4: 18, 5: 20, 6: 24, true: 16 },
-  weight: { 1: '400', 2: '500', true: '400' },
-  lineHeight: { 1: 16, 2: 20, 3: 24, 4: 26, 5: 30, 6: 34, true: 24 },
+  family: 'IBMPlexSans_400Regular',
+  size: { 1: 10, 2: 11, 3: 12, 4: 13, 5: 14, 6: 18, 7: 24, true: 14 },
+  weight: { 4: '400', 5: '500', 6: '600' },
+  lineHeight: { 1: 14, 2: 16, 3: 17, 4: 19, 5: 20, 6: 24, 7: 32, true: 20 },
+  letterSpacing: { 1: 0.4, 2: 0.22, true: 0 },
+  face: {
+    '400': { normal: 'IBMPlexSans_400Regular' },
+    '500': { normal: 'IBMPlexSans_500Medium' },
+    '600': { normal: 'IBMPlexSans_600SemiBold' },
+  },
 })
 
 const monoFont = createFont({
-  family: 'Inter_500Medium',
-  size: { 1: 14, 2: 16, 3: 20, 4: 28, 5: 32, 6: 40, true: 16 },
-  weight: { 1: '500', true: '500' },
-  lineHeight: { 1: 18, 2: 22, 3: 26, 4: 34, 5: 40, 6: 48, true: 22 },
+  family: 'IBMPlexMono_500Medium',
+  // Keys 1 and 3 are outside design_handoff_sakuplan_rn's scale (which starts at 2)
+  // but are kept here at their pre-existing pixel values (14 and 20) because existing
+  // screens - not touched by this plan - still reference $mono $1 and $3. Dropping
+  // them would break those screens outright (undefined token), not just drift their
+  // spacing the way the rest of this scale change does.
+  size: {
+    1: 14,
+    2: 11,
+    3: 20,
+    4: 13,
+    5: 14,
+    6: 15,
+    7: 16,
+    8: 17,
+    9: 26,
+    10: 28,
+    11: 36,
+    12: 42,
+    true: 14,
+  },
+  weight: { 5: '500' },
+  lineHeight: {
+    1: 18,
+    2: 15,
+    3: 26,
+    4: 17,
+    5: 18,
+    6: 20,
+    7: 21,
+    8: 22,
+    9: 30,
+    10: 32,
+    11: 40,
+    12: 46,
+    true: 18,
+  },
+  letterSpacing: { 2: 0.44, true: 0 },
+  face: { '500': { normal: 'IBMPlexMono_500Medium' } },
 })
 
 const lightTheme = {
@@ -97,7 +198,7 @@ const lightTheme = {
 
 export const config = createTamagui({
   animations: createAnimations({
-    fast: { type: 'timing', duration: 120 },
+    quick: { type: 'timing', duration: 120 },
     medium: { type: 'timing', duration: 200 },
   }),
   defaultFont: 'body',
