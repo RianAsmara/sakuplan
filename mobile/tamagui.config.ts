@@ -205,6 +205,10 @@ export const config = createTamagui({
   fonts: { heading: headingFont, body: bodyFont, mono: monoFont },
   tokens,
   themes: { light: lightTheme },
+  media: {
+    sm: { maxWidth: 767 },
+    gtSm: { minWidth: 768 },
+  },
 })
 
 export type AppConfig = typeof config
