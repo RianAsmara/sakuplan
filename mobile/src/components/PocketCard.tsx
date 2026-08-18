@@ -8,10 +8,24 @@ type PocketCardProps = YStackProps & {
   tone?: 'muted'
 }
 
-export function PocketCard({ children, elevated = false, tone, ...rest }: PocketCardProps) {
+export function PocketCard({
+  children,
+  elevated = false,
+  tone,
+  flex,
+  width,
+  maxWidth,
+  alignSelf,
+  ...rest
+}: PocketCardProps) {
   const isMuted = tone === 'muted'
   return (
-    <YStack width="100%" maxWidth={440} alignSelf="center" {...rest}>
+    <YStack
+      width={width ?? '100%'}
+      maxWidth={maxWidth ?? 440}
+      alignSelf={alignSelf ?? 'center'}
+      flex={flex}
+    >
       <DashedBox
         color="#AEB9B2"
         fill={isMuted ? 'transparent' : '#FFFFFF'}

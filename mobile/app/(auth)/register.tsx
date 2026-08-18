@@ -1,9 +1,9 @@
 import { Check, Lock, Mail, User, UserPlus } from '@tamagui/lucide-icons-2'
 import { Link } from 'expo-router'
 import { useState } from 'react'
-import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
+import { KeyboardAvoidingView, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Checkbox, Label, XStack, YStack } from 'tamagui'
+import { Checkbox, ScrollView, XStack, YStack } from 'tamagui'
 import { useRegister } from '../../src/auth/useRegister'
 import { GoogleIcon } from '../../src/components/GoogleIcon'
 import { PocketCard } from '../../src/components/PocketCard'
@@ -11,6 +11,7 @@ import {
   AuthHeading,
   BodyS,
   ButtonLabel,
+  FieldLabel,
   FlowScreen,
   InlineAction,
   Meta,
@@ -18,6 +19,7 @@ import {
   PrimaryButton,
   SecondaryButton,
   Wordmark,
+  inputStyle,
 } from '../../src/components/primitives'
 import { TextField } from '../../src/components/TextField'
 
@@ -26,41 +28,6 @@ import { TextField } from '../../src/components/TextField'
 // Login and Register now"). Intentionally a no-op until Google sign-in
 // is scoped as a real requirement.
 function handleGoogleSignIn() {}
-
-const fieldInputProps = {
-  borderWidth: 1.5,
-  borderRadius: '$3',
-  paddingHorizontal: '$3.5',
-  paddingVertical: 13,
-  fontSize: '$5',
-} as const
-
-function FieldLabelRow({
-  htmlFor,
-  icon,
-  text,
-}: {
-  htmlFor: string
-  icon: React.ReactNode
-  text: string
-}) {
-  return (
-    <XStack alignItems="center" gap="$2">
-      {icon}
-      <Label
-        htmlFor={htmlFor}
-        fontFamily="$mono"
-        fontWeight="500"
-        fontSize={11}
-        lineHeight={15}
-        letterSpacing={0.44}
-        color="$kulit"
-      >
-        {text}
-      </Label>
-    </XStack>
-  )
-}
 
 export default function RegisterScreen() {
   const [displayName, setDisplayName] = useState('')
@@ -108,12 +75,16 @@ export default function RegisterScreen() {
               ) : null}
 
               <YStack gap="$2">
-                <FieldLabelRow htmlFor="register-name" icon={<User size={14} color="$kulit" />} text="NAMA" />
-                <TextField id="register-name" value={displayName} onChangeText={setDisplayName} {...fieldInputProps} />
+                <FieldLabel htmlFor="register-name" icon={<User size={14} color="$kulit" />}>
+                  NAMA
+                </FieldLabel>
+                <TextField id="register-name" value={displayName} onChangeText={setDisplayName} {...inputStyle} />
               </YStack>
 
               <YStack gap="$2">
-                <FieldLabelRow htmlFor="register-email" icon={<Mail size={14} color="$kulit" />} text="EMAIL" />
+                <FieldLabel htmlFor="register-email" icon={<Mail size={14} color="$kulit" />}>
+                  EMAIL
+                </FieldLabel>
                 <TextField
                   id="register-email"
                   value={email}
@@ -121,35 +92,35 @@ export default function RegisterScreen() {
                   autoCapitalize="none"
                   keyboardType="email-address"
                   textContentType="emailAddress"
-                  {...fieldInputProps}
+                  {...inputStyle}
                 />
               </YStack>
 
               <YStack gap="$2">
-                <FieldLabelRow htmlFor="register-password" icon={<Lock size={14} color="$kulit" />} text="KATA SANDI" />
+                <FieldLabel htmlFor="register-password" icon={<Lock size={14} color="$kulit" />}>
+                  KATA SANDI
+                </FieldLabel>
                 <TextField
                   id="register-password"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
                   textContentType="newPassword"
-                  {...fieldInputProps}
+                  {...inputStyle}
                 />
               </YStack>
 
               <YStack gap="$2">
-                <FieldLabelRow
-                  htmlFor="register-confirm"
-                  icon={<Lock size={14} color="$kulit" />}
-                  text="KONFIRMASI KATA SANDI"
-                />
+                <FieldLabel htmlFor="register-confirm" icon={<Lock size={14} color="$kulit" />}>
+                  KONFIRMASI KATA SANDI
+                </FieldLabel>
                 <TextField
                   id="register-confirm"
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   secureTextEntry
                   textContentType="newPassword"
-                  {...fieldInputProps}
+                  {...inputStyle}
                 />
                 <MetaS>Minimal 12 karakter</MetaS>
               </YStack>
@@ -168,13 +139,13 @@ export default function RegisterScreen() {
                 </Checkbox>
                 <MetaS flexShrink={1}>
                   Saya menyetujui{' '}
-                  <Meta color="$primary" textDecorationLine="underline">
+                  <MetaS color="$primary" textDecorationLine="underline">
                     Ketentuan Layanan
-                  </Meta>{' '}
+                  </MetaS>{' '}
                   dan{' '}
-                  <Meta color="$primary" textDecorationLine="underline">
+                  <MetaS color="$primary" textDecorationLine="underline">
                     Kebijakan Privasi
-                  </Meta>
+                  </MetaS>
                 </MetaS>
               </XStack>
 
@@ -182,6 +153,7 @@ export default function RegisterScreen() {
                 gap="$2"
                 opacity={canSubmit ? 1 : 0.5}
                 disabled={!canSubmit}
+                accessibilityState={{ disabled: !canSubmit }}
                 onPress={() => register.mutate({ email, password, displayName })}
               >
                 <UserPlus size={16} color="$primaryText" />

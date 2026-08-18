@@ -1,9 +1,9 @@
 import { LogIn, Lock, Mail } from '@tamagui/lucide-icons-2'
 import { Link } from 'expo-router'
 import { useState } from 'react'
-import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
+import { KeyboardAvoidingView, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Label, XStack, YStack } from 'tamagui'
+import { ScrollView, XStack, YStack } from 'tamagui'
 import { useLogin } from '../../src/auth/useLogin'
 import { GoogleIcon } from '../../src/components/GoogleIcon'
 import { PocketCard } from '../../src/components/PocketCard'
@@ -11,12 +11,14 @@ import {
   AuthHeading,
   BodyS,
   ButtonLabel,
+  FieldLabel,
   FlowScreen,
   InlineAction,
   Meta,
   PrimaryButton,
   SecondaryButton,
   Wordmark,
+  inputStyle,
 } from '../../src/components/primitives'
 import { TextField } from '../../src/components/TextField'
 
@@ -25,14 +27,6 @@ import { TextField } from '../../src/components/TextField'
 // Login and Register now"). Intentionally a no-op until Google sign-in
 // is scoped as a real requirement.
 function handleGoogleSignIn() {}
-
-const fieldInputProps = {
-  borderWidth: 1.5,
-  borderRadius: '$3',
-  paddingHorizontal: '$3.5',
-  paddingVertical: 13,
-  fontSize: '$5',
-} as const
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('')
@@ -70,20 +64,9 @@ export default function LoginScreen() {
               ) : null}
 
               <YStack gap="$2">
-                <XStack alignItems="center" gap="$2">
-                  <Mail size={14} color="$kulit" />
-                  <Label
-                    htmlFor="login-email"
-                    fontFamily="$mono"
-                    fontWeight="500"
-                    fontSize={11}
-                    lineHeight={15}
-                    letterSpacing={0.44}
-                    color="$kulit"
-                  >
-                    EMAIL
-                  </Label>
-                </XStack>
+                <FieldLabel htmlFor="login-email" icon={<Mail size={14} color="$kulit" />}>
+                  EMAIL
+                </FieldLabel>
                 <TextField
                   id="login-email"
                   value={email}
@@ -91,32 +74,21 @@ export default function LoginScreen() {
                   autoCapitalize="none"
                   keyboardType="email-address"
                   textContentType="emailAddress"
-                  {...fieldInputProps}
+                  {...inputStyle}
                 />
               </YStack>
 
               <YStack gap="$2">
-                <XStack alignItems="center" gap="$2">
-                  <Lock size={14} color="$kulit" />
-                  <Label
-                    htmlFor="login-password"
-                    fontFamily="$mono"
-                    fontWeight="500"
-                    fontSize={11}
-                    lineHeight={15}
-                    letterSpacing={0.44}
-                    color="$kulit"
-                  >
-                    KATA SANDI
-                  </Label>
-                </XStack>
+                <FieldLabel htmlFor="login-password" icon={<Lock size={14} color="$kulit" />}>
+                  KATA SANDI
+                </FieldLabel>
                 <TextField
                   id="login-password"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
                   textContentType="password"
-                  {...fieldInputProps}
+                  {...inputStyle}
                 />
               </YStack>
 
@@ -124,6 +96,7 @@ export default function LoginScreen() {
                 gap="$2"
                 opacity={canSubmit ? 1 : 0.5}
                 disabled={!canSubmit}
+                accessibilityState={{ disabled: !canSubmit }}
                 onPress={() => login.mutate({ email, password })}
               >
                 <LogIn size={16} color="$primaryText" />

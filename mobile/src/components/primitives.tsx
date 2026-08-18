@@ -1,4 +1,5 @@
-import { styled, Text, XStack, YStack, View } from 'tamagui'
+import type { ReactNode } from 'react'
+import { Label, styled, Text, XStack, YStack, View } from 'tamagui'
 
 /**
  * The whole type system, as components. Nothing in a screen should set fontFamily,
@@ -152,15 +153,37 @@ export const Amount = styled(Text, {
   defaultVariants: { size: 14 },
 })
 
-/** Uppercase mono form label. Always paired with an optional 14px icon. */
-export const FieldLabel = styled(Text, {
-  fontFamily: '$mono',
-  fontWeight: '500',
-  fontSize: 11,
-  lineHeight: 15,
-  letterSpacing: 0.44,
-  color: '$kulit',
-})
+/**
+ * Icon + uppercase mono form label on one row, with `htmlFor` wired to the
+ * paired input's `id`. The `styled(Text)` route can't take `htmlFor` — this
+ * is a plain component built on Tamagui's `Label` for that reason.
+ */
+export function FieldLabel({
+  htmlFor,
+  icon,
+  children,
+}: {
+  htmlFor: string
+  icon?: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <XStack alignItems="center" gap="$2">
+      {icon}
+      <Label
+        htmlFor={htmlFor}
+        fontFamily="$mono"
+        fontWeight="500"
+        fontSize={11}
+        lineHeight={15}
+        letterSpacing={0.44}
+        color="$kulit"
+      >
+        {children}
+      </Label>
+    </XStack>
+  )
+}
 
 // --- Layout ---
 
@@ -231,6 +254,7 @@ export const inputFocusStyle = {
 
 /** Primary action. Full-width brand green. */
 export const PrimaryButton = styled(XStack, {
+  role: 'button',
   alignItems: 'center',
   justifyContent: 'center',
   gap: 8,
@@ -243,6 +267,7 @@ export const PrimaryButton = styled(XStack, {
 
 /** Secondary action. Outlined, transparent fill. */
 export const SecondaryButton = styled(XStack, {
+  role: 'button',
   alignItems: 'center',
   justifyContent: 'center',
   gap: 8,
