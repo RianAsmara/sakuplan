@@ -1,12 +1,24 @@
-import { Activity, Lock, Mail } from "@tamagui/lucide-icons-2";
-import { Link } from "expo-router";
-import { useState } from "react";
-import { KeyboardAvoidingView, Platform } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Label, ScrollView, Text, XStack, YStack } from "tamagui";
-import { useLogin } from "../../src/auth/useLogin";
-import { PocketCard } from "../../src/components/PocketCard";
-import { TextField } from "../../src/components/TextField";
+import { LogIn, Lock, Mail } from '@tamagui/lucide-icons-2'
+import { Link } from 'expo-router'
+import { useState } from 'react'
+import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { Label, XStack, YStack } from 'tamagui'
+import { useLogin } from '../../src/auth/useLogin'
+import { GoogleIcon } from '../../src/components/GoogleIcon'
+import { PocketCard } from '../../src/components/PocketCard'
+import {
+  AuthHeading,
+  BodyS,
+  ButtonLabel,
+  FlowScreen,
+  InlineAction,
+  Meta,
+  PrimaryButton,
+  SecondaryButton,
+  Wordmark,
+} from '../../src/components/primitives'
+import { TextField } from '../../src/components/TextField'
 
 // Design-only placeholder: no OAuth backend exists yet
 // (see docs/design/sakuplan-claude-design-prompt.md, "Priority: redesign
@@ -14,59 +26,46 @@ import { TextField } from "../../src/components/TextField";
 // is scoped as a real requirement.
 function handleGoogleSignIn() {}
 
-export default function LoginScreen() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const login = useLogin();
+const fieldInputProps = {
+  borderWidth: 1.5,
+  borderRadius: '$3',
+  paddingHorizontal: '$3.5',
+  paddingVertical: 13,
+  fontSize: '$5',
+} as const
 
-  const canSubmit =
-    email.trim().length > 0 && password.length > 0 && !login.isPending;
+export default function LoginScreen() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const login = useLogin()
+
+  const canSubmit = email.trim().length > 0 && password.length > 0 && !login.isPending
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: "#F5F6F3" }}
-      edges={["top", "bottom"]}
-    >
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <YStack
-            flex={1}
-            backgroundColor="$background"
-            padding="$5"
-            justifyContent="center"
-            gap="$6"
-          >
-            <Text
-              fontFamily="$heading"
-              fontSize="$5"
-              textAlign="center"
-              color="$color"
-            >
-              SakuPlan
-            </Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8F4' }} edges={['top', 'bottom']}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+          <FlowScreen justifyContent="center" gap="$6">
+            <YStack alignItems="center" gap="$2">
+              <Wordmark size="l">SakuPlan</Wordmark>
+              <Meta textAlign="center">
+                Kelola pengeluaran dan lihat berapa yang aman kamu belanjakan hari ini.
+              </Meta>
+            </YStack>
 
-            <PocketCard elevated>
-              <Text fontFamily="$heading" fontSize="$4" color="$color">
-                Masuk
-              </Text>
+            <PocketCard elevated padding="$6" gap="$4">
+              <AuthHeading>Masuk</AuthHeading>
 
               {login.isError ? (
                 <YStack
-                  backgroundColor="rgba(178,59,51,0.06)"
+                  backgroundColor="$peringatanFill"
                   borderLeftWidth={3}
                   borderLeftColor="$danger"
-                  borderRadius="$1"
-                  padding="$3"
+                  borderRadius="$1.5"
+                  paddingHorizontal="$3"
+                  paddingVertical="$2.5"
                 >
-                  <Text fontFamily="$body" color="$tinta" fontSize="$2">
-                    Email atau kata sandi salah.
-                  </Text>
+                  <BodyS color="$tinta">Email atau kata sandi salah.</BodyS>
                 </YStack>
               ) : null}
 
@@ -75,11 +74,14 @@ export default function LoginScreen() {
                   <Mail size={14} color="$kulit" />
                   <Label
                     htmlFor="login-email"
-                    fontFamily="$body"
-                    fontSize="$2"
+                    fontFamily="$mono"
+                    fontWeight="500"
+                    fontSize={11}
+                    lineHeight={15}
+                    letterSpacing={0.44}
                     color="$kulit"
                   >
-                    Email
+                    EMAIL
                   </Label>
                 </XStack>
                 <TextField
@@ -89,6 +91,7 @@ export default function LoginScreen() {
                   autoCapitalize="none"
                   keyboardType="email-address"
                   textContentType="emailAddress"
+                  {...fieldInputProps}
                 />
               </YStack>
 
@@ -97,11 +100,14 @@ export default function LoginScreen() {
                   <Lock size={14} color="$kulit" />
                   <Label
                     htmlFor="login-password"
-                    fontFamily="$body"
-                    fontSize="$2"
+                    fontFamily="$mono"
+                    fontWeight="500"
+                    fontSize={11}
+                    lineHeight={15}
+                    letterSpacing={0.44}
                     color="$kulit"
                   >
-                    Kata sandi
+                    KATA SANDI
                   </Label>
                 </XStack>
                 <TextField
@@ -110,75 +116,46 @@ export default function LoginScreen() {
                   onChangeText={setPassword}
                   secureTextEntry
                   textContentType="password"
+                  {...fieldInputProps}
                 />
               </YStack>
 
-              <Button
-                size="$6"
-                backgroundColor="$primary"
-                color="$primaryText"
-                disabled={!canSubmit}
+              <PrimaryButton
+                gap="$2"
                 opacity={canSubmit ? 1 : 0.5}
+                disabled={!canSubmit}
                 onPress={() => login.mutate({ email, password })}
               >
-                <Button.Icon>
-                  <Activity />
-                </Button.Icon>
-                <Button.Text fontFamily="$body" fontSize="$3">
-                  {login.isPending ? "Memuat..." : "Masuk"}
-                </Button.Text>
-              </Button>
+                <LogIn size={16} color="$primaryText" />
+                <ButtonLabel color="$primaryText">
+                  {login.isPending ? 'Memuat...' : 'Masuk'}
+                </ButtonLabel>
+              </PrimaryButton>
 
               <XStack alignItems="center" gap="$3">
-                <YStack flex={1} height={1} backgroundColor="$background" />
-                <Text fontFamily="$body" fontSize="$2" color="$kulit">
-                  atau
-                </Text>
-                <YStack flex={1} height={1} backgroundColor="$background" />
+                <YStack flex={1} height={1} backgroundColor="$kertas" />
+                <Meta>atau</Meta>
+                <YStack flex={1} height={1} backgroundColor="$kertas" />
               </XStack>
 
               <YStack gap="$2">
-                <Button
-                  size="$6"
-                  width="100%"
-                  backgroundColor="$white"
-                  borderWidth={1.5}
-                  borderColor="$borderColor"
-                  onPress={handleGoogleSignIn}
-                >
-                  <Button.Text fontFamily="$body" fontSize="$3" color="$color">
-                    Masuk dengan Google
-                  </Button.Text>
-                </Button>
-                <Text
-                  fontFamily="$body"
-                  fontSize="$1"
-                  color="$kulit"
-                  textAlign="center"
-                >
-                  Pratinjau desain — integrasi belum tersedia.
-                </Text>
+                <SecondaryButton onPress={handleGoogleSignIn}>
+                  <GoogleIcon size={18} />
+                  <ButtonLabel color="$tinta">Masuk dengan Google</ButtonLabel>
+                </SecondaryButton>
+                <Meta textAlign="center">Pratinjau desain — integrasi belum tersedia.</Meta>
               </YStack>
 
               <XStack justifyContent="center" gap="$2">
-                <Text fontFamily="$body" fontSize="$2" color="$kulit">
-                  Belum punya akun?
-                </Text>
+                <Meta>Belum punya akun?</Meta>
                 <Link href="/(auth)/register">
-                  <Text
-                    fontFamily="$body"
-                    fontSize="$2"
-                    color="$primary"
-                    textDecorationLine="underline"
-                  >
-                    Daftar
-                  </Text>
+                  <InlineAction>Daftar</InlineAction>
                 </Link>
               </XStack>
             </PocketCard>
-          </YStack>
+          </FlowScreen>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
-  );
+  )
 }
