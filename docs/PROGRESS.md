@@ -867,3 +867,148 @@ None.
   fixed here: `PocketCard`'s `{...rest}` double-spread (outer `YStack`
   and inner content `YStack` both receive the same `rest` props), and
   `TabBar`'s unguarded `LABELS` lookup.
+
+## 2026-08-18 — Design Handoff — Login & Register re-skin
+
+### Requirement IDs implemented
+
+None (design/UI implementation of
+`docs/superpowers/specs/2026-08-18-design-handoff-auth-screens-design.md`
+and `docs/superpowers/plans/2026-08-18-design-handoff-auth-screens.md` —
+the first screen-level phase of the design handoff port, following the
+2026-08-17 Phase A foundation entry above). Pure visual re-skin of
+`mobile/app/(auth)/login.tsx` and `mobile/app/(auth)/register.tsx` to
+match `design_handoff_sakuplan_rn/SCREENS.md`'s auth mockups using Phase
+A's tokens/primitives; no hook, API, or navigation logic changed.
+Beranda and all other screens remain explicitly deferred to later phases.
+
+Three deliberate deviations from the spec's literal mockup (recorded in
+the spec's "Decisions made during brainstorming" section): Register keeps
+its consent checkbox and 12-character password minimum (backend-required,
+not decorative); Login has no back button (it's the app's entry point);
+both screens keep the existing disabled-submit-button pattern instead of
+adding a new inline validation message the spec's copy assumed.
+
+### Files changed
+
+- `mobile/src/components/GoogleIcon.tsx` (new) — inline SVG Google "G"
+  mark in the 4 official brand colors, used by both screens' secondary
+  button.
+- `mobile/app/(auth)/login.tsx` — full re-skin: `FlowScreen`/`Wordmark`/
+  `PocketCard elevated`/`AuthHeading`, restyled error banner
+  (`$peringatanFill`), field rows using the shared `FieldLabel`
+  component, `LogIn` icon restored on the submit button (an earlier
+  commit had accidentally swapped it for `Activity`), Google button copy
+  "Masuk dengan Google".
+- `mobile/app/(auth)/register.tsx` — same re-skin pattern; consent
+  checkbox and 12-char minimum preserved; Google button copy corrected
+  from a pre-existing bug ("Masuk dengan Google" on the *register*
+  screen) to "Daftar dengan Google".
+- `mobile/src/components/PocketCard.tsx` — bug fix, see below (not in
+  the plan's original file list; added during the final-review fix
+  round once the bug was found).
+- `mobile/src/components/primitives.tsx` — `PrimaryButton`/
+  `SecondaryButton` gained `role: 'button'`; the `FieldLabel` primitive
+  (previously a `styled(Text)` with zero importers, since it couldn't
+  take `htmlFor`) was replaced with a function component that wraps an
+  icon and an `htmlFor`-wired Tamagui `Label`, now used identically by
+  both auth screens.
+
+### Database migrations
+
+None.
+
+### Bugs fixed along the way
+
+1. **`PocketCard` double-applies props passed to it, once caught by real
+   usage.** The 2026-08-17 Phase A entry above explicitly deferred this
+   exact defect as a later-phase follow-up: `PocketCard.tsx` spread
+   `{...rest}` onto both its outer layout `YStack` and its inner content
+   `YStack`. It stayed harmless because no existing call site passed a
+   prop that would visibly differ between the two layers — until this
+   phase's `login.tsx`/`register.tsx` became the first call sites in the
+   codebase to pass `padding` (`padding="$6"`), which landed on both
+   layers and doubled the auth card's gutter from the spec'd 24px to
+   48px. Caught by the final whole-branch review (opus), not by any
+   automated check (`tsc`/`eslint`/`jest` were all green regardless).
+   Fixed by spreading `rest` only on the inner `YStack` and forwarding
+   `flex` explicitly to the outer one (the only other cross-layer prop
+   any existing call site relies on); verified against all ~48 other
+   `PocketCard` call sites in the app to confirm none of them broke.
+2. **Register's Google button said "Masuk dengan Google" (a copy-paste
+   bug pre-dating this phase).** Should say "Daftar dengan Google",
+   matching Login's "Masuk dengan Google" — corrected as part of the
+   re-skin.
+3. **`PrimaryButton`/`SecondaryButton` (styled `XStack`s) carried no
+   `role="button"`,** unlike Tamagui's real `Button` component which
+   sets this automatically. Four controls across both screens presented
+   to screen readers as plain views (the `disabled` gate itself was
+   still functionally correct — `onPress` was never attached when
+   disabled — this was purely an announcement gap). Fixed by adding
+   `role: 'button'` to both primitives' `styled()` configs and
+   `accessibilityState={{ disabled: !canSubmit }}` on both screens'
+   submit buttons.
+4. **Both screens reimplemented `primitives.tsx`'s existing `inputStyle`
+   as a local `fieldInputProps` const, and silently dropped its
+   `backgroundColor: '$putih'` doing so** — inputs rendered
+   kertas-on-white instead of the reference design's white-on-white.
+   Fixed by importing and spreading the shared `inputStyle` instead.
+5. **Login and Register built the same field-label row two different
+   ways** (Login inlined it twice; Register extracted a local
+   `FieldLabelRow` helper) — a whole-branch-only finding, invisible to
+   either screen's own task review. Consolidated into one shared
+   `FieldLabel` component in `primitives.tsx`, used identically by both
+   screens; retired the old `styled(Text)` `FieldLabel` that had no
+   importers left anywhere in the codebase.
+6. **Both screens imported `ScrollView` from `'react-native'`,**
+   reversing the project-wide convention established by the immediately
+   preceding commit on `main` (`9ed0418`, every other screen imports it
+   from `'tamagui'`). Fixed to match.
+7. **Register's consent sentence nested `Meta` (12px) links inside a
+   `MetaS` (11px) sentence,** rendering "Ketentuan Layanan"/"Kebijakan
+   Privasi" slightly larger than the surrounding text — a small
+   regression from the pre-existing code, which used a bare `Text` that
+   inherited its parent's size. Fixed to use `MetaS` throughout.
+
+Findings 1–7 above were all raised by the final whole-branch review
+(dispatched on opus after all 3 tasks passed their individual task
+reviews clean) and addressed in a single fix round, independently
+re-verified by a scoped re-review (sonnet) that confirmed all seven
+ADDRESSED with file:line evidence and found no new breakage.
+
+### Commands run and results
+
+1. `cd mobile && npx tsc --noEmit` → exit 0, no output (re-confirmed
+   independently by both the final review and the fix round's re-review,
+   not just claimed by the implementer).
+2. `cd mobile && npx eslint .` → 0 errors, the same 2 pre-existing
+   warnings in `tamagui.config.ts` as every prior entry, nothing new.
+3. `cd mobile && npx jest` → PASS, 13 suites / 66 tests — unchanged from
+   Phase A's baseline (this phase added no new testable logic; it is a
+   pure styling pass over already-tested hooks).
+
+### Deferred / not verified
+
+- Manual on-device visual confirmation against
+  `design_handoff_sakuplan_rn/reference/SakuPlan.dc.html` (430px width)
+  was explicitly out of scope for this session — same established
+  pattern as every prior phase's entry. Specifically worth checking on
+  a real device given finding #1 above: the auth card's gutters, the
+  white (not kertas) input fill from finding #4, and the Fraunces/IBM
+  Plex fonts actually rendering rather than falling back.
+- Minor findings from the final review were explicitly parked, not
+  fixed, as out of this phase's scope: missing input placeholders
+  (`SCREENS.md` specifies a password placeholder and an email
+  placeholder, neither implemented, pre-existing gap); Register's
+  "Minimal 12 karakter" hint sits under the confirm-password field
+  rather than the password field it actually describes (pre-existing,
+  carried over verbatim); `register-consent`'s `Checkbox` has an `id`
+  with no corresponding `Label htmlFor`, so tapping the consent text
+  doesn't toggle the box (pre-existing); `'#F7F8F4'` is now hardcoded
+  identically in both `login.tsx` and `register.tsx`'s `SafeAreaView`
+  style (necessary — `SafeAreaView` can't resolve Tamagui tokens — but
+  duplicated, a shared constant would be cheap insurance against drift
+  from `tokens.color.kertas`).
+- Beranda (Home) and all other screens remain unstyled by this design
+  handoff port — Phase C+ per `project_design_handoff_phases` (session
+  memory), not tracked in this file until scoped.
