@@ -25,6 +25,7 @@ export function PocketCard({
       maxWidth={maxWidth ?? 440}
       alignSelf={alignSelf ?? 'center'}
       flex={flex}
+      {...(maxWidth === undefined ? { $gtSm: { maxWidth: 600 } } : {})}
     >
       <DashedBox
         color="#AEB9B2"
@@ -36,6 +37,7 @@ export function PocketCard({
           backgroundColor="transparent"
           padding={elevated ? '$5' : '$4'}
           gap={elevated ? '$4' : '$3'}
+          $gtSm={{ padding: elevated ? '$6' : '$5', gap: elevated ? '$5' : '$4' }}
           shadowColor={elevated && !isMuted ? '$tinta' : undefined}
           shadowOffset={elevated && !isMuted ? { width: 0, height: 6 } : undefined}
           shadowOpacity={elevated ? (isMuted ? 0 : 0.1) : undefined}
