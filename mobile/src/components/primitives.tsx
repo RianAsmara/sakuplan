@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Label, styled, Text, XStack, YStack, View } from 'tamagui'
+import { scaleForTablet } from '../theme/responsive'
 
 /**
  * The whole type system, as components. Nothing in a screen should set fontFamily,
@@ -7,6 +8,9 @@ import { Label, styled, Text, XStack, YStack, View } from 'tamagui'
  * design, and that is worth a question rather than an invention.
  *
  * Names map 1:1 to the table in design_handoff_sakuplan_rn/DESIGN_TOKENS.md.
+ *
+ * Every fontSize/lineHeight pair also carries a $gtSm (>=768px, tablet) override via
+ * scaleForTablet() — see docs/superpowers/specs/2026-08-18-responsive-tablet-typography-design.md.
  */
 
 // --- Fraunces. Wordmark and onboarding/auth headings only. ---
@@ -17,9 +21,21 @@ export const Wordmark = styled(Text, {
   color: '$terjaga',
   variants: {
     size: {
-      s: { fontSize: 20, lineHeight: 26 }, // home
-      m: { fontSize: 22, lineHeight: 28 }, // onboarding
-      l: { fontSize: 24, lineHeight: 30 }, // auth
+      s: {
+        fontSize: 20,
+        lineHeight: 26,
+        $gtSm: { fontSize: scaleForTablet(20), lineHeight: scaleForTablet(26) },
+      }, // home
+      m: {
+        fontSize: 22,
+        lineHeight: 28,
+        $gtSm: { fontSize: scaleForTablet(22), lineHeight: scaleForTablet(28) },
+      }, // onboarding
+      l: {
+        fontSize: 24,
+        lineHeight: 30,
+        $gtSm: { fontSize: scaleForTablet(24), lineHeight: scaleForTablet(30) },
+      }, // auth
     },
   } as const,
   defaultVariants: { size: 's' },
@@ -31,6 +47,7 @@ export const DisplayHeading = styled(Text, {
   fontSize: 24,
   lineHeight: 30,
   color: '$tinta',
+  $gtSm: { fontSize: scaleForTablet(24), lineHeight: scaleForTablet(30) },
 })
 
 export const AuthHeading = styled(Text, {
@@ -39,6 +56,7 @@ export const AuthHeading = styled(Text, {
   fontSize: 20,
   lineHeight: 26,
   color: '$tinta',
+  $gtSm: { fontSize: scaleForTablet(20), lineHeight: scaleForTablet(26) },
 })
 
 // --- IBM Plex Sans. Everything else. ---
@@ -50,6 +68,7 @@ export const TabTitle = styled(Text, {
   fontSize: 24,
   lineHeight: 32,
   color: '$tinta',
+  $gtSm: { fontSize: scaleForTablet(24), lineHeight: scaleForTablet(32) },
 })
 
 /** Detail screen title. 18/24 SemiBold, one line. */
@@ -61,6 +80,7 @@ export const DetailTitle = styled(Text, {
   color: '$tinta',
   numberOfLines: 1,
   ellipsizeMode: 'tail',
+  $gtSm: { fontSize: scaleForTablet(18), lineHeight: scaleForTablet(24) },
 })
 
 /** "Perlu perhatian", "Riwayat", "Identitas" … */
@@ -70,6 +90,7 @@ export const SectionHeading = styled(Text, {
   fontSize: 14,
   lineHeight: 20,
   color: '$tinta',
+  $gtSm: { fontSize: scaleForTablet(14), lineHeight: scaleForTablet(20) },
 })
 
 /** "Akun" / "Perencanaan" / "Aplikasi" group labels in Lainnya. */
@@ -80,6 +101,7 @@ export const GroupLabel = styled(Text, {
   lineHeight: 16,
   letterSpacing: 0.22,
   color: '$kulit',
+  $gtSm: { fontSize: scaleForTablet(11), lineHeight: scaleForTablet(16) },
 })
 
 export const Body = styled(Text, {
@@ -88,6 +110,7 @@ export const Body = styled(Text, {
   fontSize: 14,
   lineHeight: 20,
   color: '$tinta',
+  $gtSm: { fontSize: scaleForTablet(14), lineHeight: scaleForTablet(20) },
 })
 
 export const BodyS = styled(Text, {
@@ -96,6 +119,7 @@ export const BodyS = styled(Text, {
   fontSize: 13,
   lineHeight: 19,
   color: '$tinta',
+  $gtSm: { fontSize: scaleForTablet(13), lineHeight: scaleForTablet(19) },
 })
 
 export const Meta = styled(Text, {
@@ -104,6 +128,7 @@ export const Meta = styled(Text, {
   fontSize: 12,
   lineHeight: 17,
   color: '$kulit',
+  $gtSm: { fontSize: scaleForTablet(12), lineHeight: scaleForTablet(17) },
 })
 
 export const MetaS = styled(Text, {
@@ -112,6 +137,7 @@ export const MetaS = styled(Text, {
   fontSize: 11,
   lineHeight: 16,
   color: '$kulit',
+  $gtSm: { fontSize: scaleForTablet(11), lineHeight: scaleForTablet(16) },
 })
 
 /** 10px, tracked out. Chart labels and the "SARAN AI · …" eyebrow. */
@@ -122,6 +148,7 @@ export const Micro = styled(Text, {
   lineHeight: 14,
   letterSpacing: 0.4,
   color: '$kulit',
+  $gtSm: { fontSize: scaleForTablet(10), lineHeight: scaleForTablet(14) },
 })
 
 // --- IBM Plex Mono. Numbers and field labels. ---
@@ -139,15 +166,51 @@ export const Amount = styled(Text, {
   fontVariant: ['tabular-nums'],
   variants: {
     size: {
-      13: { fontSize: 13, lineHeight: 17 },
-      14: { fontSize: 14, lineHeight: 18 },
-      15: { fontSize: 15, lineHeight: 20 },
-      16: { fontSize: 16, lineHeight: 21 },
-      17: { fontSize: 17, lineHeight: 22 },
-      26: { fontSize: 26, lineHeight: 30 },
-      28: { fontSize: 28, lineHeight: 32 },
-      36: { fontSize: 36, lineHeight: 40 },
-      42: { fontSize: 42, lineHeight: 46 }, // home hero: line-height 1.1
+      13: {
+        fontSize: 13,
+        lineHeight: 17,
+        $gtSm: { fontSize: scaleForTablet(13), lineHeight: scaleForTablet(17) },
+      },
+      14: {
+        fontSize: 14,
+        lineHeight: 18,
+        $gtSm: { fontSize: scaleForTablet(14), lineHeight: scaleForTablet(18) },
+      },
+      15: {
+        fontSize: 15,
+        lineHeight: 20,
+        $gtSm: { fontSize: scaleForTablet(15), lineHeight: scaleForTablet(20) },
+      },
+      16: {
+        fontSize: 16,
+        lineHeight: 21,
+        $gtSm: { fontSize: scaleForTablet(16), lineHeight: scaleForTablet(21) },
+      },
+      17: {
+        fontSize: 17,
+        lineHeight: 22,
+        $gtSm: { fontSize: scaleForTablet(17), lineHeight: scaleForTablet(22) },
+      },
+      26: {
+        fontSize: 26,
+        lineHeight: 30,
+        $gtSm: { fontSize: scaleForTablet(26), lineHeight: scaleForTablet(30) },
+      },
+      28: {
+        fontSize: 28,
+        lineHeight: 32,
+        $gtSm: { fontSize: scaleForTablet(28), lineHeight: scaleForTablet(32) },
+      },
+      36: {
+        fontSize: 36,
+        lineHeight: 40,
+        $gtSm: { fontSize: scaleForTablet(36), lineHeight: scaleForTablet(40) },
+      },
+      42: {
+        fontSize: 42,
+        lineHeight: 46,
+        $gtSm: { fontSize: scaleForTablet(42), lineHeight: scaleForTablet(46) },
+      }, // home hero: line-height 1.1
     },
   } as const,
   defaultVariants: { size: 14 },
@@ -156,7 +219,8 @@ export const Amount = styled(Text, {
 /**
  * Icon + uppercase mono form label on one row, with `htmlFor` wired to the
  * paired input's `id`. The `styled(Text)` route can't take `htmlFor` — this
- * is a plain component built on Tamagui's `Label` for that reason.
+ * is a plain component built on Tamagui's `Label` for that reason, so its
+ * tablet override is an inline `$gtSm` prop rather than a styled() config key.
  */
 export function FieldLabel({
   htmlFor,
@@ -178,6 +242,7 @@ export function FieldLabel({
         lineHeight={15}
         letterSpacing={0.44}
         color="$kulit"
+        $gtSm={{ fontSize: scaleForTablet(11), lineHeight: scaleForTablet(15) }}
       >
         {children}
       </Label>
@@ -187,21 +252,23 @@ export function FieldLabel({
 
 // --- Layout ---
 
-/** Main-app screen body. 20px gutters, 20 top, 28 bottom. */
+/** Main-app screen body. 20px gutters, 20 top, 28 bottom; 24/24/32 on tablet. */
 export const Screen = styled(YStack, {
   flex: 1,
   backgroundColor: '$kertas',
   paddingHorizontal: 20,
   paddingTop: 20,
   paddingBottom: 28,
+  $gtSm: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 },
 })
 
-/** Onboarding and auth use wider gutters. */
+/** Onboarding and auth use wider gutters; wider still on tablet. */
 export const FlowScreen = styled(YStack, {
   flex: 1,
   backgroundColor: '$kertas',
   paddingHorizontal: 24,
   paddingBottom: 24,
+  $gtSm: { paddingHorizontal: 32, paddingBottom: 32 },
 })
 
 /** 1px horizontal rule. Applied as the TOP border of each list row. */
@@ -213,7 +280,8 @@ export const Hairline = styled(View, {
 
 /**
  * A ledger row: full-width, space-between, hairline on top.
- * `pv` matches the design's per-list padding (9 / 12 / 13 / 14).
+ * `pv` matches the design's per-list padding (9 / 12 / 13 / 14); +3px on tablet,
+ * whatever value the caller passes.
  */
 export const LedgerRow = styled(XStack, {
   alignItems: 'center',
@@ -222,7 +290,7 @@ export const LedgerRow = styled(XStack, {
   borderTopColor: '$hairline',
   variants: {
     pv: {
-      ':number': (n) => ({ paddingVertical: n }),
+      ':number': (n) => ({ paddingVertical: n, $gtSm: { paddingVertical: n + 3 } }),
     },
   } as const,
   defaultVariants: { pv: 13 },
@@ -239,6 +307,11 @@ export const inputStyle = {
   fontFamily: '$body',
   fontSize: 14,
   color: '$tinta',
+  $gtSm: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    fontSize: scaleForTablet(14),
+  },
 } as const
 
 /** Focus treatment: border goes brand green, plus a 3px soft ring. */
@@ -263,6 +336,7 @@ export const PrimaryButton = styled(XStack, {
   paddingVertical: 15,
   pressStyle: { scale: 0.97 },
   transition: 'quick',
+  $gtSm: { paddingVertical: 18 },
 })
 
 /** Secondary action. Outlined, transparent fill. */
@@ -278,6 +352,7 @@ export const SecondaryButton = styled(XStack, {
   paddingVertical: 15,
   pressStyle: { scale: 0.97 },
   transition: 'quick',
+  $gtSm: { paddingVertical: 18 },
 })
 
 export const ButtonLabel = styled(Text, {
@@ -285,6 +360,7 @@ export const ButtonLabel = styled(Text, {
   fontWeight: '500',
   fontSize: 14,
   lineHeight: 20,
+  $gtSm: { fontSize: scaleForTablet(14), lineHeight: scaleForTablet(20) },
 })
 
 /** Small inline text action: "Ubah", "Tandai lunas", "Lihat anggaran". */
@@ -295,11 +371,13 @@ export const InlineAction = styled(Text, {
   lineHeight: 16,
   color: '$terjaga',
   pressStyle: { opacity: 0.7 },
+  $gtSm: { fontSize: scaleForTablet(12), lineHeight: scaleForTablet(16) },
 })
 
 /**
  * Selection chip. 32px tall by design — below the 44px minimum, so callers MUST pass
  * hitSlop to the pressable wrapper. Keep the visual size; expand only the touch area.
+ * A bit taller/wider on tablet (36 / 16 / 10).
  */
 export const Chip = styled(XStack, {
   alignItems: 'center',
@@ -311,6 +389,7 @@ export const Chip = styled(XStack, {
   borderWidth: 1,
   pressStyle: { scale: 0.95 },
   transition: 'quick',
+  $gtSm: { minHeight: 36, paddingHorizontal: 16, paddingVertical: 10 },
   variants: {
     selected: {
       true: { backgroundColor: '$terjaga', borderColor: '$terjaga' },
@@ -325,6 +404,7 @@ export const ChipLabel = styled(Text, {
   fontWeight: '400',
   fontSize: 12,
   lineHeight: 16,
+  $gtSm: { fontSize: scaleForTablet(12), lineHeight: scaleForTablet(16) },
   variants: {
     selected: {
       true: { color: '$putih' },
