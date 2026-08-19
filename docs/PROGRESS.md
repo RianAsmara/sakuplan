@@ -1135,3 +1135,87 @@ None.
   only. If the on-device check finds the scale reads too aggressive or
   too subtle, `TABLET_TYPE_SCALE` in `mobile/src/theme/responsive.ts` is
   the single place to retune it.
+
+## 2026-08-19 — Tab bar re-skin (wire in Phase A's `TabBar`)
+
+### Requirement IDs implemented
+
+None (design/UX implementation — user request: "reskin menu/tabbar
+first" while scoping the next design-handoff phase). Wires the custom
+`TabBar` component built in the 2026-08-17 Phase A foundation entry
+above into the actual tab navigator; that component existed unused since
+Phase A ("deliberately NOT done in Phase A — swapping the tab bar
+affects all 5 tabs at once," see that entry), and this closes that gap
+ahead of any tab-content re-skin. Bounded scope per
+`superpowers:brainstorming` (no spec/plan document) — approved in chat.
+
+### Files changed
+
+- `mobile/app/(app)/(tabs)/_layout.tsx` — `<Tabs>` now renders
+  `tabBar={(props) => <TabBar {...props} />}` instead of a per-screen
+  `tabBarButton` plus a hardcoded `tabBarStyle` (which set
+  `backgroundColor`/`borderTopColor` as raw hex and `borderStyle:
+  'dashed'` directly, bypassing both the token system and the
+  Android-dashed-border bug fix `DashedBox`/`DashedRule` exist for).
+- `mobile/src/components/TabBar.tsx` — `LABELS[key]` lookup now falls
+  back to `route.name` instead of silently rendering nothing for an
+  unmapped route (a Phase A final-review finding explicitly deferred as
+  "not affecting any current caller" — same latent-bug shape as the
+  `PocketCard` padding bug that later became real, closed here since the
+  file was already being touched). `BottomTabBarProps` is now imported
+  from `expo-router/tabs` instead of `@react-navigation/bottom-tabs`
+  directly — see bug fixed below.
+- `mobile/src/components/TabBarButton.tsx` (deleted) — the tab bar
+  component this replaces, a leftover from before the design handoff
+  that still referenced the removed Inter font
+  (`fontFamily: 'Inter_500Medium'`, silently falling back to a system
+  font since Phase A dropped that font load) and rendered no icon.
+  Confirmed no other importers before deleting.
+
+### Database migrations
+
+None.
+
+### Bugs fixed along the way
+
+1. **`BottomTabBarProps` from `@react-navigation/bottom-tabs` doesn't
+   type-check against expo-router's `Tabs` `tabBar` prop.** Wiring
+   `TabBar` in via `tabBar={(props) => <TabBar {...props} />}` failed
+   `tsc` with a real structural mismatch (`ColorValue` vs `string` on
+   `tintColor`, among others) — expo-router ships its own re-exported
+   `BottomTabBarProps` type (`expo-router/build/react-navigation/
+   bottom-tabs/types.d.ts`) that's close to but not identical to
+   `@react-navigation/bottom-tabs`'s own. Traced the type through
+   `expo-router`'s actual `.d.ts` files (not assumed) to find it's
+   reachable via the public `expo-router/tabs` subpath (`tabs.d.ts` →
+   `export *` chain all the way to the bottom-tabs types — unlike the
+   main `expo-router` entry, which only re-exports the `Tabs` *value*
+   by name, not the wildcard type exports behind it). Fixed by importing
+   `BottomTabBarProps` from `expo-router/tabs` instead.
+
+### Commands run and results
+
+1. `cd mobile && npx tsc --noEmit` → exit 0, no output.
+2. `cd mobile && npx eslint .` → 0 errors, the same 2 pre-existing
+   warnings in `tamagui.config.ts` as every prior entry, nothing new.
+3. `cd mobile && npx jest` → PASS, 14 suites / 69 tests — unchanged (no
+   new testable logic, this is navigation-shell wiring only).
+
+### Deferred / not verified
+
+- Manual on-device confirmation that the tab bar actually renders
+  correctly (icons, active-state top-rule indicator, the dashed top
+  edge, Fraunces/Plex fonts) is deferred to the human partner, per this
+  project's established pattern. Worth checking specifically that
+  switching tabs still navigates correctly — the `tabBar` prop wiring
+  is a different code path through `expo-router`/`@react-navigation`
+  than the previous per-screen `tabBarButton` approach, and this is the
+  first time this app has used it.
+- `@react-navigation/bottom-tabs`/`@react-navigation/native` remain in
+  `package.json` unchanged — not removed even though no app code now
+  imports from them directly, since they're very likely still required
+  transitively by `expo-router`'s own `Tabs` implementation. Not
+  verified either way; left alone as out of scope for this change.
+- No screen content changed — Beranda/Home and the other tab screens'
+  own re-skins remain future phases (Phase B+ per
+  `project_design_handoff_phases`, session memory).
