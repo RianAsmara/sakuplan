@@ -16,9 +16,15 @@ export function PocketCard({
   width,
   maxWidth,
   alignSelf,
+  padding,
+  gap,
   ...rest
 }: PocketCardProps) {
   const isMuted = tone === 'muted'
+  const phonePadding = elevated ? '$5' : '$4'
+  const phoneGap = elevated ? '$4' : '$3'
+  const tabletPadding = elevated ? '$6' : '$5'
+  const tabletGap = elevated ? '$5' : '$4'
   return (
     <YStack
       width={width ?? '100%'}
@@ -35,9 +41,14 @@ export function PocketCard({
       >
         <YStack
           backgroundColor="transparent"
-          padding={elevated ? '$5' : '$4'}
-          gap={elevated ? '$4' : '$3'}
-          $gtSm={{ padding: elevated ? '$6' : '$5', gap: elevated ? '$5' : '$4' }}
+          padding={padding ?? phonePadding}
+          gap={gap ?? phoneGap}
+          $gtSm={{
+            ...((padding === undefined || padding === phonePadding)
+              ? { padding: tabletPadding }
+              : {}),
+            ...((gap === undefined || gap === phoneGap) ? { gap: tabletGap } : {}),
+          }}
           shadowColor={elevated && !isMuted ? '$tinta' : undefined}
           shadowOffset={elevated && !isMuted ? { width: 0, height: 6 } : undefined}
           shadowOpacity={elevated ? (isMuted ? 0 : 0.1) : undefined}

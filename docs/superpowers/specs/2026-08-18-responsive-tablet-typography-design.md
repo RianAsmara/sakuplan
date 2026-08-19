@@ -12,11 +12,18 @@ so both the two screens using it today and every future design-handoff phase
 inherit responsive behavior automatically as they migrate onto these
 primitives — no separate typography system to reconcile later.
 
-Screens that don't yet use `primitives.tsx` (Home, Budgets, Accounts, Bills,
-Goals, Transactions, More, Profile, Safe-to-Spend, Reports) are unaffected by
-this spec. They become responsive when their own design-handoff phase
-migrates them onto these primitives, same as the Login/Register phase did for
-typography and spacing generally.
+Screens that don't yet use `primitives.tsx` for typography (Home, Budgets,
+Accounts, Bills, Goals, Transactions, More, Profile, Safe-to-Spend, Reports)
+keep their current phone-scale text under this spec — they become
+responsive when their own design-handoff phase migrates them onto these
+primitives. `PocketCard.tsx`, however, is already used by all of those
+screens (17 import sites across 10 non-auth screens, not just
+Login/Register) — its `maxWidth`/`padding`/`gap` tablet bump applies to
+every one of them immediately, ahead of their own re-skin. The visible
+result: on tablet, cards on those screens get wider and roomier around
+still-phone-scale type until their own phase catches up. Not a defect,
+but a real consequence worth knowing about before the manual on-device
+check (see Testing).
 
 ## Decisions made during brainstorming
 
@@ -187,3 +194,17 @@ emulator/device still render at the original phone sizes (i.e. `$gtSm`
 correctly does *not* apply below 768px) — this is the "returns to regular
 on phone" half of the requirement and is just as important to verify as
 the tablet half.
+
+Also check at least Home, Budgets, and Reports at ≥768px — `PocketCard.tsx`
+reaches all ten non-auth screens today (see Context), so this branch's
+effect isn't confined to Login/Register. Two things will look different
+there and are expected, not evidence of a bug: cards will be visibly wider
+and roomier while their text stays phone-scale (those screens haven't been
+migrated onto `primitives.tsx` yet), and PrimaryButton/SecondaryButton
+already touch every screen (through Login/Register only for now), so no
+surprise there. Finally, exercise `LedgerRow` and `TextField` (via
+`inputStyle`) specifically if a screen with a list or a form is visible in
+that pass — both apply `$gtSm` in structurally unusual ways (a functional
+variant returning a media key, and a plain object spread through a wrapped
+`Input`, respectively) that static review can confirm type-checks but not
+that Tamagui actually resolves them at runtime.
