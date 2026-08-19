@@ -2,9 +2,21 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Button, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui'
+import { ScrollView, Spinner, Text, XStack, YStack } from 'tamagui'
 import { ChevronRight, PiggyBank, Receipt, User, Wallet } from '@tamagui/lucide-icons-2'
 import { PocketCard } from '../../../src/components/PocketCard'
+import {
+  AuthHeading,
+  Body,
+  BodyS,
+  ButtonLabel,
+  GroupLabel,
+  InlineAction,
+  Meta,
+  PrimaryButton,
+  SecondaryButton,
+  TabTitle,
+} from '../../../src/components/primitives'
 import { useCurrentUser } from '../../../src/auth/useCurrentUser'
 import { useLogout } from '../../../src/auth/useLogout'
 import { useLogoutAll } from '../../../src/auth/useLogoutAll'
@@ -33,17 +45,15 @@ function NavRow({
     <XStack
       alignItems="center"
       justifyContent="space-between"
-      paddingVertical="$3"
+      paddingVertical="$3.5"
       borderTopWidth={1}
-      borderTopColor="$borderColor"
+      borderTopColor="$hairline"
       onPress={onPress}
       pressStyle={{ opacity: 0.7 }}
     >
       <XStack alignItems="center" gap="$3">
         {icon}
-        <Text fontFamily="$body" fontSize="$3" color="$color">
-          {label}
-        </Text>
+        <Body>{label}</Body>
       </XStack>
       <ChevronRight size={16} color="$kulit" />
     </XStack>
@@ -62,12 +72,10 @@ export default function MoreScreen() {
   const userInitial = user?.display_name?.trim()?.[0]?.toUpperCase() ?? '?'
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F6F3' }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8F4' }} edges={['top']}>
       <ScrollView flex={1} backgroundColor="$background">
         <YStack padding="$5" gap="$4">
-          <Text fontFamily="$heading" fontSize="$4" color="$color">
-            Lainnya
-          </Text>
+          <TabTitle>Lainnya</TabTitle>
 
           {isLoading || !user ? (
             <YStack alignItems="center" paddingTop="$6">
@@ -92,20 +100,14 @@ export default function MoreScreen() {
                     </Text>
                   </YStack>
                   <YStack>
-                    <Text fontFamily="$body" fontSize="$3" color="$color">
-                      {user.display_name}
-                    </Text>
-                    <Text fontFamily="$body" fontSize="$2" color="$kulit">
-                      {user.email}
-                    </Text>
+                    <Body>{user.display_name}</Body>
+                    <Meta>{user.email}</Meta>
                   </YStack>
                 </XStack>
               </PocketCard>
 
               <YStack>
-                <Text fontFamily="$body" fontSize="$1" color="$kulit" marginBottom="$1">
-                  AKUN
-                </Text>
+                <GroupLabel marginBottom="$1">AKUN</GroupLabel>
                 <NavRow
                   icon={<User size={16} color="$kulit" />}
                   label="Profil & preferensi"
@@ -119,9 +121,7 @@ export default function MoreScreen() {
               </YStack>
 
               <YStack>
-                <Text fontFamily="$body" fontSize="$1" color="$kulit" marginBottom="$1">
-                  PERENCANAAN
-                </Text>
+                <GroupLabel marginBottom="$1">PERENCANAAN</GroupLabel>
                 <NavRow
                   icon={<Receipt size={16} color="$kulit" />}
                   label="Tagihan berulang"
@@ -135,89 +135,61 @@ export default function MoreScreen() {
               </YStack>
 
               <PocketCard>
-                <Text fontFamily="$heading" fontSize="$4" color="$color">
-                  Akun
-                </Text>
+                <AuthHeading>Akun</AuthHeading>
 
-                <Button
-                  backgroundColor="$white"
-                  borderWidth={1.5}
-                  borderColor="$borderColor"
-                  color="$color"
+                <SecondaryButton
                   disabled={exportData.isPending}
+                  opacity={exportData.isPending ? 0.5 : 1}
                   onPress={() => exportData.mutate()}
                 >
-                  {exportData.isPending ? 'Menyiapkan ekspor...' : 'Unduh Data Saya'}
-                </Button>
+                  <ButtonLabel color="$tinta">
+                    {exportData.isPending ? 'Menyiapkan ekspor...' : 'Unduh Data Saya'}
+                  </ButtonLabel>
+                </SecondaryButton>
                 {exportData.isError ? (
-                  <Text fontFamily="$body" fontSize="$1" color="$danger">
-                    Gagal mengekspor data. Coba lagi.
-                  </Text>
+                  <BodyS color="$danger">Gagal mengekspor data. Coba lagi.</BodyS>
                 ) : null}
 
-                <Button
-                  backgroundColor="$white"
-                  borderWidth={1.5}
-                  borderColor="$borderColor"
-                  color="$color"
-                  disabled={logout.isPending}
-                  onPress={() => logout.mutate()}
-                >
-                  {logout.isPending ? 'Keluar...' : 'Keluar'}
-                </Button>
+                <SecondaryButton disabled={logout.isPending} opacity={logout.isPending ? 0.5 : 1} onPress={() => logout.mutate()}>
+                  <ButtonLabel color="$tinta">{logout.isPending ? 'Keluar...' : 'Keluar'}</ButtonLabel>
+                </SecondaryButton>
 
                 {confirmLogoutAll ? (
                   <YStack gap="$2">
-                    <Text fontFamily="$body" fontSize="$2" color="$kulit">
-                      Yakin ingin keluar dari semua perangkat?
-                    </Text>
+                    <Meta>Yakin ingin keluar dari semua perangkat?</Meta>
                     <XStack gap="$2">
-                      <Button
+                      <PrimaryButton
                         flex={1}
                         backgroundColor="$danger"
-                        color="$white"
                         disabled={logoutAll.isPending}
+                        opacity={logoutAll.isPending ? 0.5 : 1}
                         onPress={() => logoutAll.mutate()}
                       >
-                        {logoutAll.isPending ? 'Memproses...' : 'Ya, Keluar'}
-                      </Button>
-                      <Button flex={1} backgroundColor="$white" borderWidth={1.5} borderColor="$borderColor" color="$color" onPress={() => setConfirmLogoutAll(false)}>
-                        Batal
-                      </Button>
+                        <ButtonLabel color="$primaryText">
+                          {logoutAll.isPending ? 'Memproses...' : 'Ya, Keluar'}
+                        </ButtonLabel>
+                      </PrimaryButton>
+                      <SecondaryButton flex={1} onPress={() => setConfirmLogoutAll(false)}>
+                        <ButtonLabel color="$tinta">Batal</ButtonLabel>
+                      </SecondaryButton>
                     </XStack>
                   </YStack>
                 ) : (
-                  <Text
-                    fontFamily="$body"
-                    fontSize="$2"
-                    color="$danger"
-                    textDecorationLine="underline"
-                    onPress={() => setConfirmLogoutAll(true)}
-                  >
+                  <InlineAction color="$danger" textDecorationLine="underline" onPress={() => setConfirmLogoutAll(true)}>
                     Keluar dari semua perangkat
-                  </Text>
+                  </InlineAction>
                 )}
               </PocketCard>
 
               <PocketCard tone="muted">
-                <Text fontFamily="$heading" fontSize="$4" color="$color">
-                  Segera Hadir
-                </Text>
+                <AuthHeading>Segera Hadir</AuthHeading>
                 <XStack justifyContent="space-between" onPress={handleNotifications}>
-                  <Text fontFamily="$body" fontSize="$2" color="$kulit">
-                    Notifikasi
-                  </Text>
-                  <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                    Segera hadir
-                  </Text>
+                  <Meta>Notifikasi</Meta>
+                  <Meta>Segera hadir</Meta>
                 </XStack>
                 <XStack justifyContent="space-between" onPress={handleDeleteAccount}>
-                  <Text fontFamily="$body" fontSize="$2" color="$danger">
-                    Hapus Akun
-                  </Text>
-                  <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                    Segera hadir
-                  </Text>
+                  <Meta color="$danger">Hapus Akun</Meta>
+                  <Meta>Segera hadir</Meta>
                 </XStack>
               </PocketCard>
             </>
