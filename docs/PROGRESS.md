@@ -1219,3 +1219,53 @@ None.
 - No screen content changed — Beranda/Home and the other tab screens'
   own re-skins remain future phases (Phase B+ per
   `project_design_handoff_phases`, session memory).
+
+## 2026-08-19 — Password show/hide toggle
+
+### Requirement IDs implemented
+
+None (user-requested UX addition — "add show/hide password" — not present
+in `design_handoff_sakuplan_rn/SCREENS.md`, which is silent on password
+visibility). Bounded scope per `superpowers:brainstorming` (no spec/plan
+document), approved in chat.
+
+### Files changed
+
+- `mobile/src/components/PasswordField.tsx` (new) — wraps `TextField` with
+  an `Eye`/`EyeOff` toggle button that flips `secureTextEntry`. The toggle
+  is a full 44×44 absolutely-positioned touch target on the field's right
+  edge (this project's minimum-touch-target rule), with `paddingRight={44}`
+  on the inner `TextField` so typed text never runs under the icon.
+- `mobile/app/(auth)/login.tsx` — password field now `<PasswordField
+  .../>` instead of `<TextField secureTextEntry .../>`.
+- `mobile/app/(auth)/register.tsx` — both the password and confirm-password
+  fields switched the same way.
+
+### Database migrations
+
+None.
+
+### Bugs fixed along the way
+
+None — small, self-contained addition, no pre-existing issues encountered.
+
+### Commands run and results
+
+1. `cd mobile && npx tsc --noEmit` → exit 0, no output.
+2. `cd mobile && npx eslint .` → 0 errors, the same 2 pre-existing
+   warnings in `tamagui.config.ts` as every prior entry, nothing new.
+3. `cd mobile && npx jest` → PASS, 14 suites / 69 tests — unchanged (no
+   new testable logic; this is a UI-only addition with no pure functions
+   to unit-test).
+
+### Deferred / not verified
+
+- Manual on-device confirmation that the toggle actually shows/hides
+  password text and that the touch target is comfortable to tap, deferred
+  to the human partner per this project's established pattern.
+- This worktree was built directly from the last commit on `main` rather
+  than the primary checkout's working tree, specifically to avoid the
+  primary checkout's `login.tsx`, which has unrelated uncommitted changes
+  from a concurrent session (including a recurring plaintext
+  `console.log(email, password)` — not touched, not this change's
+  concern, see `project_dirty_primary_checkout` session memory).
