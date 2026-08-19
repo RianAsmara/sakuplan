@@ -1,4 +1,4 @@
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
+import type { BottomTabBarProps } from 'expo-router/tabs'
 import { Home, ReceiptText, Wallet, BarChart3, MoreHorizontal } from '@tamagui/lucide-icons-2'
 import { Text, XStack, YStack } from 'tamagui'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -73,7 +73,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                 lineHeight={16}
                 color={color}
               >
-                {LABELS[key]}
+                {LABELS[key] ?? route.name}
               </Text>
             </YStack>
           )
