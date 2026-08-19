@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Checkbox, ScrollView, XStack, YStack } from 'tamagui'
 import { useRegister } from '../../src/auth/useRegister'
 import { GoogleIcon } from '../../src/components/GoogleIcon'
+import { PasswordField } from '../../src/components/PasswordField'
 import { PocketCard } from '../../src/components/PocketCard'
 import {
   AuthHeading,
@@ -100,11 +101,10 @@ export default function RegisterScreen() {
                 <FieldLabel htmlFor="register-password" icon={<Lock size={14} color="$kulit" />}>
                   KATA SANDI
                 </FieldLabel>
-                <TextField
+                <PasswordField
                   id="register-password"
                   value={password}
                   onChangeText={setPassword}
-                  secureTextEntry
                   textContentType="newPassword"
                   {...inputStyle}
                 />
@@ -114,11 +114,10 @@ export default function RegisterScreen() {
                 <FieldLabel htmlFor="register-confirm" icon={<Lock size={14} color="$kulit" />}>
                   KONFIRMASI KATA SANDI
                 </FieldLabel>
-                <TextField
+                <PasswordField
                   id="register-confirm"
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
-                  secureTextEntry
                   textContentType="newPassword"
                   {...inputStyle}
                 />

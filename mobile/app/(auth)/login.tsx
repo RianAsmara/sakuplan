@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { ScrollView, XStack, YStack } from 'tamagui'
 import { useLogin } from '../../src/auth/useLogin'
 import { GoogleIcon } from '../../src/components/GoogleIcon'
+import { PasswordField } from '../../src/components/PasswordField'
 import { PocketCard } from '../../src/components/PocketCard'
 import {
   AuthHeading,
@@ -82,11 +83,10 @@ export default function LoginScreen() {
                 <FieldLabel htmlFor="login-password" icon={<Lock size={14} color="$kulit" />}>
                   KATA SANDI
                 </FieldLabel>
-                <TextField
+                <PasswordField
                   id="login-password"
                   value={password}
                   onChangeText={setPassword}
-                  secureTextEntry
                   textContentType="password"
                   {...inputStyle}
                 />
