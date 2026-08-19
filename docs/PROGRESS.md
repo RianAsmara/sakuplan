@@ -1269,3 +1269,83 @@ None — small, self-contained addition, no pre-existing issues encountered.
   from a concurrent session (including a recurring plaintext
   `console.log(email, password)` — not touched, not this change's
   concern, see `project_dirty_primary_checkout` session memory).
+
+## 2026-08-19 — Lainnya (More) re-skin
+
+### Requirement IDs implemented
+
+None (design/UX implementation, first screen of the resequenced
+design-handoff rollout — user directed "reskin the simpler [screens]
+first, plan the hardest last"; Lainnya was assessed as the simplest
+remaining screen: static nav rows, no forms, no charts, no
+state-dependent logic). Bounded scope per `superpowers:brainstorming`
+(no spec/plan document), approved in chat.
+
+### Files changed
+
+- `mobile/app/(app)/(tabs)/more.tsx` — visual-only re-skin using
+  `primitives.tsx` (`TabTitle`, `GroupLabel`, `AuthHeading`, `Body`,
+  `BodyS`, `Meta`, `ButtonLabel`, `InlineAction`, `PrimaryButton`,
+  `SecondaryButton`). No hook, route, or state logic changed — same
+  `useCurrentUser`/`useLogout`/`useLogoutAll`/`useExportData` calls, same
+  `confirmLogoutAll` confirm-flow state, same `router.push` targets.
+
+  Deliberately kept the app's existing structure rather than matching
+  `SCREENS.md`'s Lainnya mockup literally: the design shows Lainnya as
+  three pure nav-row groups (Akun/Perencanaan/Aplikasi) with a separate
+  "Privasi & keamanan" destination screen, but this app has no such
+  destination — the real logout/export/delete-account actions already
+  live directly on this screen, and this project's own rule is "app
+  conventions for structure, spec for appearance." Only the visuals were
+  brought in line with the token/primitive system.
+
+### Database migrations
+
+None.
+
+### Bugs fixed along the way
+
+None new, but two near-misses caught during self-review before committing
+(worth recording since they're the kind of silent-substitution mistake
+this project has been bitten by before, in other screens):
+
+1. Initially substituted `DetailTitle` (Plex Sans 600·18) for the "Akun"
+   and "Segera Hadir" card titles, which originally used raw
+   `fontFamily="$heading" fontSize="$4"` (Fraunces 600·20). `AuthHeading`
+   is the primitive that actually matches that exact size/weight/font —
+   corrected before committing.
+2. Initially substituted `BodyS` (Plex Sans 13px, with `fontFamily`
+   overridden to mono) for the profile avatar's initial-letter text,
+   which originally used `fontFamily="$mono" fontSize="$3"` — mono `$3`
+   resolves to 20px, a legacy size `primitives.tsx`'s own file header
+   comment says is intentionally preserved for exactly this kind of
+   pre-existing usage (not on the standard scale, kept because
+   "existing screens... still reference `$mono` `$1` and `$3`" — this is
+   very likely one of the screens that comment was written about). No
+   primitive matches this size, so kept it as the original raw `Text`
+   usage rather than force-fitting a primitive that would have silently
+   shrunk it to 13px.
+
+### Commands run and results
+
+1. `cd mobile && npx tsc --noEmit` → exit 0, no output.
+2. `cd mobile && npx eslint .` → 0 errors, the same 2 pre-existing
+   warnings in `tamagui.config.ts` as every prior entry, nothing new.
+3. `cd mobile && npx jest` → PASS, 14 suites / 69 tests — unchanged (pure
+   visual re-skin, no new testable logic).
+
+### Deferred / not verified
+
+- Manual on-device confirmation deferred to the human partner, per this
+  project's established pattern — specifically worth checking the
+  destructive "Ya, Keluar" button (reuses `PrimaryButton`'s shape with an
+  explicit `$danger` background override, not a dedicated primitive) and
+  the avatar-initial text's size now that it's been deliberately
+  preserved rather than substituted.
+- This worktree was built directly from the last commit on `main`, same
+  reasoning as the password-toggle entry above — `more.tsx` is also one
+  of the primary checkout's currently-dirty files from a concurrent
+  session (see `project_dirty_primary_checkout` session memory).
+- No other screens changed. Next up per the resequenced rollout: Akun &
+  saldo, then Profile (see `project_design_handoff_phases` session
+  memory for the full ordering).
