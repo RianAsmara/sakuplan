@@ -1012,3 +1012,126 @@ ADDRESSED with file:line evidence and found no new breakage.
 - Beranda (Home) and all other screens remain unstyled by this design
   handoff port — Phase C+ per `project_design_handoff_phases` (session
   memory), not tracked in this file until scoped.
+
+## 2026-08-19 — Responsive tablet typography and layout
+
+### Requirement IDs implemented
+
+None (design/UX implementation of
+`docs/superpowers/specs/2026-08-18-responsive-tablet-typography-design.md`
+and `docs/superpowers/plans/2026-08-18-responsive-tablet-typography.md` —
+user-requested follow-up to the login/register re-skin: "font too small on
+tablet, needs to be bigger; but on phone, keep the regular size"). Adds a
+phone-vs-tablet responsive breakpoint to the shared design-system
+primitives (`mobile/src/components/primitives.tsx`,
+`mobile/src/components/PocketCard.tsx`) so bigger type and more generous
+spacing apply automatically at ≥768px width, unchanged below it.
+
+Confirmed against Tamagui's own docs during design (not assumed from
+memory) that Tamagui has no mechanism for a token's own value to vary by
+breakpoint — `fontSize="$4"` always resolves the same number everywhere.
+Every responsive override in this change attaches a `$gtSm={{...}}`
+override to each component's own definition instead, which is the only
+mechanism Tamagui actually provides.
+
+### Files changed
+
+- `mobile/tamagui.config.ts` — added a `media` block (`sm: {maxWidth:767}`,
+  `gtSm: {minWidth:768}`), the app's first use of Tamagui media queries.
+- `mobile/src/theme/responsive.ts` (new) — `scaleForTablet(px)` helper,
+  a uniform 1.15× scale factor applied to `fontSize`/`lineHeight` pairs
+  (no tablet mockup exists to match pixel-for-pixel, so a single computed
+  factor was used instead of 30+ independent hand-picked values).
+- `mobile/src/theme/responsive.test.ts` (new) — unit tests for the helper,
+  including the `Math.round` half-up rounding boundary (`30 → 35`) later
+  code depends on.
+- `mobile/src/components/primitives.tsx` — every typography component
+  (17+ call sites: `Wordmark`'s 3 size variants, headings, `Body`/`Meta`/
+  `Micro`/etc., `Amount`'s 9 size variants, `FieldLabel`, `ButtonLabel`,
+  `InlineAction`, `ChipLabel`) gets a `$gtSm` override via
+  `scaleForTablet()`. Layout primitives (`Screen`, `FlowScreen`,
+  `PrimaryButton`/`SecondaryButton`, `Chip`, `LedgerRow`, `inputStyle`)
+  get discrete, hand-picked spacing bumps matching the existing token
+  scale's own discrete idiom rather than a formula. `letterSpacing` values
+  are never scaled.
+- `mobile/src/components/PocketCard.tsx` — `maxWidth` bumps 440→600 on
+  tablet, guarded so it only applies when the caller didn't pass their own
+  `maxWidth` (no current call site does, verified against all ~48). Inner
+  `padding`/`gap` also bump on tablet — see bug fixed below.
+
+Only `login.tsx`/`register.tsx` consume `primitives.tsx` today, so
+typography visibly changes only there; every future design-handoff phase
+inherits it automatically when migrated onto these primitives.
+`PocketCard.tsx`, however, is already consumed by 17 files across 10
+non-auth screens (Home, Budgets, Reports, Transactions, More, Accounts,
+Bills, Goals, Profile, Safe-to-Spend, plus `ComingSoonScreen`/
+`AddAccountCard`/`TransactionListItem`) — its `maxWidth`/`padding`/`gap`
+bump applies to all of them immediately. This was an incorrect claim in
+the spec's first draft ("no other screens are touched") caught in the
+final whole-branch review and corrected there — see Deferred/not verified.
+
+### Database migrations
+
+None.
+
+### Bugs fixed along the way
+
+1. **A naive `padding`/`gap` override guard would have regressed the two
+   live screens this plan exists to make responsive.** Following the same
+   `prop === undefined` pattern already used for `maxWidth`'s guard seemed
+   obvious, but `login.tsx`/`register.tsx` explicitly pass `gap="$4"`
+   (which equals the elevated default) — under a naive `undefined` check,
+   that would read as "caller customized it, don't touch it at tablet,"
+   silently killing the `$4`→`$5` bump that was already shipped and
+   reviewed in this branch's own Task 3. Caught during the final
+   whole-branch review's fix-triage (not by the reviewer's own proposed
+   snippet, which had this exact flaw) by hand-tracing all 3 real call
+   sites against the proposed fix before dispatching it. Corrected design:
+   compare the caller's value against the component's own phone-baseline
+   default, not against `undefined` — only skip the tablet bump when the
+   value genuinely differs from the default (real customization), keep
+   bumping when it merely equals the default (a redundant explicit repeat
+   of it, which is what all 3 real call sites actually are). Verified by
+   hand-tracing 4 cases (the 3 real call sites plus one hypothetical
+   genuinely-customized value) both when the fix was authored and again,
+   independently, in the fix's re-review.
+
+### Commands run and results
+
+1. `cd mobile && npx tsc --noEmit` → exit 0, no output (independently
+   re-confirmed at every task review and the final review, not just
+   claimed by implementers).
+2. `cd mobile && npx eslint .` → 0 errors, the same 2 pre-existing
+   warnings in `tamagui.config.ts` as every prior entry, nothing new.
+3. `cd mobile && npx jest` → PASS, 14 suites / 69 tests (13/66 baseline +
+   1 new suite / 3 new tests for `scaleForTablet`; no other new tests —
+   this is a styling/config change over an already-tested surface).
+
+### Deferred / not verified
+
+- Manual on-device visual confirmation was explicitly out of scope for
+  this session — same established pattern as every prior phase. The final
+  whole-branch review widened what this check should cover, since
+  `PocketCard.tsx` reaches far more of the app than `primitives.tsx` does
+  (see Files changed): check Login/Register plus at least Home, Budgets,
+  and Reports at ≥768px width. Two things will look different on the
+  un-migrated screens and are expected, not bugs: cards will be visibly
+  wider/roomier while their text stays phone-scale. Also worth exercising
+  specifically: `LedgerRow`'s functional variant returning a media key
+  from inside its `':number'` handler, and `inputStyle`'s plain-object
+  `$gtSm` traveling through a spread onto `TextField`'s wrapped `Input` —
+  both type-check and are plausible, but this is the app's first use of
+  Tamagui media queries at all, so runtime resolution is genuinely
+  unverified, not just unfancy.
+- The `padding`/`gap` guard only covers those two exact prop names — a
+  caller passing `paddingHorizontal`/`paddingTop` directly still lands
+  unguarded in `...rest` on `PocketCard`'s inner stack. Not encountered by
+  any current call site; noted as a known gap, not fixed, since closing it
+  would mean guarding an open-ended set of shorthand prop names for a
+  case nothing in the app actually uses today.
+- Login/Register's typography sizing decisions (the 1.15× factor, the
+  specific spacing bumps) have no tablet design reference to validate
+  against — `design_handoff_sakuplan_rn`'s reference HTML is phone-width
+  only. If the on-device check finds the scale reads too aggressive or
+  too subtle, `TABLET_TYPE_SCALE` in `mobile/src/theme/responsive.ts` is
+  the single place to retune it.
