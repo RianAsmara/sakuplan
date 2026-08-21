@@ -1,12 +1,12 @@
 import { formatSignedRupiah, transactionTypeMeta } from './transactionDisplay'
 
 describe('transactionTypeMeta', () => {
-  it('labels income green with a positive sign', () => {
-    expect(transactionTypeMeta('income')).toEqual({ label: 'Pemasukan', color: '$primary', sign: 1 })
+  it('labels income terjaga with a positive sign', () => {
+    expect(transactionTypeMeta('income')).toEqual({ label: 'Pemasukan', color: '$terjaga', sign: 1 })
   })
 
-  it('labels expense red with a negative sign', () => {
-    expect(transactionTypeMeta('expense')).toEqual({ label: 'Pengeluaran', color: '$danger', sign: -1 })
+  it('labels expense tinta with a negative sign', () => {
+    expect(transactionTypeMeta('expense')).toEqual({ label: 'Pengeluaran', color: '$tinta', sign: -1 })
   })
 
   it('labels transfer neutral with no sign', () => {
@@ -14,11 +14,11 @@ describe('transactionTypeMeta', () => {
   })
 
   it('labels adjustment neutral with no sign', () => {
-    expect(transactionTypeMeta('adjustment')).toEqual({ label: 'Penyesuaian', color: '$accent', sign: 0 })
+    expect(transactionTypeMeta('adjustment')).toEqual({ label: 'Penyesuaian', color: '$kulit', sign: 0 })
   })
 
-  it('labels reversal red with no sign', () => {
-    expect(transactionTypeMeta('reversal')).toEqual({ label: 'Pembatalan', color: '$danger', sign: 0 })
+  it('labels reversal peringatan with no sign', () => {
+    expect(transactionTypeMeta('reversal')).toEqual({ label: 'Pembatalan', color: '$peringatan', sign: 0 })
   })
 })
 

@@ -1349,3 +1349,116 @@ this project has been bitten by before, in other screens):
 - No other screens changed. Next up per the resequenced rollout: Akun &
   saldo, then Profile (see `project_design_handoff_phases` session
   memory for the full ordering).
+
+## 2026-08-21 — Transaksi re-skin
+
+### Requirement IDs implemented
+
+None (design/UX implementation, continuing the resequenced design-handoff
+rollout). Bounded scope per `superpowers:brainstorming` (no spec/plan
+document), approved in chat.
+
+### Files changed
+
+- `mobile/src/components/primitives.tsx` — added `SegmentButton` /
+  `SegmentLabel`. The type segmented control has its own radius/padding/
+  font per `SCREENS.md` §2 (radius 6, padding 10, Plex Sans 500·13),
+  distinct enough from `Chip` (radius 14, padding 8/14, Plex Sans 400·12)
+  that reusing `Chip` with prop overrides would have fought the
+  component's own variant contract — added as a new primitives.tsx export
+  instead, per COMPONENT_CONTRACT's "if a spec size has no variant, add
+  it to primitives.tsx" rule.
+- `mobile/src/transactions/transactionDisplay.ts` (+ test) — fixed two
+  real color-rule violations found while re-skinning: expense rows were
+  rendering in `peringatan` (destructive red) instead of the spec's
+  `tinta`; adjustment rows were rendering in `leluasa`, which
+  `design_handoff_sakuplan_rn/CLAUDE.md` reserves exclusively for savings
+  goals and AI suggestions. Both now use the colors STATES.md/the color
+  rule actually specify (`tinta`, and neutral `kulit` for adjustment,
+  matching transfer).
+- `mobile/app/(app)/(tabs)/transactions.tsx` — recomposed with
+  `TabHeader`, `SegmentButton`, `Chip`/`ChipLabel`, `FieldLabel`, an
+  `Amount`-prefixed amount field (inline composition, not the shared
+  `RupiahInput` — see below), `PrimaryButton`, `SectionHeading`. Fixed a
+  real bug along the way: category chips were showing for income as well
+  as expense, but STATES.md requires income be forced onto its (single)
+  category with the chip row hidden entirely — now derived from the
+  income category query at render time (see commands/results below for
+  why not via `useEffect`). Account and destination-account chips now
+  filter to `account.spendable` per SCREENS.md ("savings accounts cannot
+  fund a transaction"), where they previously showed every account.
+- `mobile/src/transactions/TransactionListItem.tsx` — rebuilt as a
+  `LedgerRow` (`Body` description / `MetaS` meta line / `Amount`) per
+  `LAYOUT_TREES.md` §2. Reversal form now expands inline under the row on
+  tap (agreed design decision), replacing the previous always-visible
+  "Batalkan Transaksi" button. Account name is resolved from
+  `transaction.entries[0].account_id` — the `Transaction` schema has no
+  direct `account_id` field, only an `entries[]` array — to fill in the
+  spec's `"{date} · {category} · {account}"` meta line, which the prior
+  version omitted (account name wasn't shown at all).
+
+Scope note: this screen already implements four transaction types
+(income/expense/transfer/adjustment) and transaction reversal, none of
+which are modeled anywhere in ROUTES/LAYOUT_TREES/STATES/
+COMPONENT_CONTRACT — the handoff's prototype only ever had two types and
+no reversal concept. The user explicitly approved extending the
+documented visual language (segmented control, chips, `FieldLabel`s) to
+cover these extra states rather than dropping them or leaving them
+unstyled.
+
+### Database migrations
+
+None.
+
+### Commands run and results
+
+1. `cd mobile && npx tsc --noEmit` → exit 0, no output.
+2. `cd mobile && npx eslint <changed files>` → first pass caught a real
+   `react-hooks/set-state-in-effect` violation: the income-category
+   auto-selection was implemented as two `useEffect`s syncing derived
+   state, which is also subtly wrong on its own (the first draft read
+   `categories.data` synchronously inside the type-change click handler,
+   which is the *previous* type's stale query data, since TanStack Query
+   only refetches after the queryKey changes on the next render).
+   Refactored to derive `effectiveCategoryId` from `categories.data`
+   directly at render time instead of mirroring it into state — no
+   effect, no staleness, and it satisfies the lint rule. Clean after the
+   fix.
+3. `cd mobile && npx jest` → PASS, 14 suites / 69 tests (8 in
+   `transactionDisplay.test.ts`, updated for the corrected color tokens;
+   the other 61 unaffected).
+4. `cd mobile && npx expo start --web` (background) + `curl` against the
+   expo-router web bundle endpoint → HTTP 200, ~11 MB, zero compile
+   errors in the server log — confirms Metro transforms every touched
+   route file (and everything they import) without a runtime-breaking
+   error. Not a substitute for manually exercising the screen.
+
+### Deferred / not verified
+
+- Live-data manual verification (login, real account/category/
+  transaction API calls) was not performed — requires the Go backend and
+  Docker running, out of scope for this pass. STATES.md's Transaksi rows
+  (income vs. expense chip visibility, `+terjaga` vs. `tinta` row color,
+  invalid-submit no-op) plus the extrapolated states (transfer/adjustment
+  chip flows, reversal expand/collapse, 409-conflict banner) should be
+  walked by hand against the running app before this is considered fully
+  done.
+- `mobile/src/components/RupiahInput.tsx` was deliberately **not**
+  touched, despite being the obvious shared home for the "Rp" + `Amount`
+  26px numeric-field treatment: it's also used by `AddAccountCard`,
+  `goals.tsx`, `budgets.tsx`, and `profile.tsx`, none of which are in
+  scope here. Restyling it would have changed those four screens'
+  numeric inputs unreviewed — the same class of mistake the
+  responsive-tablet-typography phase hit with `PocketCard`'s 17
+  unexpected consumers. The Transaksi amount field is composed inline in
+  the screen instead.
+- This worktree carries other, unrelated uncommitted files from a
+  concurrent session (`design_handoff_sakuplan_rn/CLAUDE.md`,
+  `README.md`, `mobile/app.json`, `mobile/eas.json`,
+  `mobile/package.json`/`package-lock.json`, `mobile/src/api/client.ts`,
+  plus several untracked `design_handoff_sakuplan_rn/` docs) — not
+  touched, staged, or committed as part of this entry.
+- Per the resequenced rollout the nominal next screen is Akun & saldo,
+  then Profile (see `project_design_handoff_phases` session memory) —
+  this session worked Transaksi out of that order at the user's
+  direction.

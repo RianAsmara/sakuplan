@@ -413,3 +413,40 @@ export const ChipLabel = styled(Text, {
   } as const,
   defaultVariants: { selected: false },
 })
+
+/**
+ * Type segmented control (Transaksi). Distinct from `Chip`: radius 6 not 14,
+ * no border, kertas (not white) unselected fill, Plex Sans 500 · 13 not 400 · 12.
+ */
+export const SegmentButton = styled(XStack, {
+  role: 'button',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flex: 1,
+  borderRadius: 6,
+  paddingVertical: 10,
+  pressStyle: { scale: 0.97 },
+  transition: 'quick',
+  variants: {
+    selected: {
+      true: { backgroundColor: '$terjaga' },
+      false: { backgroundColor: '$kertas' },
+    },
+  } as const,
+  defaultVariants: { selected: false },
+})
+
+export const SegmentLabel = styled(Text, {
+  fontFamily: '$body',
+  fontWeight: '500',
+  fontSize: 13,
+  lineHeight: 18,
+  $gtSm: { fontSize: scaleForTablet(13), lineHeight: scaleForTablet(18) },
+  variants: {
+    selected: {
+      true: { color: '$putih' },
+      false: { color: '$tinta' },
+    },
+  } as const,
+  defaultVariants: { selected: false },
+})
