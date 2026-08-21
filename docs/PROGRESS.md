@@ -1619,3 +1619,72 @@ rather than keep asking.
 - Remaining unstyled screens: Beranda, Laporan, and safe-to-spend.tsx
   (only used as an internal styling reference by other screens' comments
   so far — it has not itself been re-skinned).
+
+## 2026-08-21 — Beranda (Home) re-skin
+
+### Requirement IDs implemented
+
+None (design/UX implementation). Bounded scope per
+`superpowers:brainstorming`, approved in chat. This was the original
+Phase B, deferred repeatedly since 2026-08-18 in favor of auth, tab bar,
+Lainnya, Transaksi, and Anggaran — now the last unstyled tab screen.
+
+### Files changed
+
+- `mobile/app/(app)/(tabs)/home.tsx` — full recompose: brand row, safe-
+  to-spend hero card (full positive/negative color-swap per SCREENS.md
+  §1's state table), summary pair, "Perlu perhatian," top-goal card, top-3
+  categories list. AI banner omitted (no backend), consistent with every
+  other screen this session. Two real fixes along the way: the avatar
+  wasn't wrapped in a 44×44 touch target (CLAUDE.md's own documented
+  gap) and had no `onPress` at all — now navigates to Profile.
+- `mobile/src/components/primitives.tsx` — added a `12` size to `Amount`
+  (needed for the avatar-initial text; no existing variant matched).
+
+"Perlu perhatian" has no single backend endpoint — `/v1/dashboard` only
+returns one `upcoming_bill`, not a full overdue list, and nothing about
+over-budget categories. Composed instead from `useBills` (overdue/due-
+today detection) and the same `useCashFlowReport`/`useActiveBudget`
+pairing Anggaran already uses (over-budget detection via
+`budget_vs_actual`) — reusing real, already-fetched-elsewhere data, not
+fabricating anything.
+
+### Real limitation found (not a bug introduced here — inherited)
+
+`nextBillOccurrence` always rolls forward to the next non-past
+occurrence of a bill's due day. Combined with `Bill` having no
+`status`/paid field (see the 2026-08-21 Lainnya-batch entry above), a
+bill's due date silently rolls into next month once it passes, rather
+than reading as overdue — there is no way to know if it was actually
+paid. In practice "Perlu perhatian" can only ever surface a bill on the
+exact day it's due, never truly overdue, until a payment-status field
+exists. This was already true of `bills.tsx`'s wiring before this entry;
+Beranda's attention list inherits the same limitation by reusing the
+same due-date logic.
+
+### Commands run and results
+
+1. `cd mobile && npx tsc --noEmit` → exit 0.
+2. `cd mobile && npx eslint <changed files>` → 0 errors.
+3. `cd mobile && npx jest` → PASS, 14 suites / 69 tests (no new/changed
+   tests — pure UI composition, no new testable logic beyond what
+   `nextBillOccurrence`/`billUrgency`/`budgetMath` already cover).
+4. Web-bundle smoke test: confirmed the running dev server was actually
+   the user's own already-live `expo start --android` session (26+ min
+   uptime, PID unrelated to anything this session started) rather than a
+   fresh instance — Metro serves multiple platforms from one instance, so
+   `curl .../entry.bundle?platform=web...` against it was sufficient and
+   didn't conflict with or disturb that session. HTTP 200, ~11 MB, zero
+   compile errors.
+
+### Deferred / not verified
+
+- Live-data manual verification not performed — needs the Go backend +
+  Docker running. Particularly worth checking by hand: the "Perlu
+  perhatian" section's real trigger conditions given the limitation
+  above, and the safe-to-spend hero's negative-balance color swap.
+- Same unrelated concurrent-session dirty files noted in earlier entries,
+  still untouched.
+- Remaining unstyled screens: Laporan and `safe-to-spend.tsx` (the
+  latter still only referenced as a styling pattern in other screens'
+  comments, never itself rebuilt).

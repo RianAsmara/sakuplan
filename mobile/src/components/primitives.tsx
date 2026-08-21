@@ -166,6 +166,11 @@ export const Amount = styled(Text, {
   fontVariant: ['tabular-nums'],
   variants: {
     size: {
+      12: {
+        fontSize: 12,
+        lineHeight: 16,
+        $gtSm: { fontSize: scaleForTablet(12), lineHeight: scaleForTablet(16) },
+      },
       13: {
         fontSize: 13,
         lineHeight: 17,
