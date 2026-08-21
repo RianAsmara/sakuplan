@@ -192,6 +192,22 @@ type RecurringBill struct {
 	Active       bool
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+	// LastPaidDueDate is the due_date of the most recent bill_occurrence
+	// paid for this bill, or nil if none has ever been paid.
+	LastPaidDueDate *time.Time
+}
+
+// BillOccurrence is the record of a single recurring-bill period being
+// paid. Its existence for a given (bill_id, due_date) pair IS the "paid"
+// state — there is no separate status column to track.
+type BillOccurrence struct {
+	ID            string
+	BillID        string
+	UserID        string
+	DueDate       time.Time
+	Amount        Money
+	TransactionID string
+	CreatedAt     time.Time
 }
 
 type GoalStatus string

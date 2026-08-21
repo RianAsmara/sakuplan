@@ -404,6 +404,24 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Bill' }
+  /v1/bills/{id}/occurrences:
+    parameters:
+      - $ref: '#/components/parameters/ResourceID'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [Bills]
+      operationId: markBillPaid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MarkBillPaidRequest' }
+      responses:
+        '201':
+          description: Bill occurrence marked paid.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BillOccurrence' }
   /v1/goals:
     get:
       tags: [Goals]
@@ -759,6 +777,26 @@ components:
             active: { type: boolean }
             created_at: { type: string, format: date-time }
             updated_at: { type: string, format: date-time }
+            last_paid_due_date:
+              type: string
+              format: date-time
+              nullable: true
+              description: due_date of the most recently paid bill_occurrence, or absent if none has ever been paid.
+    MarkBillPaidRequest:
+      type: object
+      required: [due_date]
+      properties:
+        due_date: { type: string, format: date-time }
+    BillOccurrence:
+      type: object
+      required: [id, bill_id, due_date, amount, transaction_id, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        bill_id: { type: string, format: uuid }
+        due_date: { type: string, format: date-time }
+        amount: { $ref: '#/components/schemas/Money' }
+        transaction_id: { type: string, format: uuid }
+        created_at: { type: string, format: date-time }
     CreateGoalRequest:
       type: object
       required: [name, target_amount, monthly_commitment, priority]

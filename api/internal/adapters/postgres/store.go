@@ -491,16 +491,22 @@ func (s *Store) CreateBill(ctx context.Context, b domain.RecurringBill) (domain.
 	_, err := s.db(ctx).Exec(ctx, `INSERT INTO recurring_bills(id,user_id,name,amount,due_day,frequency,category_id,account_id,reminder_days,active,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`, b.ID, b.UserID, b.Name, b.Amount, b.DueDay, b.Frequency, b.CategoryID, b.AccountID, b.ReminderDays, b.Active, b.CreatedAt, b.UpdatedAt)
 	return b, mapError(err)
 }
+
+const billColumns = `b.id,b.user_id,b.name,b.amount,b.due_day,b.frequency,b.category_id,b.account_id,b.reminder_days,b.active,b.created_at,b.updated_at,
+	(SELECT max(o.due_date) FROM bill_occurrences o WHERE o.bill_id=b.id)`
+
 func scanBill(row pgx.Row) (domain.RecurringBill, error) {
 	var b domain.RecurringBill
-	err := row.Scan(&b.ID, &b.UserID, &b.Name, &b.Amount, &b.DueDay, &b.Frequency, &b.CategoryID, &b.AccountID, &b.ReminderDays, &b.Active, &b.CreatedAt, &b.UpdatedAt)
+	var lastPaid *time.Time
+	err := row.Scan(&b.ID, &b.UserID, &b.Name, &b.Amount, &b.DueDay, &b.Frequency, &b.CategoryID, &b.AccountID, &b.ReminderDays, &b.Active, &b.CreatedAt, &b.UpdatedAt, &lastPaid)
+	b.LastPaidDueDate = lastPaid
 	return b, mapError(err)
 }
 func (s *Store) GetBill(ctx context.Context, u, id string) (domain.RecurringBill, error) {
-	return scanBill(s.db(ctx).QueryRow(ctx, `SELECT id,user_id,name,amount,due_day,frequency,category_id,account_id,reminder_days,active,created_at,updated_at FROM recurring_bills WHERE id=$1 AND user_id=$2`, id, u))
+	return scanBill(s.db(ctx).QueryRow(ctx, `SELECT `+billColumns+` FROM recurring_bills b WHERE b.id=$1 AND b.user_id=$2`, id, u))
 }
 func (s *Store) ListBills(ctx context.Context, u string, active bool) ([]domain.RecurringBill, error) {
-	rows, err := s.db(ctx).Query(ctx, `SELECT id,user_id,name,amount,due_day,frequency,category_id,account_id,reminder_days,active,created_at,updated_at FROM recurring_bills WHERE user_id=$1 AND ($2=false OR active=true) ORDER BY name`, u, active)
+	rows, err := s.db(ctx).Query(ctx, `SELECT `+billColumns+` FROM recurring_bills b WHERE b.user_id=$1 AND ($2=false OR b.active=true) ORDER BY b.name`, u, active)
 	if err != nil {
 		return nil, err
 	}
@@ -514,6 +520,15 @@ func (s *Store) ListBills(ctx context.Context, u string, active bool) ([]domain.
 		out = append(out, b)
 	}
 	return out, rows.Err()
+}
+func (s *Store) AddBillOccurrence(ctx context.Context, o domain.BillOccurrence) (domain.BillOccurrence, error) {
+	_, err := s.db(ctx).Exec(ctx, `INSERT INTO bill_occurrences(id,bill_id,user_id,due_date,amount,transaction_id,created_at) VALUES($1,$2,$3,$4::date,$5,$6,$7)`, o.ID, o.BillID, o.UserID, nullableDate(o.DueDate), o.Amount, o.TransactionID, o.CreatedAt)
+	return o, mapError(err)
+}
+func (s *Store) GetBillOccurrenceByTransactionID(ctx context.Context, userID, transactionID string) (domain.BillOccurrence, error) {
+	var o domain.BillOccurrence
+	err := s.db(ctx).QueryRow(ctx, `SELECT id,bill_id,user_id,due_date,amount,transaction_id,created_at FROM bill_occurrences WHERE user_id=$1 AND transaction_id=$2`, userID, transactionID).Scan(&o.ID, &o.BillID, &o.UserID, &o.DueDate, &o.Amount, &o.TransactionID, &o.CreatedAt)
+	return o, mapError(err)
 }
 func (s *Store) UpdateBill(ctx context.Context, b domain.RecurringBill) (domain.RecurringBill, error) {
 	_, err := s.db(ctx).Exec(ctx, `UPDATE recurring_bills SET name=$3,amount=$4,due_day=$5,frequency=$6,category_id=$7,account_id=$8,reminder_days=$9,active=$10,updated_at=$11 WHERE id=$1 AND user_id=$2`, b.ID, b.UserID, b.Name, b.Amount, b.DueDay, b.Frequency, b.CategoryID, b.AccountID, b.ReminderDays, b.Active, b.UpdatedAt)

@@ -66,6 +66,8 @@ type BillRepository interface {
 	Update(context.Context, RecurringBill) (RecurringBill, error)
 	UpcomingTotal(context.Context, string, time.Time, time.Time) (Money, error)
 	NextDue(context.Context, string, time.Time, time.Time) (RecurringBill, time.Time, error)
+	AddOccurrence(context.Context, BillOccurrence) (BillOccurrence, error)
+	GetOccurrenceByTransactionID(context.Context, string, string) (BillOccurrence, error)
 }
 
 type GoalRepository interface {

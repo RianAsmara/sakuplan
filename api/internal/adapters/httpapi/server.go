@@ -109,6 +109,7 @@ func (s *Server) routes() {
 
 	secured.Get("/bills", s.listBills)
 	secured.Post("/bills", s.createBill)
+	secured.Post("/bills/:id/occurrences", s.markBillPaid)
 
 	secured.Get("/goals", s.listGoals)
 	secured.Post("/goals", s.createGoal)

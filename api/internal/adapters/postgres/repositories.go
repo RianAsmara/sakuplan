@@ -160,6 +160,12 @@ func (r *BillRepo) UpcomingTotal(c context.Context, u string, f, t time.Time) (d
 func (r *BillRepo) NextDue(c context.Context, u string, f, t time.Time) (domain.RecurringBill, time.Time, error) {
 	return r.s.NextDueBill(c, u, f, t)
 }
+func (r *BillRepo) AddOccurrence(c context.Context, v domain.BillOccurrence) (domain.BillOccurrence, error) {
+	return r.s.AddBillOccurrence(c, v)
+}
+func (r *BillRepo) GetOccurrenceByTransactionID(c context.Context, u, id string) (domain.BillOccurrence, error) {
+	return r.s.GetBillOccurrenceByTransactionID(c, u, id)
+}
 
 type GoalRepo struct{ s *Store }
 

@@ -1,4 +1,4 @@
-import { nextBillOccurrence } from './nextBillOccurrence'
+import { currentBillPeriodDueDate, nextBillOccurrence } from './nextBillOccurrence'
 
 describe('nextBillOccurrence', () => {
   it('returns this month\'s occurrence when the due day is still ahead', () => {
@@ -24,5 +24,22 @@ describe('nextBillOccurrence', () => {
   it('rolls a December-clamped occurrence into January of the next year', () => {
     const now = new Date(2026, 11, 15) // 15 Dec 2026
     expect(nextBillOccurrence(10, now)).toEqual(new Date(2027, 0, 10))
+  })
+})
+
+describe('currentBillPeriodDueDate', () => {
+  it('returns this month\'s occurrence when the due day is still ahead', () => {
+    const now = new Date(2026, 7, 4) // 4 Aug 2026
+    expect(currentBillPeriodDueDate(10, now)).toEqual(new Date(2026, 7, 10))
+  })
+
+  it('does NOT roll over when the due day already passed this month (unlike nextBillOccurrence)', () => {
+    const now = new Date(2026, 7, 20) // 20 Aug 2026
+    expect(currentBillPeriodDueDate(10, now)).toEqual(new Date(2026, 7, 10))
+  })
+
+  it('clamps a day-of-month beyond a short month\'s length', () => {
+    const now = new Date(2026, 1, 1) // 1 Feb 2026 (28 days, not a leap year)
+    expect(currentBillPeriodDueDate(31, now)).toEqual(new Date(2026, 1, 28))
   })
 })

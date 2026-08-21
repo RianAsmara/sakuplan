@@ -118,21 +118,35 @@ func mapBudget(v domain.BudgetPeriod) budgetResponse {
 }
 
 type billResponse struct {
-	ID           string               `json:"id"`
-	Name         string               `json:"name"`
-	Amount       domain.Money         `json:"amount"`
-	DueDay       int                  `json:"due_day"`
-	Frequency    domain.BillFrequency `json:"frequency"`
-	CategoryID   string               `json:"category_id"`
-	AccountID    string               `json:"account_id"`
-	ReminderDays int                  `json:"reminder_days"`
-	Active       bool                 `json:"active"`
-	CreatedAt    time.Time            `json:"created_at"`
-	UpdatedAt    time.Time            `json:"updated_at"`
+	ID              string               `json:"id"`
+	Name            string               `json:"name"`
+	Amount          domain.Money         `json:"amount"`
+	DueDay          int                  `json:"due_day"`
+	Frequency       domain.BillFrequency `json:"frequency"`
+	CategoryID      string               `json:"category_id"`
+	AccountID       string               `json:"account_id"`
+	ReminderDays    int                  `json:"reminder_days"`
+	Active          bool                 `json:"active"`
+	CreatedAt       time.Time            `json:"created_at"`
+	UpdatedAt       time.Time            `json:"updated_at"`
+	LastPaidDueDate *time.Time           `json:"last_paid_due_date,omitempty"`
 }
 
 func mapBill(v domain.RecurringBill) billResponse {
-	return billResponse{ID: v.ID, Name: v.Name, Amount: v.Amount, DueDay: v.DueDay, Frequency: v.Frequency, CategoryID: v.CategoryID, AccountID: v.AccountID, ReminderDays: v.ReminderDays, Active: v.Active, CreatedAt: v.CreatedAt, UpdatedAt: v.UpdatedAt}
+	return billResponse{ID: v.ID, Name: v.Name, Amount: v.Amount, DueDay: v.DueDay, Frequency: v.Frequency, CategoryID: v.CategoryID, AccountID: v.AccountID, ReminderDays: v.ReminderDays, Active: v.Active, CreatedAt: v.CreatedAt, UpdatedAt: v.UpdatedAt, LastPaidDueDate: v.LastPaidDueDate}
+}
+
+type billOccurrenceResponse struct {
+	ID            string       `json:"id"`
+	BillID        string       `json:"bill_id"`
+	DueDate       time.Time    `json:"due_date"`
+	Amount        domain.Money `json:"amount"`
+	TransactionID string       `json:"transaction_id"`
+	CreatedAt     time.Time    `json:"created_at"`
+}
+
+func mapBillOccurrence(v domain.BillOccurrence) billOccurrenceResponse {
+	return billOccurrenceResponse{ID: v.ID, BillID: v.BillID, DueDate: v.DueDate, Amount: v.Amount, TransactionID: v.TransactionID, CreatedAt: v.CreatedAt}
 }
 
 type goalResponse struct {

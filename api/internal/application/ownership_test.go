@@ -39,7 +39,7 @@ func TestBillRejectsAnotherUsersAccount(t *testing.T) {
 	_, _ = accounts.Create(context.Background(), domain.FinancialAccount{ID: "other-account", UserID: "u2", Currency: "IDR", Spendable: true})
 	categories := testkit.NewCategories()
 	_, _ = categories.Create(context.Background(), domain.Category{ID: "utilities", Kind: domain.CategoryExpense, IsDefault: true})
-	svc := application.NewBillService(&testkit.Bills{}, accounts, categories, testkit.Clock{Time: time.Now()}, &testkit.IDs{})
+	svc := application.NewBillService(&testkit.Bills{}, accounts, categories, testkit.NewTransactions(accounts), testkit.UOW{}, testkit.Clock{Time: time.Now()}, &testkit.IDs{})
 	_, err := svc.Create(context.Background(), "u1", domain.RecurringBill{
 		Name:       "Internet",
 		Amount:     350_000,

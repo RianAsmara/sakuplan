@@ -342,3 +342,96 @@ func TestPostgresReportingQueries(t *testing.T) {
 		t.Fatalf("unexpected week bucket totals: %+v", trend[0])
 	}
 }
+
+func TestPostgresMarkBillPaid(t *testing.T) {
+	store, cleanup := startPostgres(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	now := time.Date(2026, 8, 5, 9, 0, 0, 0, time.UTC)
+	clock := fixedClock{now: now}
+	ids := system.NewIDGenerator()
+	users := postgres.NewUserRepo(store)
+	accounts := postgres.NewAccountRepo(store)
+	categories := postgres.NewCategoryRepo(store)
+	transactions := postgres.NewTransactionRepo(store)
+	bills := postgres.NewBillRepo(store)
+
+	user := createUser(t, users, ids, now)
+	accountService := application.NewAccountService(accounts, clock, ids)
+	billService := application.NewBillService(bills, accounts, categories, transactions, store, clock, ids)
+
+	cash, err := accountService.Create(ctx, user.ID, application.CreateAccountInput{
+		Name: "Cash", Type: domain.AccountCash, Currency: "IDR", InitialBalance: 1_000_000, Spendable: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	utilities, err := categories.Create(ctx, domain.Category{ID: ids.New(), UserID: user.ID, Name: "Utilities", Kind: domain.CategoryExpense})
+	if err != nil {
+		t.Fatal(err)
+	}
+	bill, err := billService.Create(ctx, user.ID, domain.RecurringBill{
+		Name: "Iuran RT", Amount: 150_000, DueDay: 5, Frequency: domain.BillMonthly, CategoryID: utilities.ID, AccountID: cash.ID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Bill is unpaid before any occurrence exists.
+	fetched, err := bills.Get(ctx, user.ID, bill.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fetched.LastPaidDueDate != nil {
+		t.Fatalf("expected no paid occurrence yet, got %v", fetched.LastPaidDueDate)
+	}
+
+	dueDate := time.Date(2026, 8, 5, 0, 0, 0, 0, time.UTC)
+	first, err := billService.MarkPaid(ctx, user.ID, application.MarkBillPaidInput{BillID: bill.ID, DueDate: dueDate, IdempotencyKey: "pay-aug-2026"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.TransactionID == "" {
+		t.Fatal("expected occurrence to link a transaction")
+	}
+
+	// Retrying under the same idempotency key returns the original occurrence
+	// and does not debit the account a second time.
+	second, err := billService.MarkPaid(ctx, user.ID, application.MarkBillPaidInput{BillID: bill.ID, DueDate: dueDate, IdempotencyKey: "pay-aug-2026"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if second.ID != first.ID {
+		t.Fatalf("expected retry to return the same occurrence, got %s vs %s", second.ID, first.ID)
+	}
+	balance, err := accounts.Balance(ctx, user.ID, cash.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if balance != 850_000 {
+		t.Fatalf("expected balance debited exactly once to 850000, got %d", balance)
+	}
+
+	// Paying the same period again under a *different* idempotency key hits
+	// the UNIQUE(bill_id, due_date) constraint, mapped to ErrConflict.
+	if _, err := billService.MarkPaid(ctx, user.ID, application.MarkBillPaidInput{BillID: bill.ID, DueDate: dueDate, IdempotencyKey: "pay-aug-2026-again"}); !errors.Is(err, domain.ErrConflict) {
+		t.Fatalf("expected ErrConflict paying the same period twice, got %v", err)
+	}
+
+	// Get/List now report the period as paid.
+	afterPaid, err := bills.Get(ctx, user.ID, bill.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if afterPaid.LastPaidDueDate == nil || !afterPaid.LastPaidDueDate.Equal(dueDate) {
+		t.Fatalf("expected LastPaidDueDate %v, got %v", dueDate, afterPaid.LastPaidDueDate)
+	}
+	list, err := bills.List(ctx, user.ID, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(list) != 1 || list[0].LastPaidDueDate == nil || !list[0].LastPaidDueDate.Equal(dueDate) {
+		t.Fatalf("expected ListBills to report the paid period, got %+v", list)
+	}
+}

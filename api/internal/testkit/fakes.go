@@ -472,11 +472,12 @@ func (r *Budgets) List(_ context.Context, u string) ([]domain.BudgetPeriod, erro
 }
 
 type Bills struct {
-	Items    []domain.RecurringBill
-	Upcoming domain.Money
-	Next     domain.RecurringBill
-	NextDate time.Time
-	NextErr  error
+	Items       []domain.RecurringBill
+	Occurrences []domain.BillOccurrence
+	Upcoming    domain.Money
+	Next        domain.RecurringBill
+	NextDate    time.Time
+	NextErr     error
 }
 
 func (r *Bills) Create(_ context.Context, b domain.RecurringBill) (domain.RecurringBill, error) {
@@ -486,7 +487,7 @@ func (r *Bills) Create(_ context.Context, b domain.RecurringBill) (domain.Recurr
 func (r *Bills) Get(_ context.Context, u, id string) (domain.RecurringBill, error) {
 	for _, b := range r.Items {
 		if b.UserID == u && b.ID == id {
-			return b, nil
+			return r.withLastPaidDueDate(b), nil
 		}
 	}
 	return domain.RecurringBill{}, domain.ErrNotFound
@@ -495,10 +496,28 @@ func (r *Bills) List(_ context.Context, u string, a bool) ([]domain.RecurringBil
 	out := []domain.RecurringBill{}
 	for _, b := range r.Items {
 		if b.UserID == u && (!a || b.Active) {
-			out = append(out, b)
+			out = append(out, r.withLastPaidDueDate(b))
 		}
 	}
 	return out, nil
+}
+
+// withLastPaidDueDate mirrors the real Postgres adapter's correlated
+// max(due_date) subquery, so tests against this fake see the same derived
+// field the real store would compute.
+func (r *Bills) withLastPaidDueDate(b domain.RecurringBill) domain.RecurringBill {
+	var last *time.Time
+	for _, o := range r.Occurrences {
+		if o.BillID != b.ID {
+			continue
+		}
+		if last == nil || o.DueDate.After(*last) {
+			due := o.DueDate
+			last = &due
+		}
+	}
+	b.LastPaidDueDate = last
+	return b
 }
 func (r *Bills) Update(_ context.Context, b domain.RecurringBill) (domain.RecurringBill, error) {
 	return b, nil
@@ -511,6 +530,23 @@ func (r *Bills) NextDue(_ context.Context, u string, f, t time.Time) (domain.Rec
 		return domain.RecurringBill{}, time.Time{}, r.NextErr
 	}
 	return r.Next, r.NextDate, nil
+}
+func (r *Bills) AddOccurrence(_ context.Context, o domain.BillOccurrence) (domain.BillOccurrence, error) {
+	for _, existing := range r.Occurrences {
+		if existing.BillID == o.BillID && existing.DueDate.Equal(o.DueDate) {
+			return domain.BillOccurrence{}, domain.ErrConflict
+		}
+	}
+	r.Occurrences = append(r.Occurrences, o)
+	return o, nil
+}
+func (r *Bills) GetOccurrenceByTransactionID(_ context.Context, u, transactionID string) (domain.BillOccurrence, error) {
+	for _, o := range r.Occurrences {
+		if o.UserID == u && o.TransactionID == transactionID {
+			return o, nil
+		}
+	}
+	return domain.BillOccurrence{}, domain.ErrNotFound
 }
 
 type Goals struct {

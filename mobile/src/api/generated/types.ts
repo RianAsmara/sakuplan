@@ -352,6 +352,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/bills/{id}/occurrences": {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                id: components["parameters"]["ResourceID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["markBillPaid"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/goals": {
         parameters: {
             query?: never;
@@ -670,6 +690,28 @@ export interface components {
             created_at: string;
             /** Format: date-time */
             updated_at: string;
+            /**
+             * Format: date-time
+             * @description due_date of the most recently paid bill_occurrence, or absent if none has ever been paid.
+             */
+            last_paid_due_date?: string | null;
+        };
+        MarkBillPaidRequest: {
+            /** Format: date-time */
+            due_date: string;
+        };
+        BillOccurrence: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            bill_id: string;
+            /** Format: date-time */
+            due_date: string;
+            amount: components["schemas"]["Money"];
+            /** Format: uuid */
+            transaction_id: string;
+            /** Format: date-time */
+            created_at: string;
         };
         CreateGoalRequest: {
             name: string;
@@ -1477,6 +1519,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Bill"];
+                };
+            };
+        };
+    };
+    markBillPaid: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                id: components["parameters"]["ResourceID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkBillPaidRequest"];
+            };
+        };
+        responses: {
+            /** @description Bill occurrence marked paid. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillOccurrence"];
                 };
             };
         };

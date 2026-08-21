@@ -1814,7 +1814,183 @@ the label doesn't perfectly describe what's being combined.
   Remaining work is backend, not styling: NOTIF-001..004 (Notifikasi),
   an AI recommendation feature (Rekomendasi AI), a list-sessions
   endpoint and account-deletion endpoint (Privasi & keamanan), a
-  PATCH/PUT allocation endpoint (Anggaran's "Ubah" editor), a bill
-  status/mark-paid endpoint (Tagihan berulang's "paid" branch), and
+  PATCH/PUT allocation endpoint (Anggaran's "Ubah" editor), and
   `group_by: 'month'` on the cash-flow report (Laporan currently makes 6
-  separate calls to work around its absence).
+  separate calls to work around its absence). The bill mark-paid gap is
+  now closed — see the entry below.
+
+## 2026-08-21 — BILL-004/BILL-005: bill mark-paid endpoint
+
+### Requirement IDs implemented
+
+BILL-004 (mark bill paid creates an expense transaction atomically and
+links it to the occurrence), BILL-005 (paying a bill occurrence is
+idempotent). Full-stack: Go API (domain → application → Postgres
+adapter → HTTP handler → OpenAPI) through the mobile client, closing
+the "Tandai lunas"/"paid" gap flagged in the 2026-08-21 Lainnya-batch
+and Beranda entries above. Picked as the smallest of the design
+rollout's flagged backend gaps, per the user's direction after the
+visual rollout completed.
+
+### Design decision (bounded scope, presented in chat before implementing)
+
+The PRD's data model already lists `bill_occurrences` as a distinct
+entity from `recurring_bills` — confirmed this was the intended design
+(not a shortcut status field) by checking `BILL-004`'s exact wording
+("create an expense transaction... and link it to the bill occurrence")
+and the existing `saving_goal_contributions` table, which is
+structurally identical to what `bill_occurrences` needed to be. Chose
+**lazy occurrence creation**: a row's existence for `(bill_id,
+due_date)` *is* the paid state — no background job pre-generates
+occurrence rows for future periods (the worker process ARCHITECTURE.md
+§11 describes doesn't exist yet), and "unpaid" is simply the absence of
+a row. The bill's own `account_id`/`category_id` (already required
+fields) are the payment source/category — no per-payment account
+override, matching BILL-001's "preferred account" framing and avoiding
+re-inventing the "let the user choose the source account" question
+SCREENS.md's "prototype fakes" list raised for a different, simpler
+reason (the *design* prototype hardcoded BCA; the real schema never
+did).
+
+### Files changed
+
+**Go API** (`api/`), following this project's use-case-first workflow
+(TDD: application layer + fake-repo tests written and failing before
+any implementation, then Postgres adapter + integration test, then HTTP
+handler — see Commands below for each RED→GREEN step):
+- `db/migrations/00003_bill_occurrences.sql` — new table, modeled
+  directly on `saving_goal_contributions`: `id, bill_id, user_id,
+  due_date, amount, transaction_id (unique FK), created_at`, plus
+  `UNIQUE(bill_id, due_date)` so a double-pay under a different
+  idempotency key is a real DB conflict, not just an app-level check.
+- `internal/domain/entities.go` — new `BillOccurrence` entity;
+  `RecurringBill` gains `LastPaidDueDate *time.Time` (derived, not
+  stored on that table).
+- `internal/domain/repositories.go` — `BillRepository` gains
+  `AddOccurrence`/`GetOccurrenceByTransactionID`.
+- `internal/application/bills_goals.go` — `BillService` gains `txs`/
+  `uow` dependencies and `MarkPaid`, structured identically to the
+  existing `GoalService.Contribute` (idempotency-key lookup, then
+  inside `uow.WithinTransaction`: fetch+validate the bill, create an
+  `expense` transaction debiting the bill's own account/category with
+  note `"Bayar {bill.Name}"`, then insert the occurrence).
+- `internal/adapters/postgres/store.go` — `AddBillOccurrence`/
+  `GetBillOccurrenceByTransactionID` (mirrors
+  `AddGoalContribution`/`GetGoalContributionByTransactionID` exactly);
+  `GetBill`/`ListBills` now select `LastPaidDueDate` via a correlated
+  `max(due_date)` subquery against `bill_occurrences` — one query, not
+  N+1.
+- `internal/adapters/postgres/repositories.go` — `BillRepo` wrapper
+  methods for the two new Store functions.
+- `internal/adapters/httpapi/{planning_handlers,dto,server}.go` —
+  `POST /v1/bills/:id/occurrences` (matches the existing `/goals/:id/
+  contributions` noun convention), `markBillPaidRequest`/
+  `billOccurrenceResponse` DTOs, `billResponse` gains
+  `last_paid_due_date`.
+- `api/openapi/openapi.yaml` — `MarkBillPaidRequest`/`BillOccurrence`
+  schemas, the new path, `Bill.last_paid_due_date`.
+- Test infrastructure updated to match: `internal/testkit/fakes.go`
+  (`Bills` fake gained `Occurrences` + the two new methods, and a
+  `withLastPaidDueDate` helper mirroring the real correlated-subquery
+  derivation — a first attempt at the HTTP handler test caught that the
+  fake's `List`/`Get` weren't computing this field at all); the two
+  other `NewBillService` call sites
+  (`internal/application/ownership_test.go`,
+  `internal/adapters/httpapi/server_test.go`) updated for the new
+  constructor params.
+
+**Mobile** (`mobile/`):
+- `src/api/generated/types.ts` — regenerated from the updated OpenAPI
+  spec (`npm run generate:api`), which also served as spec validation.
+- `src/bills/useMarkBillPaid.ts` **(new)** — mirrors
+  `useContributeToGoal`/`useReverseTransaction` exactly (mutation +
+  `generateIdempotencyKey()` + query invalidation).
+- `src/bills/nextBillOccurrence.ts` (+ test) — added
+  `currentBillPeriodDueDate(dueDay, now)`: this month's due date
+  *without* `nextBillOccurrence`'s roll-forward-to-next-month behavior.
+  This is the actual fix for the "overdue bills are invisible" limitation
+  flagged in both the Lainnya-batch and Beranda 2026-08-21 entries above
+  — that limitation existed specifically because every caller was using
+  the always-rolls-forward function for display, which by construction
+  can never show a past-due date. Extracted the shared day-clamping
+  logic (`candidateFor`) so both functions share it instead of
+  duplicating.
+- `src/bills/billPaymentStatus.ts` **(new)** — `isPaidForPeriod(bill,
+  periodDue)`, shared by `bills.tsx` and `home.tsx` (extracted rather
+  than duplicated once a second real consumer existed).
+- `app/(app)/bills.tsx` — now shows the real 4th "Lunas" branch
+  (previously impossible — no data existed to compute it) and a working
+  "Tandai lunas" button with per-row pending state (checks
+  `mutation.variables?.billId` since the mutation hook is shared across
+  all rows in the list).
+- `app/(app)/(tabs)/home.tsx` — "Perlu perhatian"'s overdue-bill
+  detection now uses `currentBillPeriodDueDate` + `last_paid_due_date`
+  instead of the old always-rolls-forward logic, so overdue bills
+  actually appear now (not just due-today ones). Also wired the real
+  "Tandai dibayar" action per SCREENS.md §1, previously impossible for
+  the same missing-backend reason.
+
+### Commands run and results
+
+1. **Application layer TDD**: wrote `internal/application/bills_test.go`
+   (`TestMarkBillPaidIsIdempotent`,
+   `TestMarkBillPaidRejectsDuplicatePeriodUnderNewKey`) against
+   `application.NewBillService`/`MarkPaid`, which didn't exist yet →
+   `go test ./internal/application/... -run TestMarkBillPaid` failed to
+   *compile* (RED, confirmed via CLI not just IDE diagnostics — this
+   project's hard rule to only report a command as passed if actually
+   executed). Implemented `MarkPaid` → RED became a real test failure
+   (`invalid input` — my own test used 5-char idempotency keys, below
+   the 8-char minimum; fixed the test, not the validation) → GREEN.
+2. `go build ./...` → clean. `gofmt -l .` → clean.
+3. `go test -race ./...` → PASS, all packages.
+4. **Repository integration test**: added `TestPostgresMarkBillPaid` to
+   `tests/integration/postgres_test.go` (Testcontainers real Postgres —
+   confirmed Docker access works in this environment first via the
+   existing `TestPostgresReportingQueries`). Exercises the real UNIQUE
+   constraint (not just the fake's in-memory check) and the correlated
+   subquery. `go test -tags=integration ./tests/integration/...` → all
+   3 tests PASS (10.4s).
+5. **HTTP handler test**: added `TestBillMarkPaidHTTPFlow` to
+   `internal/adapters/httpapi/server_test.go`, mirroring
+   `TestTransactionAndReversalHTTPFlow`. First run failed — the
+   `testkit.Bills` fake wasn't deriving `LastPaidDueDate` from
+   `Occurrences` at all, so `ListBills`'s HTTP response never showed the
+   paid period even though the mark-paid call itself succeeded. Fixed
+   the fake (see Files changed), not the handler. PASS after.
+6. `task verify` (fmt:check, vet, test, test:race, build) → all green.
+7. `task lint` (golangci-lint) → 47 pre-existing issues across files
+   this change never touched (`auth.go`, `transactions.go`, `seed.go`:
+   `bodyclose` ×28, `govet`/shadow ×17, `gosec` ×1, `nilerr` ×1) — none
+   introduced by this change. 2 shadow warnings do land inside the new
+   `MarkPaid` function, but they exactly mirror the identical,
+   already-accepted `err`-shadowing pattern in the same file's
+   pre-existing `Contribute` method — left as-is for consistency with
+   established style rather than introducing a stylistic deviation.
+8. `govulncheck ./...` → 5 findings, all in the Go **standard
+   library** itself (go1.26.5 → fixed in go1.26.6), triggered through
+   code this change never touched (`ListBudgets`, `reporting.go`,
+   `bootstrap.New`) — a toolchain-version issue, not a dependency this
+   change introduced.
+9. `task migrate:up` → applied `00003_bill_occurrences.sql` to the local
+   dev database cleanly; verified the resulting table/constraints via
+   `psql \d bill_occurrences` match the migration exactly.
+10. Mobile: `npx tsc --noEmit` → exit 0. `npx eslint <changed files>` →
+    0 errors. `npx jest` → PASS, 13 suites / 69 tests (+3 for
+    `currentBillPeriodDueDate`). Web-bundle smoke test via the user's
+    own running `expo start --android` dev server → HTTP 200, ~10 MB,
+    zero compile errors.
+
+### Deferred / not verified
+
+- Live end-to-end verification (mobile app → real API → real DB via the
+  actual UI) not performed — the backend was verified with real
+  Postgres via Testcontainers and the migration was applied to the dev
+  DB, but no manual tap-through of "Tandai lunas" in a running app.
+- The pre-existing lint/vulnerability findings noted above are
+  unresolved (out of scope — unrelated to this change).
+- Same unrelated concurrent-session dirty files noted in every prior
+  entry, still untouched.
+- Remaining backend gaps: Notifikasi, Rekomendasi AI, Privasi's
+  session-list/account-deletion, Anggaran's allocation-edit endpoint,
+  Laporan's monthly report grouping.

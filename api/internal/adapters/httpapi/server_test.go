@@ -63,7 +63,7 @@ func newTestServer() (*Server, *testFixtures) {
 	categoryService := application.NewCategoryService(categories, clock, ids)
 	transactionService := application.NewTransactionService(transactions, accounts, categories, testkit.UOW{}, clock, ids)
 	budgetService := application.NewBudgetService(budgets, categories, clock, ids)
-	billService := application.NewBillService(bills, accounts, categories, clock, ids)
+	billService := application.NewBillService(bills, accounts, categories, transactions, testkit.UOW{}, clock, ids)
 	goalService := application.NewGoalService(goals, accounts, transactions, testkit.UOW{}, clock, ids)
 	planningService := application.NewPlanningService(accounts, budgets, bills, goals, clock)
 	recommendationService := application.NewRecommendationService()
@@ -277,6 +277,89 @@ func TestTransactionAndReversalHTTPFlow(t *testing.T) {
 	}
 	if balance.Balance != 500000 {
 		t.Fatalf("expected restored balance, got %d", balance.Balance)
+	}
+}
+
+func TestBillMarkPaidHTTPFlow(t *testing.T) {
+	server, _ := newTestServer()
+	_, registerBody := requestJSON(t, server.App(), http.MethodPost, "/v1/auth/register", "", map[string]any{
+		"email":                    "bills@example.com",
+		"password":                 "strong-password",
+		"display_name":             "Bills User",
+		"accepted_terms_version":   "2026-08-02",
+		"accepted_privacy_version": "2026-08-02",
+	})
+	var tokens struct {
+		AccessToken string `json:"access_token"`
+	}
+	if err := json.Unmarshal(registerBody, &tokens); err != nil {
+		t.Fatal(err)
+	}
+
+	_, accountBody := requestJSON(t, server.App(), http.MethodPost, "/v1/accounts", tokens.AccessToken, map[string]any{
+		"name": "Cash", "type": "cash", "currency": "IDR", "initial_balance": 500000, "spendable": true,
+	})
+	var account accountResponse
+	if err := json.Unmarshal(accountBody, &account); err != nil {
+		t.Fatal(err)
+	}
+
+	_, categoryBody := requestJSON(t, server.App(), http.MethodPost, "/v1/categories", tokens.AccessToken, map[string]any{
+		"name": "Utilities", "kind": "expense",
+	})
+	var category categoryResponse
+	if err := json.Unmarshal(categoryBody, &category); err != nil {
+		t.Fatal(err)
+	}
+
+	_, billBody := requestJSON(t, server.App(), http.MethodPost, "/v1/bills", tokens.AccessToken, map[string]any{
+		"name": "Iuran RT", "amount": 150000, "due_day": 5, "frequency": "monthly", "category_id": category.ID, "account_id": account.ID,
+	})
+	var bill billResponse
+	if err := json.Unmarshal(billBody, &bill); err != nil {
+		t.Fatal(err)
+	}
+
+	resp, occurrenceBody := requestJSONWithHeaders(t, server.App(), http.MethodPost, "/v1/bills/"+bill.ID+"/occurrences", tokens.AccessToken, map[string]any{
+		"due_date": "2026-08-05T00:00:00Z",
+	}, map[string]string{"Idempotency-Key": "bill-pay-http-001"})
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("mark bill paid status=%d body=%s", resp.StatusCode, occurrenceBody)
+	}
+	var occurrence billOccurrenceResponse
+	if err := json.Unmarshal(occurrenceBody, &occurrence); err != nil {
+		t.Fatal(err)
+	}
+	if occurrence.BillID != bill.ID || occurrence.TransactionID == "" {
+		t.Fatalf("unexpected occurrence: %+v", occurrence)
+	}
+
+	resp, balanceBody := requestJSON(t, server.App(), http.MethodGet, "/v1/accounts/"+account.ID+"/balance", tokens.AccessToken, nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("balance status=%d body=%s", resp.StatusCode, balanceBody)
+	}
+	var balance struct {
+		Balance domain.Money `json:"balance"`
+	}
+	if err := json.Unmarshal(balanceBody, &balance); err != nil {
+		t.Fatal(err)
+	}
+	if balance.Balance != 350000 {
+		t.Fatalf("expected balance debited by the bill amount, got %d", balance.Balance)
+	}
+
+	resp, listBody := requestJSON(t, server.App(), http.MethodGet, "/v1/bills", tokens.AccessToken, nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("list bills status=%d body=%s", resp.StatusCode, listBody)
+	}
+	var list struct {
+		Data []billResponse `json:"data"`
+	}
+	if err := json.Unmarshal(listBody, &list); err != nil {
+		t.Fatal(err)
+	}
+	if len(list.Data) != 1 || list.Data[0].LastPaidDueDate == nil {
+		t.Fatalf("expected listed bill to report last_paid_due_date, got %+v", list.Data)
 	}
 }
 

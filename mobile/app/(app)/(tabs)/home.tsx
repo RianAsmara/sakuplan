@@ -4,8 +4,10 @@ import { Pressable } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ScrollView, Spinner, XStack, YStack, View } from 'tamagui'
 import { useCurrentUser } from '../../../src/auth/useCurrentUser'
-import { nextBillOccurrence } from '../../../src/bills/nextBillOccurrence'
+import { isPaidForPeriod } from '../../../src/bills/billPaymentStatus'
+import { currentBillPeriodDueDate } from '../../../src/bills/nextBillOccurrence'
 import { useBills } from '../../../src/bills/useBills'
+import { useMarkBillPaid } from '../../../src/bills/useMarkBillPaid'
 import { useActiveBudget } from '../../../src/budgets/useActiveBudget'
 import { DashedBox } from '../../../src/components/DashedBox'
 import { PocketCard } from '../../../src/components/PocketCard'
@@ -48,26 +50,27 @@ export default function HomeScreen() {
   const cashFlow = useCashFlowReport({ start: periodStart, end: periodEnd })
 
   const userInitial = user?.display_name?.trim()?.[0]?.toUpperCase() ?? '?'
+  const markBillPaid = useMarkBillPaid()
 
   // No single endpoint returns "everything needing attention" — combined
-  // here from bills (overdue/due-today) and the cash-flow report's
+  // here from bills (overdue/due-today, via currentBillPeriodDueDate + the
+  // real last_paid_due_date field) and the cash-flow report's
   // budget_vs_actual (over-budget), the same real sources bills.tsx and
-  // budgets.tsx already use. A bill only ever reads as overdue/due-today
-  // when its nextBillOccurrence lands on or before today; since there is
-  // no paid/status field, a bill whose date has already rolled to next
-  // month (the common case) never appears here — see bills.tsx's own
-  // note on this limitation.
+  // budgets.tsx already use.
   const attentionItems: AttentionItem[] = useMemo(() => {
     const items: AttentionItem[] = []
     for (const bill of bills.data ?? []) {
-      const occurrence = nextBillOccurrence(bill.due_day, now)
-      const days = Math.round((occurrence.getTime() - now.getTime()) / 86_400_000)
+      const periodDue = currentBillPeriodDueDate(bill.due_day, now)
+      if (isPaidForPeriod(bill, periodDue)) continue
+      const days = Math.round((periodDue.getTime() - now.getTime()) / 86_400_000)
       if (days > 0) continue
       items.push({
         key: `bill-${bill.id}`,
         title: bill.name,
         detail: days < 0 ? `Terlambat ${Math.abs(days)} hari` : 'Jatuh tempo hari ini',
         amount: bill.amount,
+        action: 'Tandai dibayar',
+        onAction: () => markBillPaid.mutate({ billId: bill.id, dueDate: toRFC3339(periodDue) }),
       })
     }
     for (const line of cashFlow.data?.budget_vs_actual ?? []) {

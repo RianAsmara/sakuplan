@@ -77,6 +77,22 @@ func (s *Server) listBills(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"data": out})
 }
 
+type markBillPaidRequest struct {
+	DueDate time.Time `json:"due_date"`
+}
+
+func (s *Server) markBillPaid(c fiber.Ctx) error {
+	var req markBillPaidRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return domain.ErrInvalidInput
+	}
+	v, err := s.svc.Bills.MarkPaid(c, userID(c), application.MarkBillPaidInput{BillID: c.Params("id"), DueDate: req.DueDate, IdempotencyKey: c.Get("Idempotency-Key")})
+	if err != nil {
+		return err
+	}
+	return c.Status(fiber.StatusCreated).JSON(mapBillOccurrence(v))
+}
+
 type createGoalRequest struct {
 	Name              string       `json:"name"`
 	TargetAmount      domain.Money `json:"target_amount"`
