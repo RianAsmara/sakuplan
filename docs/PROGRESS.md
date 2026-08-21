@@ -1757,3 +1757,64 @@ literally what the spec asks for, not an extrapolation.
   in the whole design-handoff rollout (all 5 tabs and 7 of 8 detail
   screens are now done; Notifikasi/Rekomendasi AI/Privasi's session-list
   sub-feature remain blocked on backend work, not styling).
+
+## 2026-08-21 — safe-to-spend.tsx re-skin
+
+### Requirement IDs implemented
+
+None (design/UX implementation). Bounded scope, approved in chat. This
+was the last unstyled screen in the entire design-handoff rollout — all
+5 tabs and all 8 detail screens now use `primitives.tsx`.
+
+### Files changed
+
+- `mobile/app/(app)/safe-to-spend.tsx` — full recompose per SCREENS.md
+  §9: `DashedBox` hero (`1.5px dashed terjaga`, `rgba(0,107,94,0.06)`
+  fill) with the headline daily amount, then a `PocketCard` breakdown
+  with `DashedRule`-separated rows.
+
+### Real question resolved in chat (SCREENS.md §9 flags this explicitly
+as "an open question, not a bug to silently fix")
+
+The real `/v1/planning/safe-to-spend` endpoint returns **3** separate
+deductions (`upcoming_bills`, `remaining_savings_commitment`,
+`minimum_buffer`), but the design's reference image and SCREENS.md §9
+both show only 2 deduction rows ("Tagihan belum lunas" and "Sisa
+anggaran bulan ini" — the latter a concept that doesn't actually
+correspond to either remaining real field). Flagged this before writing
+code; the user chose to match the reference's exact 2-row structure over
+adding a 3rd row for the buffer. Implemented by summing
+`remaining_savings_commitment + minimum_buffer` into the single "− Sisa
+anggaran bulan ini" row — arithmetically correct (the four rows still
+sum to the real `until_payday`), using the spec's literal copy per
+CLAUDE.md's "keep every Indonesian string verbatim" rule, even though
+the label doesn't perfectly describe what's being combined.
+
+### Commands run and results
+
+1. `cd mobile && npx tsc --noEmit` → exit 0.
+2. `cd mobile && npx eslint app/(app)/safe-to-spend.tsx` → 0 errors.
+3. `cd mobile && npx jest` → PASS, 13 suites / 66 tests (unchanged — no
+   new testable logic, pure composition against the existing
+   `useSafeToSpend` hook).
+4. Web-bundle smoke test via the user's own already-running
+   `expo start --android` dev server → HTTP 200, ~10 MB, zero compile
+   errors.
+
+### Deferred / not verified
+
+- Live-data manual verification not performed — needs the Go backend +
+  Docker running. Worth checking by hand: that the four breakdown rows'
+  amounts actually sum to `until_payday` against real numbers (they
+  should, per the schema, but this wasn't confirmed against a live
+  response).
+- Same unrelated concurrent-session dirty files noted in every entry
+  above, still untouched.
+- **All screens in the design-handoff rollout are now re-skinned.**
+  Remaining work is backend, not styling: NOTIF-001..004 (Notifikasi),
+  an AI recommendation feature (Rekomendasi AI), a list-sessions
+  endpoint and account-deletion endpoint (Privasi & keamanan), a
+  PATCH/PUT allocation endpoint (Anggaran's "Ubah" editor), a bill
+  status/mark-paid endpoint (Tagihan berulang's "paid" branch), and
+  `group_by: 'month'` on the cash-flow report (Laporan currently makes 6
+  separate calls to work around its absence).
