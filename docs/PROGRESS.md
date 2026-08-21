@@ -1688,3 +1688,72 @@ same due-date logic.
 - Remaining unstyled screens: Laporan and `safe-to-spend.tsx` (the
   latter still only referenced as a styling pattern in other screens'
   comments, never itself rebuilt).
+
+## 2026-08-21 — Laporan re-skin
+
+### Requirement IDs implemented
+
+None (design/UX implementation). Bounded scope per
+`superpowers:brainstorming`, approved in chat. Completes all 5 tab
+screens.
+
+### Files changed
+
+- `mobile/app/(app)/(tabs)/reports.tsx` — full rebuild. Replaced
+  `react-native-gifted-charts` (`BarChart`/`LineChart`) with a hand-drawn
+  SVG chart matching SCREENS.md §4's exact spec (gridlines, dash pattern,
+  scale formula), and switched from a navigable single-month view to the
+  design's fixed "6 bulan terakhir" trailing window (no prev/next
+  arrows — the design has none).
+- `mobile/src/reports/CashFlowChart.tsx` **(new)** — the SVG polyline
+  chart itself. Kept as its own component, not inlined in the screen,
+  because CLAUDE.md's "never hardcode a hex value in a screen" rule
+  names its two sanctioned exceptions as "components that take colors as
+  plain strings because they pass them to SVG" — this is a new instance
+  of that same pattern, not a screen-level violation.
+- `mobile/src/format/date.ts` — added `formatMonthShortID`/
+  `formatMonthLongID`, reusing the existing month-name tables rather than
+  duplicating them for the chart's labels.
+- Deleted `mobile/src/reports/chartData.ts` and its test — the
+  gifted-charts adapter functions it held (`toTrendLines`,
+  `toCategoryBarData`, `toBudgetVsActualBarData`) had no consumer left
+  once `reports.tsx` stopped using that library.
+
+Two things dropped, not restyled, since neither is in ROUTES/
+LAYOUT_TREES/SCREENS:
+- The "Anggaran vs Aktual" bar chart section — redundant with Anggaran's
+  own allocation view.
+- Month prev/next navigation — the design fixes the window to the
+  trailing 6 months ending at the current month.
+
+### Real gap handled (not a blocker — resolved without asking)
+
+`/v1/reports/cash-flow` only supports `group_by: 'day' | 'week'`, no
+`'month'`. Six real monthly totals are fetched via six range-scoped
+calls to the same endpoint Anggaran already uses (one per real calendar
+month), rather than approximating from daily/weekly buckets. SCREENS.md
+§4 itself flags its own hardcoded 6-month series as "placeholder data in
+the prototype — wire it to real monthly aggregates," so this is
+literally what the spec asks for, not an extrapolation.
+
+### Commands run and results
+
+1. `cd mobile && npx tsc --noEmit` → exit 0.
+2. `cd mobile && npx eslint <changed files>` → 0 errors.
+3. `cd mobile && npx jest` → PASS, 13 suites / 66 tests (3 fewer than
+   the prior entry — `chartData.test.ts` deleted along with the file it
+   tested).
+4. Web-bundle smoke test via the user's own already-running
+   `expo start --android` dev server (Metro serves web bundles from the
+   same instance) → HTTP 200, ~10 MB, zero compile errors.
+
+### Deferred / not verified
+
+- Live-data manual verification not performed — needs the Go backend +
+  Docker running.
+- Same unrelated concurrent-session dirty files noted in earlier
+  entries, still untouched.
+- Remaining unstyled screen: `safe-to-spend.tsx` — the only screen left
+  in the whole design-handoff rollout (all 5 tabs and 7 of 8 detail
+  screens are now done; Notifikasi/Rekomendasi AI/Privasi's session-list
+  sub-feature remain blocked on backend work, not styling).

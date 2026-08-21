@@ -1,189 +1,145 @@
-import { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ScrollView, Spinner, Text, XStack, YStack } from 'tamagui'
-import { ChevronLeft, ChevronRight } from '@tamagui/lucide-icons-2'
-import { BarChart, LineChart } from 'react-native-gifted-charts'
+import { ScrollView, Spinner, XStack, YStack, View } from 'tamagui'
+import { TabHeader } from '../../../src/components/AppHeader'
 import { PocketCard } from '../../../src/components/PocketCard'
+import { ProgressBar } from '../../../src/components/ProgressBar'
+import { Amount, Body, Meta, MetaS, Screen, SectionHeading } from '../../../src/components/primitives'
+import {
+  addMonths,
+  endOfMonth,
+  formatMonthLongID,
+  formatMonthShortID,
+  startOfMonth,
+  toRFC3339,
+} from '../../../src/format/date'
 import { formatRupiah } from '../../../src/format/money'
-import { addMonths, endOfMonth, formatMonthYearID, startOfMonth, toDateOnly } from '../../../src/format/date'
-import { toBudgetVsActualBarData, toCategoryBarData, toTrendLines } from '../../../src/reports/chartData'
+import { CashFlowChart } from '../../../src/reports/CashFlowChart'
 import { useCashFlowReport } from '../../../src/reports/useCashFlowReport'
 
-const COLORS = {
-  primary: '#0E6B58',
-  accent: '#C9A227',
-  danger: '#B23B33',
-}
+const now = new Date()
+// "6 bulan terakhir" — a fixed trailing window ending at the current month,
+// not a navigable month picker (the design has no navigation arrows).
+const MONTH_OFFSETS = [5, 4, 3, 2, 1, 0]
+const MONTH_RANGES = MONTH_OFFSETS.map((offset) => {
+  const monthDate = addMonths(startOfMonth(now), -offset)
+  return {
+    start: toRFC3339(monthDate),
+    end: toRFC3339(endOfMonth(monthDate)),
+    label: formatMonthShortID(monthDate),
+  }
+})
 
 export default function ReportsScreen() {
-  const [month, setMonth] = useState(() => startOfMonth(new Date()))
-  const start = toDateOnly(startOfMonth(month))
-  const end = toDateOnly(endOfMonth(month))
-  const report = useCashFlowReport({ start, end })
+  // No group_by:'month' on the API — six separate range-scoped calls to the
+  // same real endpoint Anggaran already uses, one per month, rather than
+  // fabricating monthly aggregates client-side.
+  const q0 = useCashFlowReport(MONTH_RANGES[0])
+  const q1 = useCashFlowReport(MONTH_RANGES[1])
+  const q2 = useCashFlowReport(MONTH_RANGES[2])
+  const q3 = useCashFlowReport(MONTH_RANGES[3])
+  const q4 = useCashFlowReport(MONTH_RANGES[4])
+  const q5 = useCashFlowReport(MONTH_RANGES[5])
+  const queries = [q0, q1, q2, q3, q4, q5]
+
+  const isLoading = queries.some((q) => q.isLoading)
+  const isError = queries.some((q) => q.isError)
+  const current = q5.data
+
+  const income = queries.map((q) => q.data?.income ?? 0)
+  const expenses = queries.map((q) => q.data?.expenses ?? 0)
+  const months = MONTH_RANGES.map((range) => range.label)
+
+  const categories = current?.category_breakdown ?? []
+  const maxCategoryAmount = Math.max(1, ...categories.map((category) => category.amount))
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F6F3' }} edges={['top']}>
-      <ScrollView flex={1} backgroundColor="$background">
-        <YStack padding="$5" gap="$4">
-          <Text fontFamily="$heading" fontSize="$4" color="$color">
-            Laporan
-          </Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8F4' }} edges={['top']}>
+      <ScrollView flex={1} backgroundColor="$kertas">
+        <Screen>
+          <TabHeader title="Laporan" description="Ringkasan kondisi keuanganmu" />
 
-          <XStack alignItems="center" justifyContent="space-between">
-            <XStack onPress={() => setMonth((prev) => addMonths(prev, -1))} padding="$2">
-              <ChevronLeft size={20} color="$color" />
-            </XStack>
-            <Text fontFamily="$body" fontSize="$3" color="$color">
-              {formatMonthYearID(month)}
-            </Text>
-            <XStack onPress={() => setMonth((prev) => addMonths(prev, 1))} padding="$2">
-              <ChevronRight size={20} color="$color" />
-            </XStack>
-          </XStack>
-
-          {report.isLoading ? (
+          {isLoading ? (
             <YStack alignItems="center" paddingTop="$6">
-              <Spinner size="large" color="$primary" />
+              <Spinner size="large" color="$terjaga" />
             </YStack>
-          ) : report.isError ? (
-            <PocketCard>
-              <Text fontFamily="$body" fontSize="$2" color="$danger">
-                Gagal memuat laporan. Coba lagi nanti.
-              </Text>
-            </PocketCard>
-          ) : report.data && report.data.income === 0 && report.data.expenses === 0 ? (
-            <PocketCard tone="muted">
-              <Text fontFamily="$body" fontSize="$2" color="$kulit" textAlign="center">
-                Belum ada transaksi di bulan ini.
-              </Text>
-            </PocketCard>
-          ) : report.data ? (
+          ) : isError ? (
+            <Meta color="$peringatan">Gagal memuat laporan. Coba lagi nanti.</Meta>
+          ) : current && current.income === 0 && current.expenses === 0 ? (
+            <Meta textAlign="center">Belum ada transaksi bulan ini.</Meta>
+          ) : (
             <>
-              <XStack gap="$3">
-                <PocketCard flex={1}>
-                  <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                    PEMASUKAN
-                  </Text>
-                  <Text fontFamily="$mono" fontSize="$3" color="$primary">
-                    {formatRupiah(report.data.income)}
-                  </Text>
-                </PocketCard>
-                <PocketCard flex={1}>
-                  <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                    PENGELUARAN
-                  </Text>
-                  <Text fontFamily="$mono" fontSize="$3" color="$danger">
-                    {formatRupiah(report.data.expenses)}
-                  </Text>
-                </PocketCard>
-                <PocketCard flex={1}>
-                  <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                    ARUS KAS BERSIH
-                  </Text>
-                  <Text fontFamily="$mono" fontSize="$3" color={report.data.net_cash_flow >= 0 ? '$primary' : '$danger'}>
-                    {formatRupiah(report.data.net_cash_flow)}
-                  </Text>
-                </PocketCard>
-              </XStack>
+              <PocketCard marginBottom="$6" gap="$3">
+                <XStack justifyContent="space-between" alignItems="center">
+                  <SectionHeading>Arus kas 6 bulan terakhir</SectionHeading>
+                  <Meta>{`${formatMonthLongID(now)} (bulan berjalan)`}</Meta>
+                </XStack>
 
-              <PocketCard>
-                <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                  TREN ARUS KAS
-                </Text>
-                {(() => {
-                  const { income, expenses } = toTrendLines(report.data.trend)
-                  return (
-                    <LineChart
-                      data={income}
-                      data2={expenses}
-                      color={COLORS.primary}
-                      color2={COLORS.danger}
-                      thickness={2}
-                      hideRules
-                      yAxisTextStyle={{ color: '#7C6A5B', fontSize: 10 }}
-                      xAxisLabelTextStyle={{ color: '#7C6A5B', fontSize: 10 }}
-                      curved
-                      initialSpacing={8}
-                      noOfSections={4}
-                      height={160}
-                    />
-                  )
-                })()}
+                <CashFlowChart months={months} income={income} expenses={expenses} />
+
                 <XStack gap="$4">
-                  <XStack alignItems="center" gap="$1">
-                    <YStack width={8} height={8} borderRadius={4} backgroundColor="$primary" />
-                    <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                      Pemasukan
-                    </Text>
+                  <XStack alignItems="center" gap="$1.5">
+                    <View width={14} height={2} backgroundColor="$terjaga" />
+                    <MetaS>Pemasukan</MetaS>
                   </XStack>
-                  <XStack alignItems="center" gap="$1">
-                    <YStack width={8} height={8} borderRadius={4} backgroundColor="$danger" />
-                    <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                      Pengeluaran
-                    </Text>
+                  <XStack alignItems="center" gap="$1.5">
+                    <View width={14} height={2} backgroundColor="$peringatan" />
+                    <MetaS>Pengeluaran</MetaS>
                   </XStack>
+                </XStack>
+
+                <XStack
+                  justifyContent="space-between"
+                  borderTopWidth={1}
+                  borderTopColor="$kertas"
+                  paddingTop="$3"
+                >
+                  <YStack>
+                    <Meta marginBottom="$1">Pemasukan</Meta>
+                    <Amount size={14}>{formatRupiah(current?.income ?? 0)}</Amount>
+                  </YStack>
+                  <YStack>
+                    <Meta marginBottom="$1">Pengeluaran</Meta>
+                    <Amount size={14}>{formatRupiah(current?.expenses ?? 0)}</Amount>
+                  </YStack>
+                  <YStack>
+                    <Meta marginBottom="$1">Arus kas bersih</Meta>
+                    <Amount
+                      size={14}
+                      color={(current?.net_cash_flow ?? 0) >= 0 ? '$terjaga' : '$peringatan'}
+                    >
+                      {formatRupiah(current?.net_cash_flow ?? 0)}
+                    </Amount>
+                  </YStack>
                 </XStack>
               </PocketCard>
 
-              {report.data.category_breakdown.length > 0 ? (
-                <PocketCard>
-                  <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                    PENGELUARAN PER KATEGORI
-                  </Text>
-                  <BarChart
-                    data={toCategoryBarData(report.data.category_breakdown, COLORS.primary)}
-                    horizontal
-                    barWidth={18}
-                    spacing={16}
-                    yAxisLabelWidth={90}
-                    barBorderRadius={4}
-                    height={report.data.category_breakdown.length * 36}
-                  />
-                </PocketCard>
-              ) : null}
-
-              {report.data.budget_vs_actual.length > 0 ? (
-                <PocketCard>
-                  <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                    ANGGARAN VS AKTUAL
-                  </Text>
-                  <BarChart
-                    data={toBudgetVsActualBarData(report.data.budget_vs_actual, {
-                      budgeted: COLORS.primary,
-                      actualOver: COLORS.danger,
-                      actualUnder: COLORS.accent,
-                    })}
-                    barWidth={14}
-                    barBorderRadius={3}
-                    yAxisTextStyle={{ color: '#7C6A5B', fontSize: 10 }}
-                    xAxisLabelTextStyle={{ color: '#7C6A5B', fontSize: 9 }}
-                    height={160}
-                  />
-                  <XStack gap="$4">
-                    <XStack alignItems="center" gap="$1">
-                      <YStack width={8} height={8} borderRadius={4} backgroundColor="$primary" />
-                      <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                        Dianggarkan
-                      </Text>
-                    </XStack>
-                    <XStack alignItems="center" gap="$1">
-                      <YStack width={8} height={8} borderRadius={4} backgroundColor="$accent" />
-                      <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                        Aktual (sesuai anggaran)
-                      </Text>
-                    </XStack>
-                    <XStack alignItems="center" gap="$1">
-                      <YStack width={8} height={8} borderRadius={4} backgroundColor="$danger" />
-                      <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                        Aktual (lebih dari anggaran)
-                      </Text>
-                    </XStack>
-                  </XStack>
-                </PocketCard>
+              {categories.length > 0 ? (
+                <YStack>
+                  <SectionHeading marginBottom="$2">Pengeluaran per kategori</SectionHeading>
+                  {categories.map((category) => (
+                    <YStack
+                      key={category.category_id}
+                      paddingVertical={10}
+                      borderTopWidth={1}
+                      borderTopColor="$hairline"
+                      gap="$1.5"
+                    >
+                      <XStack justifyContent="space-between">
+                        <Body>{category.name}</Body>
+                        <Amount size={14}>{formatRupiah(category.amount)}</Amount>
+                      </XStack>
+                      <ProgressBar
+                        pct={(category.amount / maxCategoryAmount) * 100}
+                        height={6}
+                        fill="$terjaga"
+                      />
+                    </YStack>
+                  ))}
+                </YStack>
               ) : null}
             </>
-          ) : null}
-        </YStack>
+          )}
+        </Screen>
       </ScrollView>
     </SafeAreaView>
   )
