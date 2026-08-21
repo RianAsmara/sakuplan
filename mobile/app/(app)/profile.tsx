@@ -1,12 +1,26 @@
 import { useEffect, useState } from 'react'
+import { User } from '@tamagui/lucide-icons-2'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Button, Checkbox, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui'
-import { Check } from '@tamagui/lucide-icons-2'
-import { SubScreenHeader } from '../../src/components/SubScreenHeader'
-import { PocketCard } from '../../src/components/PocketCard'
+import { ScrollView, Spinner, XStack, YStack } from 'tamagui'
+import { useCurrentUser } from '../../src/auth/useCurrentUser'
+import { nextBillOccurrence } from '../../src/bills/nextBillOccurrence'
+import { DetailHeader } from '../../src/components/AppHeader'
+import {
+  Amount,
+  Body,
+  ButtonLabel,
+  FieldLabel,
+  LedgerRow,
+  Meta,
+  PrimaryButton,
+  Screen,
+  SectionHeading,
+  Toggle,
+  inputStyle,
+} from '../../src/components/primitives'
 import { RupiahInput } from '../../src/components/RupiahInput'
 import { TextField } from '../../src/components/TextField'
-import { useCurrentUser } from '../../src/auth/useCurrentUser'
+import { formatDateID } from '../../src/format/date'
 import { useUpdateProfile } from '../../src/profile/useUpdateProfile'
 
 export default function ProfileScreen() {
@@ -45,106 +59,109 @@ export default function ProfileScreen() {
     })
   }
 
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F6F3' }} edges={['top']}>
-      <ScrollView flex={1} backgroundColor="$background">
-        <YStack padding="$5" gap="$4">
-          <SubScreenHeader title="Profil & Preferensi" />
+  const nextPaydayLong = formatDateID(nextBillOccurrence(payday, new Date()).toISOString())
 
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8F4' }} edges={['top']}>
+      <DetailHeader title="Profil & preferensi" />
+      <ScrollView flex={1} backgroundColor="$kertas">
+        <Screen>
           {isLoading || !user ? (
             <YStack alignItems="center" paddingTop="$6">
-              <Spinner size="large" color="$primary" />
+              <Spinner size="large" color="$terjaga" />
             </YStack>
           ) : (
-            <PocketCard elevated>
+            <YStack gap="$5">
               {updateProfile.isSuccess ? (
-                <Text fontFamily="$body" fontSize="$2" color="$primary">
-                  Perubahan disimpan.
-                </Text>
+                <Meta color="$terjaga">Perubahan disimpan.</Meta>
               ) : updateProfile.isError ? (
-                <Text fontFamily="$body" fontSize="$2" color="$danger">
-                  Gagal menyimpan perubahan. Coba lagi.
-                </Text>
+                <Meta color="$peringatan">Gagal menyimpan perubahan. Coba lagi.</Meta>
               ) : null}
 
-              <YStack gap="$2">
-                <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                  NAMA
-                </Text>
-                <TextField
-                  value={displayName}
-                  onChangeText={setDisplayName}
-                />
-              </YStack>
-
-              <XStack gap="$3">
-                <YStack flex={1} gap="$2">
-                  <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                    MATA UANG
-                  </Text>
-                  <Text fontFamily="$body" fontSize="$2" color="$kulit">
-                    {user.currency}
-                  </Text>
+              <YStack gap="$3">
+                <SectionHeading>Identitas</SectionHeading>
+                <YStack gap="$2">
+                  <FieldLabel htmlFor="profile-name" icon={<User size={14} color="$kulit" />}>
+                    NAMA TAMPILAN
+                  </FieldLabel>
+                  <TextField
+                    id="profile-name"
+                    value={displayName}
+                    onChangeText={setDisplayName}
+                    {...inputStyle}
+                  />
                 </YStack>
-                <YStack flex={1} gap="$2">
-                  <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                    ZONA WAKTU
-                  </Text>
-                  <Text fontFamily="$body" fontSize="$2" color="$kulit">
-                    {user.timezone}
-                  </Text>
+              </YStack>
+
+              <YStack gap="$3">
+                <SectionHeading>Gajian dan anggaran</SectionHeading>
+                <YStack gap="$2">
+                  <FieldLabel htmlFor="profile-payday">TANGGAL GAJIAN SETIAP BULAN</FieldLabel>
+                  <TextField
+                    id="profile-payday"
+                    keyboardType="number-pad"
+                    value={String(payday)}
+                    onChangeText={(text) => setPayday(Number.parseInt(text, 10) || 1)}
+                    {...inputStyle}
+                  />
+                  <Meta>
+                    {`Jika tanggal ini tidak ada di suatu bulan, gajian jatuh di hari terakhir bulan itu. Gajian berikutnya: ${nextPaydayLong}.`}
+                  </Meta>
                 </YStack>
-              </XStack>
-              <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                Mata uang dan zona waktu belum bisa diganti.
-              </Text>
-
-              <YStack gap="$2">
-                <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                  TANGGAL GAJIAN (1-31)
-                </Text>
-                <TextField
-                  keyboardType="number-pad"
-                  value={String(payday)}
-                  onChangeText={(text) => setPayday(Number.parseInt(text, 10) || 1)}
-                />
+                <YStack gap="$2">
+                  <FieldLabel htmlFor="profile-buffer">BATAS AMAN MINIMUM</FieldLabel>
+                  <RupiahInput id="profile-buffer" value={minimumBuffer} onChangeValue={setMinimumBuffer} />
+                  <Meta>Selalu disisihkan dari perhitungan aman-belanja sebagai jaga-jaga.</Meta>
+                </YStack>
               </YStack>
 
-              <YStack gap="$2">
-                <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                  DANA DARURAT MINIMUM
-                </Text>
-                <RupiahInput value={minimumBuffer} onChangeValue={setMinimumBuffer} />
+              <YStack
+                gap="$3"
+                paddingBottom="$5"
+                borderBottomWidth={1}
+                borderBottomColor="$hairline"
+              >
+                <SectionHeading>AI</SectionHeading>
+                <XStack justifyContent="space-between" alignItems="center" gap="$3">
+                  <YStack flex={1} gap="$1">
+                    <Body>Izinkan rekomendasi AI</Body>
+                    <Meta>
+                      AI hanya memberikan usulan. Perubahan anggaran tetap memerlukan
+                      persetujuanmu.
+                    </Meta>
+                  </YStack>
+                  <Toggle value={aiConsent} onValueChange={setAiConsent} />
+                </XStack>
               </YStack>
 
-              <XStack alignItems="center" gap="$3">
-                <Checkbox
-                  id="ai-consent"
-                  checked={aiConsent}
-                  onCheckedChange={(value) => setAiConsent(value === true)}
-                  backgroundColor={aiConsent ? '$primary' : undefined}
-                  borderColor="$kulit"
-                >
-                  <Checkbox.Indicator>
-                    <Check color="$primaryText" />
-                  </Checkbox.Indicator>
-                </Checkbox>
-                <Text fontFamily="$body" fontSize="$2" color="$color" flexShrink={1}>
-                  Izinkan SakuPlan memakai AI untuk menjelaskan rekomendasi anggaran
-                </Text>
-              </XStack>
+              <YStack>
+                <SectionHeading marginBottom="$2">Sistem</SectionHeading>
+                <LedgerRow pv={13}>
+                  <Body>Bahasa</Body>
+                  <Body>Bahasa Indonesia</Body>
+                </LedgerRow>
+                <LedgerRow pv={13}>
+                  <Body>Zona waktu</Body>
+                  <Body>{user.timezone}</Body>
+                </LedgerRow>
+                <LedgerRow pv={13}>
+                  <Body>Mata uang</Body>
+                  <Amount size={13}>{user.currency}</Amount>
+                </LedgerRow>
+              </YStack>
 
-              <Button
-                backgroundColor="$primary"
-                color="$primaryText"
+              <PrimaryButton
                 disabled={displayName.trim().length === 0 || updateProfile.isPending}
+                opacity={displayName.trim().length === 0 ? 0.5 : 1}
                 onPress={handleSaveProfile}
               >
-                {updateProfile.isPending ? 'Menyimpan...' : 'Simpan Perubahan'}
-              </Button>
-            </PocketCard>
+                <ButtonLabel color="$putih">
+                  {updateProfile.isPending ? 'Menyimpan...' : 'Simpan Perubahan'}
+                </ButtonLabel>
+              </PrimaryButton>
+            </YStack>
           )}
-        </YStack>
+        </Screen>
       </ScrollView>
     </SafeAreaView>
   )

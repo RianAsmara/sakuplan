@@ -1,15 +1,27 @@
 import { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Button, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui'
-import { SubScreenHeader } from '../../src/components/SubScreenHeader'
+import { ScrollView, Spinner, XStack, YStack } from 'tamagui'
+import { useAccounts } from '../../src/accounts/useAccounts'
+import { DetailHeader } from '../../src/components/AppHeader'
 import { PocketCard } from '../../src/components/PocketCard'
+import { ProgressBar } from '../../src/components/ProgressBar'
+import {
+  Amount,
+  Body,
+  ButtonLabel,
+  Chip,
+  ChipLabel,
+  Meta,
+  PrimaryButton,
+  Screen,
+  SecondaryButton,
+} from '../../src/components/primitives'
 import { RupiahInput } from '../../src/components/RupiahInput'
+import { useContributeToGoal } from '../../src/goals/useContributeToGoal'
 import { useGoals } from '../../src/goals/useGoals'
 import { useDashboard } from '../../src/dashboard/useDashboard'
-import { useContributeToGoal } from '../../src/goals/useContributeToGoal'
-import { useAccounts } from '../../src/accounts/useAccounts'
-import { formatRupiah } from '../../src/format/money'
 import { formatDateID } from '../../src/format/date'
+import { formatRupiah } from '../../src/format/money'
 
 function GoalCard({
   goal,
@@ -26,6 +38,7 @@ function GoalCard({
   const accounts = useAccounts()
   const contribute = useContributeToGoal()
 
+  const pct = Math.min(progressPercent, 100)
   const canSave = amount > 0 && accountId !== null && !contribute.isPending
 
   function handleSave() {
@@ -38,85 +51,64 @@ function GoalCard({
           setAmount(0)
           setAccountId(null)
         },
-      }
+      },
     )
   }
 
   return (
-    <PocketCard>
+    <PocketCard marginBottom="$3">
       <XStack justifyContent="space-between">
-        <Text fontFamily="$body" fontSize="$3" color="$color">
-          {goal.name}
-        </Text>
-        <Text fontFamily="$mono" fontSize="$2" color="$accent">
-          {`${Math.min(progressPercent, 100)}%`}
-        </Text>
+        <Body>{goal.name}</Body>
+        <Amount size={13} color="$leluasa">{`${pct}%`}</Amount>
       </XStack>
-      <YStack height={6} borderRadius="$1" backgroundColor="$background" overflow="hidden">
-        <YStack height="100%" width={`${Math.min(progressPercent, 100)}%`} backgroundColor="$accent" />
-      </YStack>
-      <Text fontFamily="$body" fontSize="$1" color="$kulit">
+      <ProgressBar pct={pct} height={6} fill="$leluasa" tick />
+      <Meta>
         {`${formatRupiah(contributed)} dari ${formatRupiah(goal.target_amount)}${
           goal.target_date ? ` · target ${formatDateID(goal.target_date)}` : ''
         }`}
-      </Text>
+      </Meta>
 
       {isAdding ? (
         <YStack gap="$2">
-          {contribute.isError ? (
-            <Text fontFamily="$body" fontSize="$1" color="$danger">
-              Gagal menambah dana. Coba lagi.
-            </Text>
-          ) : null}
+          {contribute.isError ? <Meta color="$peringatan">Gagal menambah dana. Coba lagi.</Meta> : null}
           <RupiahInput value={amount} onChangeValue={setAmount} />
           <XStack gap="$2" flexWrap="wrap">
             {(accounts.data ?? []).map((account) => (
-              <Button
+              <Chip
                 key={account.id}
-                size="$3"
-                backgroundColor={accountId === account.id ? '$primary' : '$white'}
-                color={accountId === account.id ? '$primaryText' : '$color'}
-                borderWidth={1.5}
-                borderColor={accountId === account.id ? '$primary' : '$borderColor'}
+                selected={accountId === account.id}
+                hitSlop={8}
                 onPress={() => setAccountId(account.id)}
               >
-                {account.name}
-              </Button>
+                <ChipLabel selected={accountId === account.id}>{account.name}</ChipLabel>
+              </Chip>
             ))}
           </XStack>
           <XStack gap="$2">
-            <Button
+            <SecondaryButton flex={1} onPress={() => setIsAdding(false)}>
+              <ButtonLabel color="$tinta">Batal</ButtonLabel>
+            </SecondaryButton>
+            <PrimaryButton
               flex={1}
-              backgroundColor="$white"
-              borderWidth={1.5}
-              borderColor="$borderColor"
-              color="$color"
-              onPress={() => setIsAdding(false)}
-            >
-              Batal
-            </Button>
-            <Button
-              flex={1}
-              backgroundColor="$primary"
-              color="$primaryText"
               disabled={!canSave}
               opacity={canSave ? 1 : 0.5}
               onPress={handleSave}
             >
-              {contribute.isPending ? 'Menyimpan...' : 'Simpan'}
-            </Button>
+              <ButtonLabel color="$putih">
+                {contribute.isPending ? 'Menyimpan...' : 'Simpan'}
+              </ButtonLabel>
+            </PrimaryButton>
           </XStack>
         </YStack>
       ) : (
-        <Button
-          backgroundColor="transparent"
-          borderWidth={1.5}
-          borderColor="$primary"
-          color="$primary"
+        <SecondaryButton
+          borderColor="$terjaga"
+          borderRadius={6}
+          paddingVertical={11}
           onPress={() => setIsAdding(true)}
         >
-          Tambah Dana
-        </Button>
+          <ButtonLabel color="$terjaga">Tambah Dana</ButtonLabel>
+        </SecondaryButton>
       )}
     </PocketCard>
   )
@@ -127,25 +119,20 @@ export default function GoalsScreen() {
   const dashboard = useDashboard()
 
   const progressByGoalId = new Map(
-    (dashboard.data?.goals ?? []).map((progress) => [progress.goal_id, progress])
+    (dashboard.data?.goals ?? []).map((progress) => [progress.goal_id, progress]),
   )
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F6F3' }} edges={['top']}>
-      <ScrollView flex={1} backgroundColor="$background">
-        <YStack padding="$5" gap="$3">
-          <SubScreenHeader title="Target Tabungan" />
-
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8F4' }} edges={['top']}>
+      <DetailHeader title="Target tabungan" />
+      <ScrollView flex={1} backgroundColor="$kertas">
+        <Screen>
           {goals.isLoading || dashboard.isLoading ? (
             <YStack alignItems="center" paddingTop="$6">
-              <Spinner size="large" color="$primary" />
+              <Spinner size="large" color="$terjaga" />
             </YStack>
           ) : goals.isError || dashboard.isError ? (
-            <PocketCard>
-              <Text fontFamily="$body" fontSize="$2" color="$danger">
-                Gagal memuat target tabungan. Coba lagi nanti.
-              </Text>
-            </PocketCard>
+            <Meta color="$peringatan">Gagal memuat target tabungan. Coba lagi nanti.</Meta>
           ) : goals.data && goals.data.length > 0 ? (
             goals.data.map((goal) => (
               <GoalCard
@@ -156,13 +143,9 @@ export default function GoalsScreen() {
               />
             ))
           ) : (
-            <PocketCard tone="muted">
-              <Text fontFamily="$body" fontSize="$3" color="$color" textAlign="center">
-                Belum ada target tabungan
-              </Text>
-            </PocketCard>
+            <Meta textAlign="center">Belum ada target tabungan</Meta>
           )}
-        </YStack>
+        </Screen>
       </ScrollView>
     </SafeAreaView>
   )

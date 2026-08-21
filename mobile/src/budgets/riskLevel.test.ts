@@ -1,15 +1,15 @@
 import { riskLevelMeta } from './riskLevel'
 
 describe('riskLevelMeta', () => {
-  it('labels healthy in the primary color', () => {
-    expect(riskLevelMeta('healthy')).toEqual({ label: 'Sehat', color: '$primary' })
+  it('labels healthy in terjaga', () => {
+    expect(riskLevelMeta('healthy')).toEqual({ label: 'Sehat', color: '$terjaga' })
   })
 
-  it('labels attention in the accent color', () => {
-    expect(riskLevelMeta('attention')).toEqual({ label: 'Perhatian', color: '$accent' })
+  it('labels attention in neutral kulit', () => {
+    expect(riskLevelMeta('attention')).toEqual({ label: 'Perhatian', color: '$kulit' })
   })
 
-  it('labels high risk in the danger color', () => {
-    expect(riskLevelMeta('high')).toEqual({ label: 'Waspada', color: '$danger' })
+  it('labels high risk in peringatan', () => {
+    expect(riskLevelMeta('high')).toEqual({ label: 'Waspada', color: '$peringatan' })
   })
 })

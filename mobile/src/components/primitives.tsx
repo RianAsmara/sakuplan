@@ -314,6 +314,24 @@ export const inputStyle = {
   },
 } as const
 
+/**
+ * Compact inline-edit input. Used where a numeric field sits directly inside
+ * a list row (Anggaran's "Ubah" editor) rather than a form — thinner border,
+ * smaller radius/padding/type than `inputStyle`.
+ */
+export const compactInputStyle = {
+  borderWidth: 1,
+  borderColor: '$kulit',
+  borderRadius: 6,
+  backgroundColor: '$putih',
+  paddingHorizontal: 9,
+  paddingVertical: 9,
+  fontFamily: '$mono',
+  fontWeight: '500',
+  fontSize: 13,
+  color: '$tinta',
+} as const
+
 /** Focus treatment: border goes brand green, plus a 3px soft ring. */
 export const inputFocusStyle = {
   borderColor: '$terjaga',
@@ -435,6 +453,39 @@ export const SegmentButton = styled(XStack, {
   } as const,
   defaultVariants: { selected: false },
 })
+
+/**
+ * AI-consent style toggle. 44×26 track, radius 13, terjaga when on /
+ * kulitTrack when off; 20px white knob, 3px inset, 150ms slide.
+ */
+export function Toggle({
+  value,
+  onValueChange,
+}: {
+  value: boolean
+  onValueChange: (next: boolean) => void
+}) {
+  return (
+    <XStack
+      width={44}
+      height={26}
+      borderRadius={13}
+      padding={3}
+      backgroundColor={value ? '$terjaga' : '$kulitTrack'}
+      onPress={() => onValueChange(!value)}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
+    >
+      <View
+        width={20}
+        height={20}
+        borderRadius={10}
+        backgroundColor="$putih"
+        marginLeft={value ? 18 : 0}
+      />
+    </XStack>
+  )
+}
 
 export const SegmentLabel = styled(Text, {
   fontFamily: '$body',

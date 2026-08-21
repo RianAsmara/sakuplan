@@ -1,10 +1,10 @@
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ScrollView, Spinner, Text, XStack, YStack } from 'tamagui'
-import { SubScreenHeader } from '../../src/components/SubScreenHeader'
-import { PocketCard } from '../../src/components/PocketCard'
-import { useAccounts } from '../../src/accounts/useAccounts'
+import { ScrollView, Spinner, YStack } from 'tamagui'
 import { useAccountBalances } from '../../src/accounts/useAccountBalances'
+import { useAccounts } from '../../src/accounts/useAccounts'
 import { accountTypeLabel } from '../../src/accounts/accountTypeLabels'
+import { DetailHeader } from '../../src/components/AppHeader'
+import { Amount, Body, LedgerRow, Meta, MetaS, Screen } from '../../src/components/primitives'
 import { formatRupiah } from '../../src/format/money'
 
 export default function AccountsScreen() {
@@ -15,59 +15,37 @@ export default function AccountsScreen() {
   const totalBalance = [...balances.balancesById.values()].reduce((sum, value) => sum + value, 0)
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F6F3' }} edges={['top']}>
-      <ScrollView flex={1} backgroundColor="$background">
-        <YStack padding="$5" gap="$3">
-          <SubScreenHeader title="Akun & Saldo" />
-
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8F4' }} edges={['top']}>
+      <DetailHeader title="Akun & saldo" />
+      <ScrollView flex={1} backgroundColor="$kertas">
+        <Screen>
           {accounts.isLoading || balances.isLoading ? (
             <YStack alignItems="center" paddingTop="$6">
-              <Spinner size="large" color="$primary" />
+              <Spinner size="large" color="$terjaga" />
             </YStack>
           ) : accounts.isError || balances.isError ? (
-            <PocketCard>
-              <Text fontFamily="$body" fontSize="$2" color="$danger">
-                Gagal memuat akun. Coba lagi nanti.
-              </Text>
-            </PocketCard>
+            <Meta color="$peringatan">Gagal memuat akun. Coba lagi nanti.</Meta>
           ) : (
-            <>
-              <PocketCard>
-                <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                  TOTAL SALDO
-                </Text>
-                <Text fontFamily="$mono" fontSize="$6" color="$color">
-                  {formatRupiah(totalBalance)}
-                </Text>
-              </PocketCard>
+            <YStack>
+              <YStack marginBottom="$4">
+                <Meta>Total saldo</Meta>
+                <Amount size={28}>{formatRupiah(totalBalance)}</Amount>
+              </YStack>
 
-              <PocketCard>
-                {(accounts.data ?? []).map((account) => (
-                  <XStack
-                    key={account.id}
-                    justifyContent="space-between"
-                    alignItems="center"
-                    paddingVertical="$3"
-                    borderTopWidth={1}
-                    borderTopColor="$borderColor"
-                  >
-                    <YStack>
-                      <Text fontFamily="$body" fontSize="$3" color="$color">
-                        {account.name}
-                      </Text>
-                      <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                        {accountTypeLabel(account.type)}
-                      </Text>
-                    </YStack>
-                    <Text fontFamily="$mono" fontSize="$3" color="$color">
-                      {formatRupiah(balances.balancesById.get(account.id) ?? 0)}
-                    </Text>
-                  </XStack>
-                ))}
-              </PocketCard>
-            </>
+              {(accounts.data ?? []).map((account) => (
+                <LedgerRow key={account.id} pv={13}>
+                  <YStack>
+                    <Body>{account.name}</Body>
+                    <MetaS>{accountTypeLabel(account.type)}</MetaS>
+                  </YStack>
+                  <Amount size={16}>
+                    {formatRupiah(balances.balancesById.get(account.id) ?? 0)}
+                  </Amount>
+                </LedgerRow>
+              ))}
+            </YStack>
           )}
-        </YStack>
+        </Screen>
       </ScrollView>
     </SafeAreaView>
   )

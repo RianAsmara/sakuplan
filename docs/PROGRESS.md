@@ -1462,3 +1462,160 @@ None.
   then Profile (see `project_design_handoff_phases` session memory) —
   this session worked Transaksi out of that order at the user's
   direction.
+
+## 2026-08-21 — Anggaran re-skin
+
+### Requirement IDs implemented
+
+None (design/UX implementation, continuing the resequenced design-handoff
+rollout). Bounded scope per `superpowers:brainstorming` (no spec/plan
+document), approved in chat — extended to cover the screen's real
+functionality beyond what SCREENS.md/LAYOUT_TREES model, same as
+Transaksi.
+
+### Files changed
+
+- `mobile/src/budgets/riskLevel.ts` (+ test) — fixed the same class of
+  color-rule bug as Transaksi's `transactionDisplay.ts`: `'attention'`
+  risk was rendering in `$accent` (leluasa), reserved for savings/AI only.
+  Remapped to `healthy→terjaga, attention→kulit, high→peringatan`.
+- `mobile/src/components/primitives.tsx` — added `compactInputStyle`
+  (thinner border/radius/padding than `inputStyle`) for SCREENS.md §3's
+  inline "Ubah" editor treatment. Not consumed yet — see blocker below —
+  kept for when Goals' "Tambah Dana" gets the same treatment.
+- `mobile/app/(app)/(tabs)/budgets.tsx` — full recompose. The design docs
+  only model a flat allocation-row list; the real screen also has an
+  active-budget summary (period/income/savings/safe-to-spend-per-day with
+  a risk badge) and a full 3-step creation wizard, neither specced
+  anywhere. User approved extending the documented visual language
+  (`FieldLabel`/`inputStyle` fields, `SegmentButton` for the
+  conservative/balanced/flexible picker, `PrimaryButton`/`SecondaryButton`
+  navigation, the auth screens' error-banner treatment) to both. The
+  safe-to-spend-per-day card reuses `safe-to-spend.tsx`'s own
+  `DashedBox` terjaga-border-and-tint hero treatment, since it's the same
+  metric.
+- Wired in the existing `useCashFlowReport` hook (already used by
+  Laporan) to get real `budget_vs_actual` data — the previous version had
+  no way to compute the spec's %/progress-bar/over-budget treatment at
+  all, since `Budget.allocations` only carries the allocated amount, not
+  actual spend.
+
+### Real blocker found (resolved in chat)
+
+Checked every `/v1/*` endpoint the API exposes — there is no PATCH/PUT to
+update a single allocation on an active budget, only create-draft and
+activate. SCREENS.md's "Ubah" inline editor (tap → numeric input →
+"Simpan") has nothing to call. Per the user, allocation rows are
+read-only (name/%/progress-bar/summary only) until that endpoint exists.
+
+### Commands run and results
+
+1. `cd mobile && npx tsc --noEmit` → exit 0.
+2. `cd mobile && npx eslint <changed files>` → 0 errors.
+3. `cd mobile && npx jest` → PASS, 14 suites / 69 tests.
+4. `cd mobile && npx expo start --web` (background) + `curl` against the
+   expo-router web bundle → HTTP 200, ~11 MB, zero compile errors.
+
+### Deferred / not verified
+
+- Live-data manual verification (login, real budget/report API calls)
+  not performed — needs the Go backend + Docker running.
+- Same unrelated concurrent-session dirty files noted in the Transaksi
+  entry above, still untouched.
+
+## 2026-08-21 — Lainnya rebuild + four detail screens (Akun & saldo,
+Tagihan berulang, Target tabungan, Profil & preferensi) + new Privasi &
+keamanan screen
+
+### Requirement IDs implemented
+
+None (design/UX implementation). Bounded scope per
+`superpowers:brainstorming`, approved in chat across several rounds.
+
+### Why this happened out of sequence
+
+The user shared `design_handoff_sakuplan_rn/reference/screens/05-lainnya.png`
+(the design's rendered reference) and pointed out that the shipped
+`more.tsx` (from the 2026-08-19 entry above) didn't match it — that
+entry's own note about "deliberately kept the app's existing structure"
+was, per this session's re-examination, actually a structural mismatch
+worth fixing: the design's Lainnya is pure navigation (3 groups, chevron
+rows only); the real logout/export/delete-account actions belong on a
+separate **Privasi & keamanan** destination screen per LAYOUT_TREES §12,
+which never got built. The user then shared the remaining 9 reference
+screenshots (Privasi & keamanan, Notifikasi, Rekomendasi AI, Target
+tabungan ×2 states, Tagihan berulang ×2 states, Akun & saldo, Profil &
+preferensi) as the target to work from directly, after declining two
+follow-up scoping questions — signal to proceed on recommended defaults
+rather than keep asking.
+
+### Files changed
+
+- `mobile/app/(app)/(tabs)/more.tsx` — rebuilt as pure 3-group nav
+  (Akun / Perencanaan / Aplikasi) matching the reference. Notifikasi and
+  Rekomendasi AI rows omitted (no backend — see below); logout, export,
+  and delete-account moved off this screen entirely.
+- `mobile/app/(app)/privacy.tsx` **(new)** — Sesi aktif, Data, Zona
+  bahaya per LAYOUT_TREES §12, with two real gaps handled (see blockers).
+- `mobile/app/(app)/accounts.tsx`, `bills.tsx`, `goals.tsx`, `profile.tsx`
+  — recomposed with `DetailHeader`, `LedgerRow`, `Amount`, `PocketCard`/
+  `ProgressBar` (goals, leluasa fill + dashed tick), `FieldLabel`, and a
+  new `Toggle` primitive.
+- `mobile/src/components/primitives.tsx` — added `Toggle` (44×26 track,
+  20px knob, terjaga/kulitTrack) for Profil's AI-consent switch — first
+  consumer of this pattern.
+- `mobile/src/dashboard/billUrgency.ts` (+ test) — fixed two real bugs
+  found while matching SCREENS.md §7's 4-branch status rule: "due today"
+  was rendering in muted `kulit` instead of the specced warning color,
+  and the "upcoming" branch was missing the due date text entirely
+  (spec: "Jatuh tempo {date} ({n} hari lagi)", was just "{n} hari lagi").
+  This also corrects the copy on Beranda's upcoming-bill card, which
+  reuses this same function (Beranda itself is still unstyled).
+
+### Real blockers found (resolved in chat, same pattern as Anggaran's "Ubah")
+
+1. `Bill` has no `status` field and there is no mark-paid endpoint
+   anywhere in the API — SCREENS.md §7's "paid" branch and "Tandai lunas"
+   button are unreachable against the real backend. Only the 3
+   due-date-computed branches (overdue / due-today / upcoming) are shown.
+2. Privasi & keamanan's "Sesi aktif" list (per-device rows with
+   individual "Keluar") has no backing endpoint — only
+   `POST /v1/auth/logout` (current) and `POST /v1/auth/logout-all` exist.
+   Replaced the list with those two real actions. Account deletion has no
+   endpoint either — the button renders disabled with a "Segera hadir"
+   note, same treatment the old `more.tsx` used.
+
+### Commands run and results
+
+1. `cd mobile && npx tsc --noEmit` → first pass failed:
+   `react-hooks`-adjacent type error — `Toggle`'s first draft passed an
+   `animation="quick"` prop to plain `XStack`/`View`, which isn't part of
+   their prop types in this Tamagui config (unlike `styled()` components,
+   which take `transition` inside their config object, not as a runtime
+   prop). Removed; the toggle still functions, just without a slide
+   animation. Clean after the fix.
+2. `cd mobile && npx eslint <changed files>` → 0 errors.
+3. `cd mobile && npx jest` → first pass failed: my own test-expectation
+   typo (`billUrgency.test.ts` expected "10 Agt 2026", the shared date
+   formatter's actual (correct, already-established) short-month table
+   produces "10 Agu 2026" — fixed the test, not the formatter. PASS after,
+   14 suites / 69 tests.
+4. `cd mobile && npx expo start --web` (background) + `curl` against the
+   expo-router web bundle → HTTP 200, ~11 MB, zero compile errors,
+   confirms the new `privacy.tsx` route and all four rewritten screens
+   transform cleanly. `find app -name '*.tsx' | wc -l` → 18.
+
+### Deferred / not verified
+
+- Live-data manual verification not performed — needs the Go backend +
+  Docker running. Particularly worth checking by hand: the `Toggle`'s
+  visual snap (no animation), and the Tagihan berulang 3-branch color/copy
+  against real bill data spanning overdue/today/upcoming.
+- Notifikasi and Rekomendasi AI screens themselves were not built —
+  still genuinely blocked on NOTIF-001..004 and an AI feature, neither of
+  which exist yet. Only their Lainnya nav rows were addressed (omitted).
+- Same unrelated concurrent-session dirty files noted in the Transaksi
+  entry above, still untouched.
+- Remaining unstyled screens: Beranda, Laporan, and safe-to-spend.tsx
+  (only used as an internal styling reference by other screens' comments
+  so far — it has not itself been re-skinned).

@@ -1,9 +1,9 @@
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ScrollView, Spinner, Text, XStack, YStack } from 'tamagui'
-import { SubScreenHeader } from '../../src/components/SubScreenHeader'
-import { PocketCard } from '../../src/components/PocketCard'
-import { useBills } from '../../src/bills/useBills'
+import { ScrollView, Spinner, YStack } from 'tamagui'
 import { nextBillOccurrence } from '../../src/bills/nextBillOccurrence'
+import { useBills } from '../../src/bills/useBills'
+import { DetailHeader } from '../../src/components/AppHeader'
+import { Amount, Body, LedgerRow, Meta, Screen } from '../../src/components/primitives'
 import { billUrgency } from '../../src/dashboard/billUrgency'
 import { formatRupiah } from '../../src/format/money'
 
@@ -12,58 +12,36 @@ export default function BillsScreen() {
   const now = new Date()
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F6F3' }} edges={['top']}>
-      <ScrollView flex={1} backgroundColor="$background">
-        <YStack padding="$5" gap="$3">
-          <SubScreenHeader title="Tagihan Berulang" />
-
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8F4' }} edges={['top']}>
+      <DetailHeader title="Tagihan berulang" />
+      <ScrollView flex={1} backgroundColor="$kertas">
+        <Screen>
           {bills.isLoading ? (
             <YStack alignItems="center" paddingTop="$6">
-              <Spinner size="large" color="$primary" />
+              <Spinner size="large" color="$terjaga" />
             </YStack>
           ) : bills.isError ? (
-            <PocketCard>
-              <Text fontFamily="$body" fontSize="$2" color="$danger">
-                Gagal memuat tagihan. Coba lagi nanti.
-              </Text>
-            </PocketCard>
+            <Meta color="$peringatan">Gagal memuat tagihan. Coba lagi nanti.</Meta>
           ) : bills.data && bills.data.length > 0 ? (
-            <PocketCard>
+            <YStack>
               {bills.data.map((bill) => {
                 const occurrence = nextBillOccurrence(bill.due_day, now)
                 const urgency = billUrgency(occurrence.toISOString(), now)
                 return (
-                  <XStack
-                    key={bill.id}
-                    justifyContent="space-between"
-                    alignItems="center"
-                    paddingVertical="$3"
-                    borderTopWidth={1}
-                    borderTopColor="$borderColor"
-                  >
-                    <YStack>
-                      <Text fontFamily="$body" fontSize="$3" color="$color">
-                        {bill.name}
-                      </Text>
-                      <Text fontFamily="$body" fontSize="$1" color={urgency.color}>
-                        {urgency.label}
-                      </Text>
+                  <LedgerRow key={bill.id} pv={13}>
+                    <YStack flex={1}>
+                      <Body>{bill.name}</Body>
+                      <Meta color={urgency.color}>{urgency.label}</Meta>
                     </YStack>
-                    <Text fontFamily="$mono" fontSize="$3" color="$color">
-                      {formatRupiah(bill.amount)}
-                    </Text>
-                  </XStack>
+                    <Amount size={15}>{formatRupiah(bill.amount)}</Amount>
+                  </LedgerRow>
                 )
               })}
-            </PocketCard>
+            </YStack>
           ) : (
-            <PocketCard tone="muted">
-              <Text fontFamily="$body" fontSize="$3" color="$color" textAlign="center">
-                Belum ada tagihan berulang
-              </Text>
-            </PocketCard>
+            <Meta textAlign="center">Belum ada tagihan berulang</Meta>
           )}
-        </YStack>
+        </Screen>
       </ScrollView>
     </SafeAreaView>
   )

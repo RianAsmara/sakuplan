@@ -1,21 +1,91 @@
 import { useMemo, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Button, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui'
-import { PocketCard } from '../../../src/components/PocketCard'
-import { formatDateID, endOfMonth, startOfMonth, toRFC3339 } from '../../../src/format/date'
-import { formatRupiah } from '../../../src/format/money'
-import { useActiveBudget } from '../../../src/budgets/useActiveBudget'
-import { useSafeToSpend } from '../../../src/budgets/useSafeToSpend'
-import { riskLevelMeta } from '../../../src/budgets/riskLevel'
-import { useCategories } from '../../../src/categories/useCategories'
-import { RupiahInput } from '../../../src/components/RupiahInput'
+import { ScrollView, Spinner, XStack, YStack } from 'tamagui'
 import { ApiError } from '../../../src/api/errors'
-import { computeUnallocated } from '../../../src/budgets/budgetMath'
-import { useCreateBudgetRecommendation } from '../../../src/budgets/useCreateBudgetRecommendation'
-import { useCreateAndActivateBudget } from '../../../src/budgets/useCreateAndActivateBudget'
 import type { components } from '../../../src/api/client'
+import { computeUnallocated } from '../../../src/budgets/budgetMath'
+import { riskLevelMeta } from '../../../src/budgets/riskLevel'
+import { useActiveBudget } from '../../../src/budgets/useActiveBudget'
+import { useCreateAndActivateBudget } from '../../../src/budgets/useCreateAndActivateBudget'
+import { useCreateBudgetRecommendation } from '../../../src/budgets/useCreateBudgetRecommendation'
+import { useSafeToSpend } from '../../../src/budgets/useSafeToSpend'
+import { useCategories } from '../../../src/categories/useCategories'
+import { TabHeader } from '../../../src/components/AppHeader'
+import { DashedBox } from '../../../src/components/DashedBox'
+import { PocketCard } from '../../../src/components/PocketCard'
+import { ProgressBar } from '../../../src/components/ProgressBar'
+import {
+  Amount,
+  Body,
+  BodyS,
+  ButtonLabel,
+  FieldLabel,
+  Meta,
+  MetaS,
+  PrimaryButton,
+  Screen,
+  SecondaryButton,
+  SectionHeading,
+  SegmentButton,
+  SegmentLabel,
+} from '../../../src/components/primitives'
+import { RupiahInput } from '../../../src/components/RupiahInput'
+import { endOfMonth, formatDateID, startOfMonth, toRFC3339 } from '../../../src/format/date'
+import { formatRupiah } from '../../../src/format/money'
+import { useCashFlowReport } from '../../../src/reports/useCashFlowReport'
 
 type RecommendationMode = components['schemas']['RecommendationRequest']['mode']
+
+const MODE_LABELS: Record<RecommendationMode, string> = {
+  conservative: 'Konservatif',
+  balanced: 'Seimbang',
+  flexible: 'Fleksibel',
+}
+
+function ErrorBanner({ children }: { children: React.ReactNode }) {
+  return (
+    <YStack
+      backgroundColor="$peringatanFill"
+      borderLeftWidth={3}
+      borderLeftColor="$peringatan"
+      borderRadius="$1.5"
+      paddingHorizontal="$3"
+      paddingVertical="$2.5"
+    >
+      <BodyS color="$tinta">{children}</BodyS>
+    </YStack>
+  )
+}
+
+function AllocationRow({
+  name,
+  allocated,
+  actual,
+}: {
+  name: string
+  allocated: number
+  actual: number
+}) {
+  const over = actual > allocated
+  const rawPct = allocated > 0 ? (actual / allocated) * 100 : actual > 0 ? 100 : 0
+  const pct = Math.round(rawPct)
+  const overage = actual - allocated
+
+  return (
+    <YStack paddingVertical={14} borderTopWidth={1} borderTopColor="$hairline" gap="$2">
+      <XStack justifyContent="space-between" alignItems="center">
+        <Body>{name}</Body>
+        <Amount size={13} color={over ? '$peringatan' : '$kulit'}>{`${pct}%`}</Amount>
+      </XStack>
+      <ProgressBar pct={Math.min(pct, 100)} height={5} fill={over ? '$peringatan' : '$terjaga'} />
+      <Meta color={over ? '$peringatan' : '$kulit'}>
+        {over
+          ? `Melebihi anggaran ${formatRupiah(overage)}`
+          : `${formatRupiah(actual)} dari ${formatRupiah(allocated)}`}
+      </Meta>
+    </YStack>
+  )
+}
 
 function BudgetWizard() {
   const [step, setStep] = useState<'basics' | 'allocate' | 'review'>('basics')
@@ -50,7 +120,7 @@ function BudgetWizard() {
           setMinimumBuffer(data.minimum_buffer)
           setUsedRecommendation(true)
         },
-      }
+      },
     )
   }
 
@@ -68,70 +138,49 @@ function BudgetWizard() {
   }
 
   return (
-    <PocketCard elevated>
-      <Text fontFamily="$heading" fontSize="$4" color="$color">
-        Buat Anggaran Bulan Ini
-      </Text>
+    <PocketCard elevated gap="$4">
+      <SectionHeading>Buat Anggaran Bulan Ini</SectionHeading>
 
       {step === 'basics' ? (
         <YStack gap="$3">
           <YStack gap="$2">
-            <Text fontFamily="$body" fontSize="$1" color="$kulit">
-              PEMASUKAN DIHARAPKAN
-            </Text>
-            <RupiahInput value={expectedIncome} onChangeValue={setExpectedIncome} />
+            <FieldLabel htmlFor="budget-income">PEMASUKAN DIHARAPKAN</FieldLabel>
+            <RupiahInput id="budget-income" value={expectedIncome} onChangeValue={setExpectedIncome} />
           </YStack>
           <YStack gap="$2">
-            <Text fontFamily="$body" fontSize="$1" color="$kulit">
-              KOMITMEN TABUNGAN
-            </Text>
-            <RupiahInput value={savingsCommitment} onChangeValue={setSavingsCommitment} />
+            <FieldLabel htmlFor="budget-savings">KOMITMEN TABUNGAN</FieldLabel>
+            <RupiahInput id="budget-savings" value={savingsCommitment} onChangeValue={setSavingsCommitment} />
           </YStack>
           <YStack gap="$2">
-            <Text fontFamily="$body" fontSize="$1" color="$kulit">
-              DANA DARURAT MINIMUM
-            </Text>
-            <RupiahInput value={minimumBuffer} onChangeValue={setMinimumBuffer} />
+            <FieldLabel htmlFor="budget-buffer">DANA DARURAT MINIMUM</FieldLabel>
+            <RupiahInput id="budget-buffer" value={minimumBuffer} onChangeValue={setMinimumBuffer} />
           </YStack>
           <YStack gap="$2">
-            <Text fontFamily="$body" fontSize="$1" color="$kulit">
-              GAYA ALOKASI
-            </Text>
+            <FieldLabel htmlFor="budget-mode">GAYA ALOKASI</FieldLabel>
             <XStack gap="$2">
               {(['conservative', 'balanced', 'flexible'] as RecommendationMode[]).map((option) => (
-                <Button
-                  key={option}
-                  flex={1}
-                  size="$3"
-                  backgroundColor={mode === option ? '$primary' : '$white'}
-                  color={mode === option ? '$primaryText' : '$color'}
-                  borderWidth={1.5}
-                  borderColor={mode === option ? '$primary' : '$borderColor'}
-                  onPress={() => setMode(option)}
-                >
-                  {option === 'conservative' ? 'Konservatif' : option === 'balanced' ? 'Seimbang' : 'Fleksibel'}
-                </Button>
+                <SegmentButton key={option} selected={mode === option} onPress={() => setMode(option)}>
+                  <SegmentLabel selected={mode === option}>{MODE_LABELS[option]}</SegmentLabel>
+                </SegmentButton>
               ))}
             </XStack>
           </YStack>
-          <Button
-            backgroundColor="$white"
-            borderWidth={1.5}
-            borderColor="$borderColor"
-            color="$color"
+          <SecondaryButton
             disabled={expectedIncome <= 0 || recommend.isPending}
+            opacity={expectedIncome <= 0 ? 0.5 : 1}
             onPress={handleGetRecommendation}
           >
-            {recommend.isPending ? 'Menghitung...' : 'Dapatkan Saran Alokasi'}
-          </Button>
-          <Button
-            backgroundColor="$primary"
-            color="$primaryText"
+            <ButtonLabel color="$tinta">
+              {recommend.isPending ? 'Menghitung...' : 'Dapatkan Saran Alokasi'}
+            </ButtonLabel>
+          </SecondaryButton>
+          <PrimaryButton
             disabled={expectedIncome <= 0}
+            opacity={expectedIncome <= 0 ? 0.5 : 1}
             onPress={() => setStep('allocate')}
           >
-            Lanjut
-          </Button>
+            <ButtonLabel color="$putih">Lanjut</ButtonLabel>
+          </PrimaryButton>
         </YStack>
       ) : null}
 
@@ -139,9 +188,7 @@ function BudgetWizard() {
         <YStack gap="$3">
           {expenseCategories.data?.map((category) => (
             <YStack key={category.id} gap="$2">
-              <Text fontFamily="$body" fontSize="$2" color="$color">
-                {category.name}
-              </Text>
+              <Body>{category.name}</Body>
               <RupiahInput
                 value={allocations[category.id] ?? 0}
                 onChangeValue={(value) => setAllocations((prev) => ({ ...prev, [category.id]: value }))}
@@ -149,52 +196,51 @@ function BudgetWizard() {
             </YStack>
           ))}
           <PocketCard tone="muted">
-            <Text fontFamily="$body" fontSize="$2" color={unallocated < 0 ? '$danger' : '$kulit'}>
+            <Meta color={unallocated < 0 ? '$peringatan' : '$kulit'}>
               {`Belum dialokasikan: ${formatRupiah(unallocated)}`}
-            </Text>
+            </Meta>
           </PocketCard>
           <XStack gap="$2">
-            <Button flex={1} backgroundColor="$white" borderWidth={1.5} borderColor="$borderColor" color="$color" onPress={() => setStep('basics')}>
-              Kembali
-            </Button>
-            <Button flex={1} backgroundColor="$primary" color="$primaryText" onPress={() => setStep('review')}>
-              Lanjut
-            </Button>
+            <SecondaryButton flex={1} onPress={() => setStep('basics')}>
+              <ButtonLabel color="$tinta">Kembali</ButtonLabel>
+            </SecondaryButton>
+            <PrimaryButton flex={1} onPress={() => setStep('review')}>
+              <ButtonLabel color="$putih">Lanjut</ButtonLabel>
+            </PrimaryButton>
           </XStack>
         </YStack>
       ) : null}
 
       {step === 'review' ? (
         <YStack gap="$3">
-          <Text fontFamily="$body" fontSize="$2" color="$kulit">
+          <Meta>
             {`Pemasukan ${formatRupiah(expectedIncome)} · Tabungan ${formatRupiah(savingsCommitment)} · Dana darurat ${formatRupiah(minimumBuffer)}`}
-          </Text>
-          <Text fontFamily="$body" fontSize="$2" color={unallocated < 0 ? '$danger' : '$kulit'}>
+          </Meta>
+          <Meta color={unallocated < 0 ? '$peringatan' : '$kulit'}>
             {`Belum dialokasikan: ${formatRupiah(unallocated)}`}
-          </Text>
+          </Meta>
           {isConflict ? (
-            <Text fontFamily="$body" fontSize="$2" color="$danger">
-              Sudah ada anggaran aktif atau draf yang tumpang tindih untuk periode ini. Muat ulang layar ini.
-            </Text>
+            <ErrorBanner>
+              Sudah ada anggaran aktif atau draf yang tumpang tindih untuk periode ini. Muat ulang
+              layar ini.
+            </ErrorBanner>
           ) : createAndActivate.isError ? (
-            <Text fontFamily="$body" fontSize="$2" color="$danger">
-              Gagal membuat anggaran. Coba lagi.
-            </Text>
+            <ErrorBanner>Gagal membuat anggaran. Coba lagi.</ErrorBanner>
           ) : null}
           <XStack gap="$2">
-            <Button flex={1} backgroundColor="$white" borderWidth={1.5} borderColor="$borderColor" color="$color" onPress={() => setStep('allocate')}>
-              Kembali
-            </Button>
-            <Button
+            <SecondaryButton flex={1} onPress={() => setStep('allocate')}>
+              <ButtonLabel color="$tinta">Kembali</ButtonLabel>
+            </SecondaryButton>
+            <PrimaryButton
               flex={1}
-              backgroundColor="$primary"
-              color="$primaryText"
               disabled={unallocated < 0 || createAndActivate.isPending}
               opacity={unallocated < 0 ? 0.5 : 1}
               onPress={handleSubmit}
             >
-              {createAndActivate.isPending ? 'Membuat...' : 'Buat & Aktifkan Anggaran'}
-            </Button>
+              <ButtonLabel color="$putih">
+                {createAndActivate.isPending ? 'Membuat...' : 'Buat & Aktifkan Anggaran'}
+              </ButtonLabel>
+            </PrimaryButton>
           </XStack>
         </YStack>
       ) : null}
@@ -208,106 +254,99 @@ export default function BudgetsScreen() {
   const allCategories = useCategories()
   const categoriesById = useMemo(
     () => new Map((allCategories.data ?? []).map((category) => [category.id, category])),
-    [allCategories.data]
+    [allCategories.data],
+  )
+
+  // No PATCH endpoint exists to update a single allocation on an active
+  // budget — SCREENS.md's "Ubah" inline editor is omitted until the API
+  // supports it (see docs/PROGRESS.md 2026-08-21 entry).
+  const periodStart = activeBudget.data?.start_date ?? toRFC3339(startOfMonth(new Date()))
+  const periodEnd = activeBudget.data?.end_date ?? toRFC3339(endOfMonth(new Date()))
+  const cashFlow = useCashFlowReport({ start: periodStart, end: periodEnd })
+  const actualByCategory = useMemo(
+    () => new Map((cashFlow.data?.budget_vs_actual ?? []).map((line) => [line.category_id, line.actual])),
+    [cashFlow.data],
   )
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F6F3' }} edges={['top']}>
-      <ScrollView flex={1} backgroundColor="$background">
-        <YStack padding="$5" gap="$4">
-          <Text fontFamily="$heading" fontSize="$4" color="$color">
-            Anggaran
-          </Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8F4' }} edges={['top']}>
+      <ScrollView flex={1} backgroundColor="$kertas">
+        <Screen gap="$4">
+          <TabHeader title="Anggaran" />
 
           {activeBudget.isLoading ? (
             <YStack alignItems="center" paddingTop="$6">
-              <Spinner size="large" color="$primary" />
+              <Spinner size="large" color="$terjaga" />
             </YStack>
           ) : activeBudget.isError ? (
-            <PocketCard>
-              <Text fontFamily="$body" fontSize="$2" color="$danger">
-                Gagal memuat anggaran. Coba lagi nanti.
-              </Text>
-            </PocketCard>
+            <Meta color="$peringatan">Gagal memuat anggaran. Coba lagi nanti.</Meta>
           ) : activeBudget.data ? (
             <>
               <PocketCard>
-                <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                  PERIODE ANGGARAN AKTIF
-                </Text>
-                <Text fontFamily="$body" fontSize="$3" color="$color">
+                <Meta>PERIODE ANGGARAN AKTIF</Meta>
+                <Body>
                   {`${formatDateID(activeBudget.data.start_date)} – ${formatDateID(activeBudget.data.end_date)}`}
-                </Text>
+                </Body>
               </PocketCard>
 
               <XStack gap="$3">
                 <PocketCard flex={1}>
-                  <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                    PEMASUKAN DIHARAPKAN
-                  </Text>
-                  <Text fontFamily="$mono" fontSize="$3" color="$color">
-                    {formatRupiah(activeBudget.data.expected_income)}
-                  </Text>
+                  <Meta>PEMASUKAN DIHARAPKAN</Meta>
+                  <Amount size={16}>{formatRupiah(activeBudget.data.expected_income)}</Amount>
                 </PocketCard>
                 <PocketCard flex={1}>
-                  <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                    KOMITMEN TABUNGAN
-                  </Text>
-                  <Text fontFamily="$mono" fontSize="$3" color="$color">
-                    {formatRupiah(activeBudget.data.savings_commitment)}
-                  </Text>
+                  <Meta>KOMITMEN TABUNGAN</Meta>
+                  <Amount size={16}>{formatRupiah(activeBudget.data.savings_commitment)}</Amount>
                 </PocketCard>
               </XStack>
 
               {safeToSpend.data ? (
-                <PocketCard>
-                  <XStack justifyContent="space-between" alignItems="center">
-                    <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                      AMAN DIBELANJAKAN PER HARI
-                    </Text>
-                    <Text fontFamily="$body" fontSize="$1" color={riskLevelMeta(safeToSpend.data.risk_level).color}>
-                      {riskLevelMeta(safeToSpend.data.risk_level).label.toUpperCase()}
-                    </Text>
-                  </XStack>
-                  <Text fontFamily="$mono" fontSize="$5" color="$primary">
-                    {formatRupiah(safeToSpend.data.daily)}
-                  </Text>
-                  <Text fontFamily="$body" fontSize="$2" color="$kulit">
-                    {`${safeToSpend.data.days_remaining} hari lagi sampai gajian · Tagihan mendatang ${formatRupiah(safeToSpend.data.upcoming_bills)}`}
-                  </Text>
-                </PocketCard>
+                <DashedBox color="#006B5E" fill="rgba(0,107,94,0.06)" radius={12} style={{ padding: 18 }}>
+                  <YStack gap="$2">
+                    <XStack justifyContent="space-between" alignItems="center">
+                      <Meta>AMAN DIBELANJAKAN PER HARI</Meta>
+                      <MetaS color={riskLevelMeta(safeToSpend.data.risk_level).color}>
+                        {riskLevelMeta(safeToSpend.data.risk_level).label.toUpperCase()}
+                      </MetaS>
+                    </XStack>
+                    <Amount size={36} color="$terjaga">
+                      {formatRupiah(safeToSpend.data.daily)}
+                    </Amount>
+                    <Meta>
+                      {`${safeToSpend.data.days_remaining} hari lagi sampai gajian · Tagihan mendatang ${formatRupiah(safeToSpend.data.upcoming_bills)}`}
+                    </Meta>
+                  </YStack>
+                </DashedBox>
               ) : null}
 
-              <PocketCard>
-                <Text fontFamily="$body" fontSize="$1" color="$kulit">
-                  ALOKASI KATEGORI
-                </Text>
-                {activeBudget.data.allocations.map((allocation) => (
-                  <XStack key={allocation.id} justifyContent="space-between">
-                    <Text fontFamily="$body" fontSize="$2" color="$color">
-                      {categoriesById.get(allocation.category_id)?.name ?? 'Kategori'}
-                    </Text>
-                    <Text fontFamily="$mono" fontSize="$2" color="$color">
-                      {formatRupiah(allocation.amount)}
-                    </Text>
-                  </XStack>
-                ))}
-              </PocketCard>
+              <YStack>
+                <SectionHeading marginBottom="$2">Alokasi Kategori</SectionHeading>
+                {cashFlow.isLoading ? (
+                  <YStack alignItems="center" paddingTop="$4">
+                    <Spinner color="$terjaga" />
+                  </YStack>
+                ) : (
+                  activeBudget.data.allocations.map((allocation) => (
+                    <AllocationRow
+                      key={allocation.id}
+                      name={categoriesById.get(allocation.category_id)?.name ?? 'Kategori'}
+                      allocated={allocation.amount}
+                      actual={actualByCategory.get(allocation.category_id) ?? 0}
+                    />
+                  ))
+                )}
+              </YStack>
             </>
           ) : (
             <>
               <PocketCard tone="muted">
-                <Text fontFamily="$body" fontSize="$3" color="$color" textAlign="center">
-                  Belum ada anggaran aktif
-                </Text>
-                <Text fontFamily="$body" fontSize="$2" color="$kulit" textAlign="center">
-                  Buat anggaran bulan ini supaya kamu tahu batas amanmu.
-                </Text>
+                <Body textAlign="center">Belum ada anggaran aktif</Body>
+                <Meta textAlign="center">Buat anggaran bulan ini supaya kamu tahu batas amanmu.</Meta>
               </PocketCard>
               <BudgetWizard />
             </>
           )}
-        </YStack>
+        </Screen>
       </ScrollView>
     </SafeAreaView>
   )
